@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include "vendor_handler.h"
 
-bool vendor_handler::setupReportProtocol(libusb_device_handle* handle, int interface_number) {
+bool vendor_handler::setupReportProtocol(libusb_device_handle* handle, unsigned char interface_number) {
     int err = libusb_control_transfer(handle,
                                   0x21,
                                   0x0b,
@@ -35,7 +35,7 @@ bool vendor_handler::setupReportProtocol(libusb_device_handle* handle, int inter
     return true;
 }
 
-bool vendor_handler::setupInfiniteIdle(libusb_device_handle* handle, int interface_number) {
+bool vendor_handler::setupInfiniteIdle(libusb_device_handle* handle, unsigned char interface_number) {
     int err = libusb_control_transfer(handle,
                                   0x21,
                                   0x0a,

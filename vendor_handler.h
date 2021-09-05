@@ -31,10 +31,10 @@ public:
     virtual bool handleProductAttach(libusb_device* device, const struct libusb_device_descriptor descriptor) { return false; };
     virtual void handleProductDetach(libusb_device* device, const struct libusb_device_descriptor descriptor) {};
 protected:
-    virtual bool setupReportProtocol(libusb_device_handle* handle, int interface_number);
-    virtual bool setupInfiniteIdle(libusb_device_handle* handle, int interface_number);
+    virtual bool setupReportProtocol(libusb_device_handle* handle, unsigned char interface_number);
+    virtual bool setupInfiniteIdle(libusb_device_handle* handle, unsigned char interface_number);
 
-    virtual bool setupTransfers(libusb_device_handle* handle, int interface_number) { return false; };
+    virtual bool setupTransfers(libusb_device_handle* handle, unsigned char interface_number) { return false; };
 };
 
 #endif //XP_PEN_USERLAND_VENDOR_HANDLER_H

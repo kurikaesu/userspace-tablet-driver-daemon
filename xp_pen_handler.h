@@ -39,11 +39,11 @@ private:
     std::map<libusb_device*, device_interface_pair*> deviceInterfaceMap;
     std::vector<int> handledProducts;
 
-    device_interface_pair* claimDevice(libusb_device* device, libusb_device_handle* handle);
+    device_interface_pair* claimDevice(libusb_device* device, libusb_device_handle* handle, const libusb_device_descriptor descriptor);
     void cleanupDevice(device_interface_pair* pair);
 
     void sendInitKey(libusb_device_handle* handle, int interface_number);
-    bool setupTransfers(libusb_device_handle* handle, int interface_number);
+    bool setupTransfers(libusb_device_handle* handle, unsigned char interface_number, int maxPacketSize);
 
     static void LIBUSB_CALL transferCallback(struct libusb_transfer* transfer);
 };

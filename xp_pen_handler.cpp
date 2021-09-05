@@ -47,7 +47,7 @@ bool xp_pen_handler::handleProductAttach(libusb_device* device, const libusb_dev
     switch (descriptor.idProduct) {
         case 0x091b:
             std::cout << "Got known device" << std::endl;
-            interfacePair = claimDevice(device, handle);
+            interfacePair = claimDevice(device, handle, descriptor);
             deviceInterfaces.push_back(interfacePair);
             deviceInterfaceMap[device] =interfacePair;
 
@@ -84,15 +84,21 @@ void xp_pen_handler::handleProductDetach(libusb_device *device, struct libusb_de
     }
 }
 
-device_interface_pair* xp_pen_handler::claimDevice(libusb_device *device, libusb_device_handle *handle) {
+device_interface_pair* xp_pen_handler::claimDevice(libusb_device *device, libusb_device_handle *handle, const libusb_device_descriptor descriptor) {
     device_interface_pair* deviceInterface = new device_interface_pair();
     int err;
 
+    struct libusb_config_descriptor* configDescriptor;
+    err = libusb_get_config_descriptor(device, 0, &configDescriptor);
+    if (err != LIBUSB_SUCCESS) {
+        std::cout << "Could not get config descriptor" << std::endl;
+    }
+
     if ((err = libusb_open(device, &handle)) == LIBUSB_SUCCESS) {
         deviceInterface->deviceHandle = handle;
-        int interfaceCount = 3;
+        unsigned char interfaceCount = configDescriptor->bNumInterfaces;
 
-        for (short interface_number = 0; interface_number < interfaceCount; ++interface_number) {
+        for (unsigned char interface_number = 0; interface_number < interfaceCount; ++interface_number) {
             err = libusb_detach_kernel_driver(handle, interface_number);
             if (LIBUSB_SUCCESS == err) {
                 std::cout << "Detached interface from kernel " << interface_number << std::endl;
@@ -103,13 +109,28 @@ device_interface_pair* xp_pen_handler::claimDevice(libusb_device *device, libusb
                 std::cout << "Claimed interface " << interface_number << std::endl;
                 deviceInterface->claimedInterfaces.push_back(interface_number);
 
-                if (!setupReportProtocol(handle, interface_number) ||
-                    !setupInfiniteIdle(handle, interface_number)) {
+                unsigned char interface_target = interface_number;
+                /*
+                if (configDescriptor->interface[interface_number].num_altsetting > 0) {
+                    std::cout << "Interface " << interface_number << " has " << configDescriptor->interface[interface_number].num_altsetting << " alt settings" << std::endl;
+
+                    // Try to set alt setting
+                    if (libusb_set_interface_alt_setting(handle, interface_number, configDescriptor->interface[interface_number].altsetting[0].bAlternateSetting) != LIBUSB_SUCCESS) {
+                        std::cout << "Could not set alt setting on interface " << interface_number << std::endl;
+                    }
+
+                    interface_target = configDescriptor->interface[interface_number].altsetting[0].bInterfaceNumber;
+                    std::cout << "Interface target set to " << (int)interface_target << std::endl;
+                }
+                 */
+
+                if (!setupReportProtocol(handle, interface_target) ||
+                    !setupInfiniteIdle(handle, interface_target)) {
                     continue;
                 }
 
-                sendInitKey(handle, interface_number);
-                setupTransfers(handle, interface_number);
+                sendInitKey(handle, interface_target);
+                setupTransfers(handle, interface_target, descriptor.bMaxPacketSize0);
 
                 std::cout << "Setup completed on interface " << interface_number << std::endl;
             }
@@ -136,9 +157,9 @@ void xp_pen_handler::cleanupDevice(device_interface_pair *pair) {
 void xp_pen_handler::sendInitKey(libusb_device_handle *handle, int interface_number) {
     unsigned char key[] = {0x02, 0xb0, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     int sentBytes;
-    int ret = libusb_interrupt_transfer(handle, interface_number, key, sizeof(key), &sentBytes, 1000);
+    int ret = libusb_interrupt_transfer(handle, interface_number | LIBUSB_ENDPOINT_OUT, key, sizeof(key), &sentBytes, 1000);
     if (ret != LIBUSB_SUCCESS) {
-        std::cout << "Failed to send key on interface " << interface_number << " errno: " << ret << std::endl;
+        std::cout << "Failed to send key on interface " << interface_number << " ret: " << ret << " errno: " << errno << std::endl;
         return;
     }
 
@@ -148,7 +169,8 @@ void xp_pen_handler::sendInitKey(libusb_device_handle *handle, int interface_num
     }
 }
 
-bool xp_pen_handler::setupTransfers(libusb_device_handle *handle, int interface_number) {
+bool xp_pen_handler::setupTransfers(libusb_device_handle *handle, unsigned char interface_number, int maxPacketSize) {
+    std::cout << "Setting up transfers with max packet size of " << maxPacketSize << std::endl;
     struct libusb_transfer* transfer = libusb_alloc_transfer(0);
     if (transfer == NULL) {
         std::cout << "Could not allocate a transfer for interface " << interface_number << std::endl;
@@ -156,15 +178,19 @@ bool xp_pen_handler::setupTransfers(libusb_device_handle *handle, int interface_
     }
 
     transfer->user_data = NULL;
-    unsigned char* buff = new unsigned char[65535];
+    unsigned char* buff = new unsigned char[maxPacketSize];
     libusb_fill_interrupt_transfer(transfer,
-                                   handle, interface_number,
-                                   buff, 65536,
+                                   handle, interface_number | LIBUSB_ENDPOINT_IN,
+                                   buff, maxPacketSize,
                                    transferCallback, NULL,
                                    1000);
 
     transfer->flags |= LIBUSB_TRANSFER_FREE_BUFFER;
-    libusb_submit_transfer(transfer);
+    int ret = libusb_submit_transfer(transfer);
+    if (ret != LIBUSB_SUCCESS) {
+        std::cout << "Could not submit transfer on interface " << interface_number << " ret: " << ret << " errno: " << errno << std::endl;
+        return false;
+    }
 
     std::cout << "Set up transfer for interface " << interface_number << std::endl;
 
@@ -172,11 +198,24 @@ bool xp_pen_handler::setupTransfers(libusb_device_handle *handle, int interface_
 }
 
 void xp_pen_handler::transferCallback(struct libusb_transfer *transfer) {
-    std::cout << "Got a callback from my transfer" << std::endl;
+    int err;
+    switch (transfer->status) {
+    case LIBUSB_TRANSFER_COMPLETED:
+        for (int i = 0 ; i < transfer->actual_length; ++i) {
+            std::cout << std::hex << transfer->buffer[i];
+        }
 
-    // Resubmit the transfer
-    int err = libusb_submit_transfer(transfer);
-    if (err != LIBUSB_SUCCESS) {
-        std::cout << "Could not resubmit my transfer" << std::endl;
+        std::cout << std::endl;
+
+        // Resubmit the transfer
+        err = libusb_submit_transfer(transfer);
+        if (err != LIBUSB_SUCCESS) {
+            std::cout << "Could not resubmit my transfer" << std::endl;
+        }
+
+        break;
+
+    default:
+        break;
     }
 }

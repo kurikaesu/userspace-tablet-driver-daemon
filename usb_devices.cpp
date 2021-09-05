@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 usb_devices::usb_devices() {
     libusb_init(&context);
+//    libusb_set_option(context, LIBUSB_OPTION_LOG_LEVEL, LIBUSB_LOG_LEVEL_DEBUG);
 }
 
 void usb_devices::handleEvents() {
