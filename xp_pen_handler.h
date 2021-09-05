@@ -32,7 +32,7 @@ public:
 
     int getVendorId();
     std::vector<int> getProductIds();
-    bool handleProduct(libusb_device* device, struct libusb_device_descriptor descriptor);
+    bool handleProductAttach(libusb_device* device, const libusb_device_descriptor descriptor);
     void handleProductDetach(libusb_device* device, struct libusb_device_descriptor descriptor);
 private:
     std::vector<device_interface_pair*> deviceInterfaces;
@@ -43,6 +43,9 @@ private:
     void cleanupDevice(device_interface_pair* pair);
 
     void sendInitKey(libusb_device_handle* handle, int interface_number);
+    bool setupTransfers(libusb_device_handle* handle, int interface_number);
+
+    static void LIBUSB_CALL transferCallback(struct libusb_transfer* transfer);
 };
 
 

@@ -27,6 +27,8 @@ class usb_devices {
 public:
     usb_devices();
 
+    void handleEvents();
+
     std::map<short, std::vector<short> > getCandidateDevices(const std::map<short, vendor_handler*> vendorHandlers);
     void handleDeviceAttach(const std::map<short, vendor_handler*> vendorHandlers, struct libusb_device* device);
     void handleDeviceDetach(const std::map<short, vendor_handler *> vendorHandlers, struct libusb_device* device);

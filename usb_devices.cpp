@@ -24,6 +24,10 @@ usb_devices::usb_devices() {
     libusb_init(&context);
 }
 
+void usb_devices::handleEvents() {
+    libusb_handle_events(context);
+}
+
 std::map<short, std::vector<short> > usb_devices::getCandidateDevices(const std::map<short, vendor_handler*> vendorHandlers) {
     std::map<short, std::vector<short> > supportedDevices;
     ssize_t num = libusb_get_device_list(context, &lusb_list);
@@ -54,7 +58,7 @@ void usb_devices::handleDeviceAttach(const std::map<short, vendor_handler *> ven
 
     libusb_get_device_descriptor(device, &descriptor);
     if (vendorHandlers.find(descriptor.idVendor) != vendorHandlers.end()) {
-        if (vendorHandlers.at(descriptor.idVendor)->handleProduct(device, descriptor)) {
+        if (vendorHandlers.at(descriptor.idVendor)->handleProductAttach(device, descriptor)) {
 
         }
     }

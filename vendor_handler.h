@@ -28,14 +28,13 @@ public:
 
     virtual int getVendorId() { return 0x0000; };
     virtual std::vector<int> getProductIds() { return std::vector<int>(); };
-    virtual bool handleProduct(libusb_device* device, const struct libusb_device_descriptor descriptor) { return false; };
+    virtual bool handleProductAttach(libusb_device* device, const struct libusb_device_descriptor descriptor) { return false; };
     virtual void handleProductDetach(libusb_device* device, const struct libusb_device_descriptor descriptor) {};
-
-    virtual void registerHotplugCallbacks() {}
-
 protected:
     virtual bool setupReportProtocol(libusb_device_handle* handle, int interface_number);
     virtual bool setupInfiniteIdle(libusb_device_handle* handle, int interface_number);
+
+    virtual bool setupTransfers(libusb_device_handle* handle, int interface_number) { return false; };
 };
 
 #endif //XP_PEN_USERLAND_VENDOR_HANDLER_H

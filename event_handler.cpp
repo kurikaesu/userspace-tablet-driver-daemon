@@ -70,7 +70,7 @@ int event_handler::run() {
     signal(SIGINT, sigHandler);
 
     while (running) {
-        libusb_handle_events_completed(NULL, NULL);
+        devices->handleEvents();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 

@@ -40,7 +40,7 @@ std::vector<int> xp_pen_handler::getProductIds() {
     return handledProducts;
 }
 
-bool xp_pen_handler::handleProduct(libusb_device* device, struct libusb_device_descriptor descriptor) {
+bool xp_pen_handler::handleProductAttach(libusb_device* device, const libusb_device_descriptor descriptor) {
     std::cout << "xp_pen_handler" << std::endl;
     libusb_device_handle* handle = NULL;
     device_interface_pair* interfacePair = NULL;
@@ -90,8 +90,9 @@ device_interface_pair* xp_pen_handler::claimDevice(libusb_device *device, libusb
 
     if ((err = libusb_open(device, &handle)) == LIBUSB_SUCCESS) {
         deviceInterface->deviceHandle = handle;
+        int interfaceCount = 3;
 
-        for (short interface_number = 0; interface_number <= 2; ++interface_number) {
+        for (short interface_number = 0; interface_number < interfaceCount; ++interface_number) {
             err = libusb_detach_kernel_driver(handle, interface_number);
             if (LIBUSB_SUCCESS == err) {
                 std::cout << "Detached interface from kernel " << interface_number << std::endl;
@@ -108,6 +109,7 @@ device_interface_pair* xp_pen_handler::claimDevice(libusb_device *device, libusb
                 }
 
                 sendInitKey(handle, interface_number);
+                setupTransfers(handle, interface_number);
 
                 std::cout << "Setup completed on interface " << interface_number << std::endl;
             }
@@ -143,5 +145,38 @@ void xp_pen_handler::sendInitKey(libusb_device_handle *handle, int interface_num
     if (sentBytes != sizeof(key)) {
         std::cout << "Didn't send all of the key on interface " << interface_number << " only sent " << sentBytes << std::endl;
         return;
+    }
+}
+
+bool xp_pen_handler::setupTransfers(libusb_device_handle *handle, int interface_number) {
+    struct libusb_transfer* transfer = libusb_alloc_transfer(0);
+    if (transfer == NULL) {
+        std::cout << "Could not allocate a transfer for interface " << interface_number << std::endl;
+        return false;
+    }
+
+    transfer->user_data = NULL;
+    unsigned char* buff = new unsigned char[65535];
+    libusb_fill_interrupt_transfer(transfer,
+                                   handle, interface_number,
+                                   buff, 65536,
+                                   transferCallback, NULL,
+                                   1000);
+
+    transfer->flags |= LIBUSB_TRANSFER_FREE_BUFFER;
+    libusb_submit_transfer(transfer);
+
+    std::cout << "Set up transfer for interface " << interface_number << std::endl;
+
+    return true;
+}
+
+void xp_pen_handler::transferCallback(struct libusb_transfer *transfer) {
+    std::cout << "Got a callback from my transfer" << std::endl;
+
+    // Resubmit the transfer
+    int err = libusb_submit_transfer(transfer);
+    if (err != LIBUSB_SUCCESS) {
+        std::cout << "Could not resubmit my transfer" << std::endl;
     }
 }
