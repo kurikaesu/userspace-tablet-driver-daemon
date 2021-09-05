@@ -41,6 +41,8 @@ private:
 
     device_interface_pair* claimDevice(libusb_device* device, libusb_device_handle* handle);
     void cleanupDevice(device_interface_pair* pair);
+
+    void sendInitKey(libusb_device_handle* handle, int interface_number);
 };
 
 

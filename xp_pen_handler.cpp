@@ -101,6 +101,15 @@ device_interface_pair* xp_pen_handler::claimDevice(libusb_device *device, libusb
             if (libusb_claim_interface(handle, interface_number) == LIBUSB_SUCCESS) {
                 std::cout << "Claimed interface " << interface_number << std::endl;
                 deviceInterface->claimedInterfaces.push_back(interface_number);
+
+                if (!setupReportProtocol(handle, interface_number) ||
+                    !setupInfiniteIdle(handle, interface_number)) {
+                    continue;
+                }
+
+                sendInitKey(handle, interface_number);
+
+                std::cout << "Setup completed on interface " << interface_number << std::endl;
             }
         }
     } else {
@@ -119,5 +128,20 @@ void xp_pen_handler::cleanupDevice(device_interface_pair *pair) {
     for (auto interface: pair->detachedInterfaces) {
         libusb_attach_kernel_driver(pair->deviceHandle, interface);
         std::cout << "Reattaching to kernel interface " << interface << std::endl;
+    }
+}
+
+void xp_pen_handler::sendInitKey(libusb_device_handle *handle, int interface_number) {
+    unsigned char key[] = {0x02, 0xb0, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    int sentBytes;
+    int ret = libusb_interrupt_transfer(handle, interface_number, key, sizeof(key), &sentBytes, 1000);
+    if (ret != LIBUSB_SUCCESS) {
+        std::cout << "Failed to send key on interface " << interface_number << " errno: " << ret << std::endl;
+        return;
+    }
+
+    if (sentBytes != sizeof(key)) {
+        std::cout << "Didn't send all of the key on interface " << interface_number << " only sent " << sentBytes << std::endl;
+        return;
     }
 }

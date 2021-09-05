@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define XP_PEN_USERLAND_VENDOR_HANDLER_H
 
 #include <vector>
+#include <libusb-1.0/libusb.h>
 
 class vendor_handler {
 public:
@@ -31,6 +32,10 @@ public:
     virtual void handleProductDetach(libusb_device* device, const struct libusb_device_descriptor descriptor) {};
 
     virtual void registerHotplugCallbacks() {}
+
+protected:
+    virtual bool setupReportProtocol(libusb_device_handle* handle, int interface_number);
+    virtual bool setupInfiniteIdle(libusb_device_handle* handle, int interface_number);
 };
 
 #endif //XP_PEN_USERLAND_VENDOR_HANDLER_H
