@@ -16,6 +16,7 @@ public:
 
     std::vector<int> handledProductIds();
     int sendInitKeyOnInterface();
+    bool attachToInterfaceId(int interfaceId);
     bool attachDevice(libusb_device_handle* handle);
     void detachDevice(libusb_device_handle* handle);
     bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen);

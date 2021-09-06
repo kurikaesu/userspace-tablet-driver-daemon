@@ -10,6 +10,8 @@
 
 class transfer_handler {
 public:
+    virtual int sendInitKeyOnInterface() = 0;
+    virtual bool attachToInterfaceId(int interfaceId) = 0;
     virtual bool attachDevice(libusb_device_handle* handle) = 0;
     virtual void detachDevice(libusb_device_handle* handle) = 0;
     virtual bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen) = 0;

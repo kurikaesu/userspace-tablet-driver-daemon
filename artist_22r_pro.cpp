@@ -22,7 +22,29 @@ int artist_22r_pro::sendInitKeyOnInterface() {
     return 0x03;
 }
 
+bool artist_22r_pro::attachToInterfaceId(int interfaceId) {
+    switch (interfaceId) {
+    case 2:
+        return true;
+    default:
+        return false;
+    }
+}
+
 bool artist_22r_pro::attachDevice(libusb_device_handle *handle) {
+    unsigned char* buf = new unsigned char[12];
+
+    // We need to get a few more bits of information
+    if (libusb_get_string_descriptor(handle, 0x64, 0x0409, buf, 12) != 12) {
+        std::cout << "Could not get descriptor";
+    }
+
+    int maxWidth = (buf[3] << 8) + buf[2];
+    int maxHeight = (buf[5] << 8) + buf[4];
+    int maxPressure = (buf[9] << 8) + buf[8];
+
+    std::cout << std::dec << "Phys max width: " << maxWidth << " max height: " << maxHeight << std::endl;
+
     int fd = -1;
     fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
     if (fd < 0) {
@@ -94,7 +116,7 @@ bool artist_22r_pro::attachDevice(libusb_device_handle *handle) {
         .absinfo = {
                 .value = 0,
                 .minimum = 0,
-                .maximum = 1,
+                .maximum = maxWidth,
         },
     };
 
@@ -106,7 +128,7 @@ bool artist_22r_pro::attachDevice(libusb_device_handle *handle) {
         .absinfo = {
                 .value = 0,
                 .minimum = 0,
-                .maximum = 1,
+                .maximum = maxHeight,
         },
     };
 
@@ -118,7 +140,7 @@ bool artist_22r_pro::attachDevice(libusb_device_handle *handle) {
             .absinfo = {
                     .value = 0,
                     .minimum = 0,
-                    .maximum = 8191,
+                    .maximum = maxPressure,
             },
     };
 
@@ -180,19 +202,11 @@ void artist_22r_pro::detachDevice(libusb_device_handle *handle) {
 }
 
 bool artist_22r_pro::handleTransferData(libusb_device_handle* handle, unsigned char *data, size_t dataLen) {
-    for (size_t i = 0; i < dataLen; ++i) {
-        std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)data[i] << " ";
-    }
-
-    std::cout << std::endl;
-
     switch (data[0]) {
     // Unified interface
     case 0x02:
         // Stylus / digitizer events
         if (data[1] < 0xb0) {
-            std::cout << "Got pen movement" << std::endl;
-
             // Extract the X and Y position
             int penX = (data[3] << 8) + data[2];
             int penY = (data[5] << 8) + data[4];
@@ -200,8 +214,6 @@ bool artist_22r_pro::handleTransferData(libusb_device_handle* handle, unsigned c
             // Check to see if the pen is touching
             int pressure = 0;
             if (0x01 & data[1]) {
-                std::cout << "Stylus touching" << std::endl;
-
                 // Grab the pressure amount
                 pressure = (data[7] << 8) + data[6];
 
@@ -229,10 +241,6 @@ bool artist_22r_pro::handleTransferData(libusb_device_handle* handle, unsigned c
                 uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 0);
                 uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 0);
             }
-
-            std::cout << std::dec << "X: " << penX << " Y: " << penY <<
-                " tilt-x: " << tiltx << " tilt-y: " << tilty <<
-                " pressure: " << pressure << " button_pressed: " << buttonPressed << std::endl;
 
             uinput_send(uinputPens[handle], EV_ABS, ABS_X, penX);
             uinput_send(uinputPens[handle], EV_ABS, ABS_Y, penY);

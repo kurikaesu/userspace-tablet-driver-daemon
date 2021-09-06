@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <algorithm>
 #include "xp_pen_handler.h"
 #include "transfer_handler_pair.h"
+#include "artist_22r_pro.h"
 
 xp_pen_handler::xp_pen_handler() {
     std::cout << "xp_pen_handler initialized" << std::endl;
@@ -124,38 +125,42 @@ device_interface_pair* xp_pen_handler::claimDevice(libusb_device *device, libusb
                 std::cout << "Claimed interface " << interface_number << std::endl;
                 deviceInterface->claimedInterfaces.push_back(interface_number);
 
-                // Attach to our handler
-                productHandlers[descriptor.idProduct]->attachDevice(handle);
+                // Even though we claim the interface, we only actually care about specific ones. We still do
+                // the claim so that no other driver mangles events while we are handling it
+                if (productHandlers[descriptor.idProduct]->attachToInterfaceId(interface_number)) {
+                    // Attach to our handler
+                    productHandlers[descriptor.idProduct]->attachDevice(handle);
 
-                unsigned char interface_target = interface_number;
-                const libusb_interface_descriptor* interfaceDescriptor =
-                        configDescriptor->interface[interface_number].altsetting;
+                    unsigned char interface_target = interface_number;
+                    const libusb_interface_descriptor *interfaceDescriptor =
+                            configDescriptor->interface[interface_number].altsetting;
 
-                if (!setupReportProtocol(handle, interface_target) ||
-                    !setupInfiniteIdle(handle, interface_target)) {
-                    continue;
-                }
-
-                const libusb_endpoint_descriptor* endpoint = interfaceDescriptor->endpoint;
-                const libusb_endpoint_descriptor* ep;
-                for (ep = endpoint; (ep - endpoint) < interfaceDescriptor->bNumEndpoints; ++ep) {
-                    // Ignore any interface that isn't of an interrupt type
-                    if ((ep->bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) != LIBUSB_TRANSFER_TYPE_INTERRUPT)
+                    if (!setupReportProtocol(handle, interface_target) ||
+                        !setupInfiniteIdle(handle, interface_target)) {
                         continue;
+                    }
 
-                    // We only send the init key on the interface the handler says it should be on
-                    if (productHandlers[descriptor.idProduct]->sendInitKeyOnInterface() == interface_number) {
-                        if ((ep->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_OUT) {
-                            sendInitKey(handle, ep->bEndpointAddress);
+                    const libusb_endpoint_descriptor *endpoint = interfaceDescriptor->endpoint;
+                    const libusb_endpoint_descriptor *ep;
+                    for (ep = endpoint; (ep - endpoint) < interfaceDescriptor->bNumEndpoints; ++ep) {
+                        // Ignore any interface that isn't of an interrupt type
+                        if ((ep->bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) != LIBUSB_TRANSFER_TYPE_INTERRUPT)
+                            continue;
+
+                        // We only send the init key on the interface the handler says it should be on
+                        if (productHandlers[descriptor.idProduct]->sendInitKeyOnInterface() == interface_number) {
+                            if ((ep->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_OUT) {
+                                sendInitKey(handle, ep->bEndpointAddress);
+                            }
+                        }
+
+                        if ((ep->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_IN) {
+                            setupTransfers(handle, ep->bEndpointAddress, ep->wMaxPacketSize, descriptor.idProduct);
                         }
                     }
 
-                    if ((ep->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_IN) {
-                        setupTransfers(handle, ep->bEndpointAddress, ep->wMaxPacketSize, descriptor.idProduct);
-                    }
+                    std::cout << "Setup completed on interface " << interface_number << std::endl;
                 }
-
-                std::cout << "Setup completed on interface " << interface_number << std::endl;
             }
         }
     } else {

@@ -33,4 +33,5 @@
 
 # Temporary and client side files
 cmake-build-debug
+cmake-build-release
 .idea
