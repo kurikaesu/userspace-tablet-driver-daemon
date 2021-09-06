@@ -191,13 +191,13 @@ bool artist_22r_pro::attachDevice(libusb_device_handle *handle) {
     ioctl(fd, UI_ABS_SETUP, &uinput_abs_setup);
 
     struct uinput_setup uinput_setup = (struct uinput_setup) {
-        .id = {
+        {
             .bustype = BUS_USB,
             .vendor = 0x28bd,
             .product = 0xf91b,
             .version = 0x0001,
         },
-        {.name = "XP-Pen Artist 22R Pro"},
+        "XP-Pen Artist 22R Pro",
     };
 
     ioctl(fd, UI_DEV_SETUP, &uinput_setup);
@@ -216,8 +216,7 @@ bool artist_22r_pro::attachDevice(libusb_device_handle *handle) {
     set_evbit(EV_ABS);
     set_evbit(EV_REL);
 
-    // First 10 buttons
-    for (int index = 0; index < padButtonAliases.size(); ++ index) {
+    for (int index = 0; index < padButtonAliases.size(); ++index) {
         set_keybit(padButtonAliases[index]);
     }
 
@@ -251,13 +250,13 @@ bool artist_22r_pro::attachDevice(libusb_device_handle *handle) {
     ioctl(fd, UI_ABS_SETUP, uinput_abs_setup);
 
     uinput_setup = (struct uinput_setup) {
-            .id = {
+            {
                     .bustype = BUS_USB,
                     .vendor = 0x28bd,
                     .product = 0xf91b,
                     .version = 0x0001,
             },
-            {.name = "XP-Pen Artist 22R Pro Pad"},
+            "XP-Pen Artist 22R Pro Pad",
     };
 
     ioctl(fd, UI_DEV_SETUP, &uinput_setup);
@@ -298,7 +297,7 @@ bool artist_22r_pro::handleTransferData(libusb_device_handle* handle, unsigned c
             int penY = (data[5] << 8) + data[4];
 
             // Check to see if the pen is touching
-            int pressure = 0;
+            int pressure;
             if (0x01 & data[1]) {
                 // Grab the pressure amount
                 pressure = (data[7] << 8) + data[6];
@@ -313,14 +312,11 @@ bool artist_22r_pro::handleTransferData(libusb_device_handle* handle, unsigned c
             short tiltx = (char)data[8];
             short tilty = (char)data[9];
 
-            int buttonPressed = 0;
             // Check to see if the stylus buttons are being pressed
             if (0x02 & data[1]) {
-                buttonPressed = 1;
                 uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 1);
                 uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 0);
             } else if (0x04 & data[1]) {
-                buttonPressed = 2;
                 uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 0);
                 uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 1);
             } else {

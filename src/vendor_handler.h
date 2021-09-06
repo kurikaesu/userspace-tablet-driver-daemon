@@ -34,7 +34,7 @@ protected:
     virtual bool setupReportProtocol(libusb_device_handle* handle, unsigned char interface_number);
     virtual bool setupInfiniteIdle(libusb_device_handle* handle, unsigned char interface_number);
 
-    virtual bool setupTransfers(libusb_device_handle* handle, unsigned char interface_number) { return false; };
+    virtual bool setupTransfers(libusb_device_handle* handle, unsigned char interface_number, int maxPacketSize, int productId) { return false; };
 };
 
 #endif //XP_PEN_USERLAND_VENDOR_HANDLER_H

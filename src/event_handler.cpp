@@ -18,7 +18,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <csignal>
 #include <iostream>
-#include <thread>
 #include "event_handler.h"
 #include "xp_pen_handler.h"
 #include "vendor_handler.h"

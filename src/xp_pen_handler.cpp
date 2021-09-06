@@ -29,8 +29,8 @@ xp_pen_handler::xp_pen_handler() {
 }
 
 xp_pen_handler::~xp_pen_handler() {
-    for (auto deviceInterfaces : deviceInterfaces) {
-        cleanupDevice(deviceInterfaces);
+    for (auto deviceInterface : deviceInterfaces) {
+        cleanupDevice(deviceInterface);
     }
 }
 
