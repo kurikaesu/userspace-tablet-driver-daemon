@@ -28,7 +28,7 @@ bool event_handler::running = true;
 
 void event_handler::sigHandler(int signo) {
     if (signo == SIGINT) {
-        std::cout << "Received SIGINT" << std::endl;
+        std::cout << "Caught SIGINT" << std::endl;
         running = false;
     }
 }
@@ -73,8 +73,9 @@ int event_handler::run() {
         devices->handleEvents();
     }
 
+    std::cout << "Shutting down" << std::endl;
+
     for (auto callbackHandle : callbackHandles) {
-        std::cout << "Deregistering callback " << callbackHandle << std::endl;
         libusb_hotplug_deregister_callback(NULL, callbackHandle);
     }
 

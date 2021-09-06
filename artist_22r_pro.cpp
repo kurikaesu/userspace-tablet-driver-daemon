@@ -43,8 +43,6 @@ bool artist_22r_pro::attachDevice(libusb_device_handle *handle) {
     int maxHeight = (buf[5] << 8) + buf[4];
     int maxPressure = (buf[9] << 8) + buf[8];
 
-    std::cout << std::dec << "Phys max width: " << maxWidth << " max height: " << maxHeight << std::endl;
-
     int fd = -1;
     fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
     if (fd < 0) {
@@ -251,7 +249,7 @@ bool artist_22r_pro::handleTransferData(libusb_device_handle* handle, unsigned c
         }
 
         // Frame keys / dials events
-        if (data[1] >= 0xb0) {
+        if (data[1] >= 0xf0) {
             std::cout << "Got frame events" << std::endl;
 
             // Extract the button being pressed (If there is one)

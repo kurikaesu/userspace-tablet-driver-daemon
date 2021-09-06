@@ -43,12 +43,11 @@ std::vector<int> xp_pen_handler::getProductIds() {
 }
 
 bool xp_pen_handler::handleProductAttach(libusb_device* device, const libusb_device_descriptor descriptor) {
-    std::cout << "xp_pen_handler" << std::endl;
     libusb_device_handle* handle = NULL;
     device_interface_pair* interfacePair = NULL;
     switch (descriptor.idProduct) {
         case 0x091b:
-            std::cout << "Got known device" << std::endl;
+            std::cout << "Handling XP-Pen Artist 22R Pro" << std::endl;
             if (productHandlers.find(descriptor.idProduct) == productHandlers.end()) {
                 productHandlers[descriptor.idProduct] = new artist_22r_pro();
             }
@@ -117,12 +116,10 @@ device_interface_pair* xp_pen_handler::claimDevice(libusb_device *device, libusb
 
             err = libusb_detach_kernel_driver(handle, interface_number);
             if (LIBUSB_SUCCESS == err) {
-                std::cout << "Detached interface from kernel " << interface_number << std::endl;
                 deviceInterface->detachedInterfaces.push_back(interface_number);
             }
 
             if (libusb_claim_interface(handle, interface_number) == LIBUSB_SUCCESS) {
-                std::cout << "Claimed interface " << interface_number << std::endl;
                 deviceInterface->claimedInterfaces.push_back(interface_number);
 
                 // Even though we claim the interface, we only actually care about specific ones. We still do
@@ -131,12 +128,11 @@ device_interface_pair* xp_pen_handler::claimDevice(libusb_device *device, libusb
                     // Attach to our handler
                     productHandlers[descriptor.idProduct]->attachDevice(handle);
 
-                    unsigned char interface_target = interface_number;
                     const libusb_interface_descriptor *interfaceDescriptor =
                             configDescriptor->interface[interface_number].altsetting;
 
-                    if (!setupReportProtocol(handle, interface_target) ||
-                        !setupInfiniteIdle(handle, interface_target)) {
+                    if (!setupReportProtocol(handle, interface_number) ||
+                        !setupInfiniteIdle(handle, interface_number)) {
                         continue;
                     }
 
@@ -159,7 +155,7 @@ device_interface_pair* xp_pen_handler::claimDevice(libusb_device *device, libusb
                         }
                     }
 
-                    std::cout << "Setup completed on interface " << interface_number << std::endl;
+                    std::cout << std::dec << "Setup completed on interface " << (int)interface_number << std::endl;
                 }
             }
         }
@@ -173,12 +169,10 @@ device_interface_pair* xp_pen_handler::claimDevice(libusb_device *device, libusb
 void xp_pen_handler::cleanupDevice(device_interface_pair *pair) {
     for (auto interface: pair->claimedInterfaces) {
         libusb_release_interface(pair->deviceHandle, interface);
-        std::cout << "Releasing interface " << interface << std::endl;
     }
 
     for (auto interface: pair->detachedInterfaces) {
         libusb_attach_kernel_driver(pair->deviceHandle, interface);
-        std::cout << "Reattaching to kernel interface " << interface << std::endl;
     }
 }
 
@@ -198,7 +192,6 @@ void xp_pen_handler::sendInitKey(libusb_device_handle *handle, int interface_num
 }
 
 bool xp_pen_handler::setupTransfers(libusb_device_handle *handle, unsigned char interface_number, int maxPacketSize, int productId) {
-    std::cout << "Setting up transfers with max packet size of " << maxPacketSize << std::endl;
     struct libusb_transfer* transfer = libusb_alloc_transfer(0);
     if (transfer == NULL) {
         std::cout << "Could not allocate a transfer for interface " << interface_number << std::endl;
@@ -224,8 +217,6 @@ bool xp_pen_handler::setupTransfers(libusb_device_handle *handle, unsigned char 
         std::cout << "Could not submit transfer on interface " << interface_number << " ret: " << ret << " errno: " << errno << std::endl;
         return false;
     }
-
-    std::cout << "Set up transfer for interface " << interface_number << std::endl;
 
     return true;
 }
