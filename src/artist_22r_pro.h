@@ -36,6 +36,9 @@ public:
     void detachDevice(libusb_device_handle* handle);
     bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
 private:
+    void handleDigitizerEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
+    void handleFrameEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
+
     std::vector<int> productIds;
     std::map<libusb_device_handle*, long> lastPressedButton;
     std::map<libusb_device_handle*, int> uinputPens;

@@ -23,6 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <libusb-1.0/libusb.h>
 #include <vector>
 #include <string>
+#include "uinput_pen_args.h"
+#include "uinput_pad_args.h"
 
 class transfer_handler {
 public:
@@ -36,6 +38,8 @@ public:
 
 protected:
     virtual bool uinput_send(int fd, uint16_t type, uint16_t code, int32_t value);
+    virtual int create_pen(const uinput_pen_args& penArgs);
+    virtual int create_pad(const uinput_pad_args& padArgs);
 };
 
 #endif //XP_PEN_USERLAND_TRANSFER_HANDLER_H
