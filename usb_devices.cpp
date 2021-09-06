@@ -22,11 +22,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 usb_devices::usb_devices() {
     libusb_init(&context);
-//    libusb_set_option(context, LIBUSB_OPTION_LOG_LEVEL, LIBUSB_LOG_LEVEL_DEBUG);
+    libusb_set_option(context, LIBUSB_OPTION_LOG_LEVEL, LIBUSB_LOG_LEVEL_DEBUG);
 }
 
 void usb_devices::handleEvents() {
-    libusb_handle_events(context);
+    std::cout << "handleEvents called" << std::endl;
+    libusb_handle_events_completed(context, NULL);
 }
 
 std::map<short, std::vector<short> > usb_devices::getCandidateDevices(const std::map<short, vendor_handler*> vendorHandlers) {

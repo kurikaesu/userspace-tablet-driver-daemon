@@ -99,6 +99,11 @@ device_interface_pair* xp_pen_handler::claimDevice(libusb_device *device, libusb
         unsigned char interfaceCount = configDescriptor->bNumInterfaces;
 
         for (unsigned char interface_number = 0; interface_number < interfaceCount; ++interface_number) {
+            // Skip interfaces with more than 1 alt setting
+            if (configDescriptor->interface[interface_number].num_altsetting != 1) {
+                continue;
+            }
+
             err = libusb_detach_kernel_driver(handle, interface_number);
             if (LIBUSB_SUCCESS == err) {
                 std::cout << "Detached interface from kernel " << interface_number << std::endl;
@@ -110,27 +115,28 @@ device_interface_pair* xp_pen_handler::claimDevice(libusb_device *device, libusb
                 deviceInterface->claimedInterfaces.push_back(interface_number);
 
                 unsigned char interface_target = interface_number;
-                /*
-                if (configDescriptor->interface[interface_number].num_altsetting > 0) {
-                    std::cout << "Interface " << interface_number << " has " << configDescriptor->interface[interface_number].num_altsetting << " alt settings" << std::endl;
-
-                    // Try to set alt setting
-                    if (libusb_set_interface_alt_setting(handle, interface_number, configDescriptor->interface[interface_number].altsetting[0].bAlternateSetting) != LIBUSB_SUCCESS) {
-                        std::cout << "Could not set alt setting on interface " << interface_number << std::endl;
-                    }
-
-                    interface_target = configDescriptor->interface[interface_number].altsetting[0].bInterfaceNumber;
-                    std::cout << "Interface target set to " << (int)interface_target << std::endl;
-                }
-                 */
+                const libusb_interface_descriptor* interfaceDescriptor =
+                        configDescriptor->interface[interface_number].altsetting;
 
                 if (!setupReportProtocol(handle, interface_target) ||
                     !setupInfiniteIdle(handle, interface_target)) {
                     continue;
                 }
+                
+                const libusb_endpoint_descriptor* endpoint = interfaceDescriptor->endpoint;
+                const libusb_endpoint_descriptor* ep;
+                for (ep = endpoint; (ep - endpoint) < interfaceDescriptor->bNumEndpoints; ++ep) {
+                    if ((ep->bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) != LIBUSB_TRANSFER_TYPE_INTERRUPT)
+                        continue;
 
-                sendInitKey(handle, interface_target);
-                setupTransfers(handle, interface_target, descriptor.bMaxPacketSize0);
+                    if ((ep->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_OUT) {
+                        sendInitKey(handle, ep->bEndpointAddress);
+                    }
+
+                    if ((ep->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_IN) {
+                        setupTransfers(handle, ep->bEndpointAddress, ep->wMaxPacketSize);
+                    }
+                }
 
                 std::cout << "Setup completed on interface " << interface_number << std::endl;
             }
@@ -183,7 +189,7 @@ bool xp_pen_handler::setupTransfers(libusb_device_handle *handle, unsigned char 
                                    handle, interface_number | LIBUSB_ENDPOINT_IN,
                                    buff, maxPacketSize,
                                    transferCallback, NULL,
-                                   1000);
+                                   60000);
 
     transfer->flags |= LIBUSB_TRANSFER_FREE_BUFFER;
     int ret = libusb_submit_transfer(transfer);
@@ -215,7 +221,17 @@ void xp_pen_handler::transferCallback(struct libusb_transfer *transfer) {
 
         break;
 
+    case LIBUSB_TRANSFER_TIMED_OUT:
+        // Resubmit the transfer
+        err = libusb_submit_transfer(transfer);
+        if (err != LIBUSB_SUCCESS) {
+            std::cout << "Could not resubmit my transfer" << std::endl;
+        }
+
+        break;
+
     default:
+        std::cout << "Unknown status received " << transfer->status << std::endl;
         break;
     }
 }
