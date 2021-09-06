@@ -24,6 +24,9 @@ private:
     std::vector<int> productIds;
     std::map<libusb_device_handle*, long> lastPressedButton;
     std::map<libusb_device_handle*, int> uinputPens;
+    std::map<libusb_device_handle*, int> uinputPads;
+
+    std::vector<int> padButtonAliases;
 };
 
 

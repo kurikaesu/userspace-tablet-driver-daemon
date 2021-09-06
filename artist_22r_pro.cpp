@@ -12,6 +12,14 @@
 
 artist_22r_pro::artist_22r_pro() {
     productIds.push_back(0x091b);
+
+    for (int currentAssignedButton = BTN_0; currentAssignedButton <= BTN_9; ++currentAssignedButton) {
+        padButtonAliases.push_back(currentAssignedButton);
+    }
+
+    for (int currentAssignedButton = BTN_A; currentAssignedButton <= BTN_SELECT; ++currentAssignedButton) {
+        padButtonAliases.push_back(currentAssignedButton);
+    }
 }
 
 std::vector<int> artist_22r_pro::handledProductIds() {
@@ -50,23 +58,23 @@ bool artist_22r_pro::attachDevice(libusb_device_handle *handle) {
         return false;
     }
 
-    auto set_evbit = [fd](int evBit) {
+    auto set_evbit = [&fd](int evBit) {
         ioctl(fd, UI_SET_EVBIT, evBit);
     };
 
-    auto set_keybit = [fd](int evBit) {
+    auto set_keybit = [&fd](int evBit) {
         ioctl(fd, UI_SET_KEYBIT, evBit);
     };
 
-    auto set_absbit = [fd](int evBit) {
+    auto set_absbit = [&fd](int evBit) {
         ioctl(fd, UI_SET_ABSBIT, evBit);
     };
 
-    auto set_relbit = [fd](int evBit) {
+    auto set_relbit = [&fd](int evBit) {
         ioctl(fd, UI_SET_RELBIT, evBit);
     };
 
-    auto set_mscbit = [fd](int evBit) {
+    auto set_mscbit = [&fd](int evBit) {
         ioctl(fd, UI_SET_MSCBIT, evBit);
     };
 
@@ -183,6 +191,66 @@ bool artist_22r_pro::attachDevice(libusb_device_handle *handle) {
 
     uinputPens[handle] = fd;
 
+    fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
+    if (fd < 0) {
+        std::cout << "Could not create uinput pad" << std::endl;
+        return false;
+    }
+
+    set_evbit(EV_SYN);
+    set_evbit(EV_KEY);
+    set_evbit(EV_ABS);
+    set_evbit(EV_REL);
+
+    // First 10 buttons
+    for (int index = 0; index < padButtonAliases.size(); ++ index) {
+        set_keybit(padButtonAliases[index]);
+    }
+
+    set_relbit(REL_X);
+    set_relbit(REL_Y);
+    set_relbit(REL_WHEEL);
+    set_relbit(REL_HWHEEL);
+
+    // Setup relative wheel
+    uinput_abs_setup = (struct uinput_abs_setup){
+            .code = REL_WHEEL,
+            .absinfo = {
+                    .value = 0,
+                    .minimum = -1,
+                    .maximum = 1,
+            },
+    };
+
+    ioctl(fd, UI_ABS_SETUP, uinput_abs_setup);
+
+    // Setup relative hwheel
+    uinput_abs_setup = (struct uinput_abs_setup){
+            .code = REL_HWHEEL,
+            .absinfo = {
+                    .value = 0,
+                    .minimum = -1,
+                    .maximum = 1,
+            },
+    };
+
+    ioctl(fd, UI_ABS_SETUP, uinput_abs_setup);
+
+    uinput_setup = (struct uinput_setup) {
+            .id = {
+                    .bustype = BUS_USB,
+                    .vendor = 0x28bd,
+                    .product = 0xf91b,
+                    .version = 0x0001,
+            },
+            {.name = "XP-Pen Artist 22R Pro Pad"},
+    };
+
+    ioctl(fd, UI_DEV_SETUP, &uinput_setup);
+    ioctl(fd, UI_DEV_CREATE);
+
+    uinputPads[handle] = fd;
+
     return true;
 }
 
@@ -196,6 +264,12 @@ void artist_22r_pro::detachDevice(libusb_device_handle *handle) {
     if (uinputPenRecord != uinputPens.end()) {
         close(uinputPens[handle]);
         uinputPens.erase(uinputPenRecord);
+    }
+
+    auto uinputPadRecord = uinputPads.find(handle);
+    if (uinputPadRecord != uinputPads.end()) {
+        close(uinputPads[handle]);
+        uinputPads.erase(uinputPadRecord);
     }
 }
 
@@ -286,16 +360,20 @@ bool artist_22r_pro::handleTransferData(libusb_device_handle* handle, unsigned c
             }
 
             if (button != 0) {
+                uinput_send(uinputPads[handle], EV_KEY, padButtonAliases[position], 1);
                 std::cout << "Button " << position << " pressed" << std::endl;
                 lastPressedButton[handle] = position;
             } else if (!dialEvent) {
                 if (lastPressedButton.find(handle) != lastPressedButton.end() && lastPressedButton[handle] > 0) {
+                    uinput_send(uinputPads[handle], EV_KEY, padButtonAliases[lastPressedButton[handle]], 0);
                     std::cout << "Button " << lastPressedButton[handle] << " released" << std::endl;
                     lastPressedButton[handle] = -1;
                 } else {
                     std::cout << "Got a phantom button up event" << std::endl;
                 }
             }
+
+            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
         }
 
         break;
