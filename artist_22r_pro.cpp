@@ -353,9 +353,11 @@ bool artist_22r_pro::handleTransferData(libusb_device_handle* handle, unsigned c
             bool dialEvent = false;
             if (leftDialValue != 0) {
                 std::cout << "Left dial: " << leftDialValue << std::endl;
+                uinput_send(uinputPads[handle], EV_REL, REL_WHEEL, leftDialValue);
                 dialEvent = true;
             } else if (rightDialValue != 0) {
                 std::cout << "Right dial: " << rightDialValue << std::endl;
+                uinput_send(uinputPads[handle], EV_REL, REL_HWHEEL, rightDialValue);
                 dialEvent = true;
             }
 
