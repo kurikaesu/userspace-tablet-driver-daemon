@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 xp_pen_handler::xp_pen_handler() {
     std::cout << "xp_pen_handler initialized" << std::endl;
 
-    handledProducts.push_back(0x091b);
+    addHandler(new artist_22r_pro());
 }
 
 xp_pen_handler::~xp_pen_handler() {
@@ -42,27 +42,27 @@ std::vector<int> xp_pen_handler::getProductIds() {
     return handledProducts;
 }
 
+void xp_pen_handler::addHandler(transfer_handler *handler) {
+    for (auto productId : handler->handledProductIds()) {
+        productHandlers[productId] = handler;
+        handledProducts.push_back(productId);
+    }
+}
+
 bool xp_pen_handler::handleProductAttach(libusb_device* device, const libusb_device_descriptor descriptor) {
     libusb_device_handle* handle = NULL;
     device_interface_pair* interfacePair = NULL;
-    switch (descriptor.idProduct) {
-        case 0x091b:
-            std::cout << "Handling XP-Pen Artist 22R Pro" << std::endl;
-            if (productHandlers.find(descriptor.idProduct) == productHandlers.end()) {
-                productHandlers[descriptor.idProduct] = new artist_22r_pro();
-            }
 
-            interfacePair = claimDevice(device, handle, descriptor);
-            deviceInterfaces.push_back(interfacePair);
-            deviceInterfaceMap[device] =interfacePair;
+    if (std::find(handledProducts.begin(), handledProducts.end(), descriptor.idProduct) != handledProducts.end()) {
+        std::cout << "Handling " << productHandlers[descriptor.idProduct]->getProductName(descriptor.idProduct) << std::endl;
+        interfacePair = claimDevice(device, handle, descriptor);
+        deviceInterfaces.push_back(interfacePair);
+        deviceInterfaceMap[device] = interfacePair;
 
-            return true;
-
-        default:
-            std::cout << "Unknown device" << std::endl;
-
-            break;
+        return true;
     }
+
+    std::cout << "Unknown product " << descriptor.idProduct << std::endl;
 
     return false;
 }

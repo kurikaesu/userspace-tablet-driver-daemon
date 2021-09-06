@@ -21,9 +21,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <cstdint>
 #include <libusb-1.0/libusb.h>
+#include <vector>
+#include <string>
 
 class transfer_handler {
 public:
+    virtual std::vector<int> handledProductIds() = 0;
+    virtual std::string getProductName(int productId) = 0;
     virtual int sendInitKeyOnInterface() = 0;
     virtual bool attachToInterfaceId(int interfaceId) = 0;
     virtual bool attachDevice(libusb_device_handle* handle) = 0;

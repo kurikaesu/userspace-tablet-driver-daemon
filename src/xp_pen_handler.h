@@ -41,6 +41,8 @@ private:
     std::vector<int> handledProducts;
     std::map<int, transfer_handler*> productHandlers;
 
+    void addHandler(transfer_handler*);
+
     device_interface_pair* claimDevice(libusb_device* device, libusb_device_handle* handle, const libusb_device_descriptor descriptor);
     void cleanupDevice(device_interface_pair* pair);
 

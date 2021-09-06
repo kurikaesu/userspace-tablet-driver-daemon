@@ -29,6 +29,7 @@ public:
     artist_22r_pro();
 
     std::vector<int> handledProductIds();
+    std::string getProductName(int productId);
     int sendInitKeyOnInterface();
     bool attachToInterfaceId(int interfaceId);
     bool attachDevice(libusb_device_handle* handle);
