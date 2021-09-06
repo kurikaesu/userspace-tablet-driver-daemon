@@ -324,8 +324,6 @@ bool artist_22r_pro::handleTransferData(libusb_device_handle* handle, unsigned c
 
         // Frame keys / dials events
         if (data[1] >= 0xf0) {
-            std::cout << "Got frame events" << std::endl;
-
             // Extract the button being pressed (If there is one)
             long button = (data[4] << 16) + (data[3] << 8) + data[2];
             // Grab the first bit set in the button long which tells us the button number
@@ -352,23 +350,19 @@ bool artist_22r_pro::handleTransferData(libusb_device_handle* handle, unsigned c
 
             bool dialEvent = false;
             if (leftDialValue != 0) {
-                std::cout << "Left dial: " << leftDialValue << std::endl;
                 uinput_send(uinputPads[handle], EV_REL, REL_WHEEL, leftDialValue);
                 dialEvent = true;
             } else if (rightDialValue != 0) {
-                std::cout << "Right dial: " << rightDialValue << std::endl;
                 uinput_send(uinputPads[handle], EV_REL, REL_HWHEEL, rightDialValue);
                 dialEvent = true;
             }
 
             if (button != 0) {
                 uinput_send(uinputPads[handle], EV_KEY, padButtonAliases[position], 1);
-                std::cout << "Button " << position << " pressed" << std::endl;
                 lastPressedButton[handle] = position;
             } else if (!dialEvent) {
                 if (lastPressedButton.find(handle) != lastPressedButton.end() && lastPressedButton[handle] > 0) {
                     uinput_send(uinputPads[handle], EV_KEY, padButtonAliases[lastPressedButton[handle]], 0);
-                    std::cout << "Button " << lastPressedButton[handle] << " released" << std::endl;
                     lastPressedButton[handle] = -1;
                 } else {
                     std::cout << "Got a phantom button up event" << std::endl;
