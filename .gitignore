@@ -35,3 +35,16 @@
 cmake-build-debug
 cmake-build-release
 .idea
+CMakeFiles
+_CPack_Packages
+Testing
+
+CMakeCache.txt
+cmake_install.cmake
+CPackConfig.cmake
+CPackSourceConfig.cmake
+Makefile
+xp_pen_userland
+xp_pen_userland-*.deb
+install_manifest.txt
+*.cbp
