@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <map>
 #include "vendor_handler.h"
 #include "device_interface_pair.h"
+#include "artist_22r_pro.h"
 
 class xp_pen_handler : public vendor_handler {
 public:
@@ -38,12 +39,13 @@ private:
     std::vector<device_interface_pair*> deviceInterfaces;
     std::map<libusb_device*, device_interface_pair*> deviceInterfaceMap;
     std::vector<int> handledProducts;
+    std::map<int, artist_22r_pro*> productHandlers;
 
     device_interface_pair* claimDevice(libusb_device* device, libusb_device_handle* handle, const libusb_device_descriptor descriptor);
     void cleanupDevice(device_interface_pair* pair);
 
     void sendInitKey(libusb_device_handle* handle, int interface_number);
-    bool setupTransfers(libusb_device_handle* handle, unsigned char interface_number, int maxPacketSize);
+    bool setupTransfers(libusb_device_handle* handle, unsigned char interface_number, int maxPacketSize, int productId);
 
     static void LIBUSB_CALL transferCallback(struct libusb_transfer* transfer);
 };

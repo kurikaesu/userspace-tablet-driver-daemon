@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include <algorithm>
 #include "xp_pen_handler.h"
+#include "transfer_handler_pair.h"
 
 xp_pen_handler::xp_pen_handler() {
     std::cout << "xp_pen_handler initialized" << std::endl;
@@ -47,6 +48,10 @@ bool xp_pen_handler::handleProductAttach(libusb_device* device, const libusb_dev
     switch (descriptor.idProduct) {
         case 0x091b:
             std::cout << "Got known device" << std::endl;
+            if (productHandlers.find(descriptor.idProduct) == productHandlers.end()) {
+                productHandlers[descriptor.idProduct] = new artist_22r_pro();
+            }
+
             interfacePair = claimDevice(device, handle, descriptor);
             deviceInterfaces.push_back(interfacePair);
             deviceInterfaceMap[device] =interfacePair;
@@ -122,19 +127,23 @@ device_interface_pair* xp_pen_handler::claimDevice(libusb_device *device, libusb
                     !setupInfiniteIdle(handle, interface_target)) {
                     continue;
                 }
-                
+
                 const libusb_endpoint_descriptor* endpoint = interfaceDescriptor->endpoint;
                 const libusb_endpoint_descriptor* ep;
                 for (ep = endpoint; (ep - endpoint) < interfaceDescriptor->bNumEndpoints; ++ep) {
+                    // Ignore any interface that isn't of an interrupt type
                     if ((ep->bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) != LIBUSB_TRANSFER_TYPE_INTERRUPT)
                         continue;
 
-                    if ((ep->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_OUT) {
-                        sendInitKey(handle, ep->bEndpointAddress);
+                    // We only send the init key on the interface the handler says it should be on
+                    if (productHandlers[descriptor.idProduct]->sendInitKeyOnInterface() == interface_number) {
+                        if ((ep->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_OUT) {
+                            sendInitKey(handle, ep->bEndpointAddress);
+                        }
                     }
 
                     if ((ep->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_IN) {
-                        setupTransfers(handle, ep->bEndpointAddress, ep->wMaxPacketSize);
+                        setupTransfers(handle, ep->bEndpointAddress, ep->wMaxPacketSize, descriptor.idProduct);
                     }
                 }
 
@@ -175,7 +184,7 @@ void xp_pen_handler::sendInitKey(libusb_device_handle *handle, int interface_num
     }
 }
 
-bool xp_pen_handler::setupTransfers(libusb_device_handle *handle, unsigned char interface_number, int maxPacketSize) {
+bool xp_pen_handler::setupTransfers(libusb_device_handle *handle, unsigned char interface_number, int maxPacketSize, int productId) {
     std::cout << "Setting up transfers with max packet size of " << maxPacketSize << std::endl;
     struct libusb_transfer* transfer = libusb_alloc_transfer(0);
     if (transfer == NULL) {
@@ -185,10 +194,15 @@ bool xp_pen_handler::setupTransfers(libusb_device_handle *handle, unsigned char 
 
     transfer->user_data = NULL;
     unsigned char* buff = new unsigned char[maxPacketSize];
+
+    struct transfer_handler_pair* dataPair = new transfer_handler_pair();
+    dataPair->vendorHandler = this;
+    dataPair->transferHandler = productHandlers[productId];
+
     libusb_fill_interrupt_transfer(transfer,
                                    handle, interface_number | LIBUSB_ENDPOINT_IN,
                                    buff, maxPacketSize,
-                                   transferCallback, NULL,
+                                   transferCallback, dataPair,
                                    60000);
 
     transfer->flags |= LIBUSB_TRANSFER_FREE_BUFFER;
@@ -205,13 +219,12 @@ bool xp_pen_handler::setupTransfers(libusb_device_handle *handle, unsigned char 
 
 void xp_pen_handler::transferCallback(struct libusb_transfer *transfer) {
     int err;
+    struct transfer_handler_pair* dataPair = (transfer_handler_pair*)transfer->user_data;
+
     switch (transfer->status) {
     case LIBUSB_TRANSFER_COMPLETED:
-        for (int i = 0 ; i < transfer->actual_length; ++i) {
-            std::cout << std::hex << transfer->buffer[i];
-        }
-
-        std::cout << std::endl;
+        // Send the packet data to the registered handler
+        dataPair->transferHandler->handleTransferData(transfer->dev_handle, transfer->buffer, transfer->actual_length);
 
         // Resubmit the transfer
         err = libusb_submit_transfer(transfer);
