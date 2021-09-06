@@ -71,6 +71,11 @@ void xp_pen_handler::handleProductDetach(libusb_device *device, struct libusb_de
     for (auto deviceObj : deviceInterfaceMap) {
         if (deviceObj.first == device) {
             std::cout << "Handling device detach" << std::endl;
+
+            if (productHandlers.find(descriptor.idProduct) != productHandlers.end()) {
+                productHandlers[descriptor.idProduct]->detachDevice(deviceObj.second->deviceHandle);
+            }
+
             cleanupDevice(deviceObj.second);
             libusb_close(deviceObj.second->deviceHandle);
 
@@ -118,6 +123,9 @@ device_interface_pair* xp_pen_handler::claimDevice(libusb_device *device, libusb
             if (libusb_claim_interface(handle, interface_number) == LIBUSB_SUCCESS) {
                 std::cout << "Claimed interface " << interface_number << std::endl;
                 deviceInterface->claimedInterfaces.push_back(interface_number);
+
+                // Attach to our handler
+                productHandlers[descriptor.idProduct]->attachDevice(handle);
 
                 unsigned char interface_target = interface_number;
                 const libusb_interface_descriptor* interfaceDescriptor =
