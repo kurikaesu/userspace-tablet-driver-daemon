@@ -16,23 +16,23 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef XP_PEN_USERLAND_PAD_MAPPING_H
-#define XP_PEN_USERLAND_PAD_MAPPING_H
-
+#ifndef XP_PEN_USERLAND_DIAL_MAPPING_H
+#define XP_PEN_USERLAND_DIAL_MAPPING_H
 
 #include <vector>
 #include <map>
+#include <string>
 #include "aliased_input_event.h"
 
-class pad_mapping {
+class dial_mapping {
 public:
-    pad_mapping();
+    dial_mapping();
 
-    std::vector<aliased_input_event> getPadMap(int eventCode);
-    void setPadMap(int eventCode, const std::vector<aliased_input_event>& events);
+    std::vector<aliased_input_event> getDialMap(int eventCode, int value, int data);
+    void setDialMap(int eventCode, std::string value, const std::vector<aliased_input_event> &events);
 private:
-    std::map<int, std::vector<aliased_input_event> > eventPadMap;
+    std::map<int, std::map<std::string, std::vector<aliased_input_event> > > eventDialMap;
 };
 
 
-#endif //XP_PEN_USERLAND_PAD_MAPPING_H
+#endif //XP_PEN_USERLAND_DIAL_MAPPING_H

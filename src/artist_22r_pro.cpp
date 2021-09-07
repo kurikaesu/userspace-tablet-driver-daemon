@@ -60,41 +60,83 @@ void artist_22r_pro::setConfig(nlohmann::json config) {
     if (!config.contains("mapping") || config["mapping"] == nullptr) {
         config["mapping"] = nlohmann::json({});
 
-        auto addToMap = [&config](int key, std::vector<int> codes) {
-            config["mapping"][std::to_string(key)] = codes;
+        auto addToButtonMap = [&config](int key, int eventType, std::vector<int> codes) {
+            std::string evstring = std::to_string(eventType);
+            config["mapping"]["buttons"][std::to_string(key)][evstring] = codes;
+        };
+
+        auto addToDialMap = [&config](int dial, int value, int eventType, std::vector<int> codes) {
+            std::string strvalue = std::to_string(value);
+            std::string evstring = std::to_string(eventType);
+            config["mapping"]["dials"][std::to_string(dial)][strvalue][evstring] = codes;
         };
 
         // We are going to emulate the default mapping of the device
-        addToMap(BTN_0, {KEY_B});
-        addToMap(BTN_1, {KEY_E});
-        addToMap(BTN_2, {KEY_LEFTALT});
-        addToMap(BTN_3, {KEY_SPACE});
-        addToMap(BTN_4, {KEY_LEFTCTRL, KEY_S});
-        addToMap(BTN_5, {KEY_LEFTCTRL, KEY_Z});
-        addToMap(BTN_6, {KEY_LEFTCTRL, KEY_LEFTALT, KEY_Z});
-        addToMap(BTN_7, {KEY_LEFTCTRL, KEY_LEFTSHIFT, KEY_Z});
-        addToMap(BTN_8, {KEY_V});
-        addToMap(BTN_9, {KEY_L});
-        addToMap(BTN_SOUTH, {KEY_LEFTCTRL, KEY_0});
-        addToMap(BTN_EAST, {KEY_LEFTCTRL, KEY_N});
-        addToMap(BTN_C, {KEY_LEFTCTRL, KEY_LEFTSHIFT, KEY_N});
-        addToMap(BTN_NORTH, {KEY_LEFTCTRL, KEY_E});
-        addToMap(BTN_WEST, {KEY_F});
-        addToMap(BTN_Z, {KEY_D});
-        addToMap(BTN_TL, {KEY_X});
-        addToMap(BTN_TR, {KEY_LEFTCTRL, KEY_DELETE});
-        addToMap(BTN_TL2, {KEY_LEFTCTRL, KEY_C});
-        addToMap(BTN_TR2, {KEY_LEFTCTRL, KEY_V});
+        addToButtonMap(BTN_0, EV_KEY, {KEY_B});
+        addToButtonMap(BTN_1, EV_KEY, {KEY_E});
+        addToButtonMap(BTN_2, EV_KEY, {KEY_LEFTALT});
+        addToButtonMap(BTN_3, EV_KEY, {KEY_SPACE});
+        addToButtonMap(BTN_4, EV_KEY, {KEY_LEFTCTRL, KEY_S});
+        addToButtonMap(BTN_5, EV_KEY, {KEY_LEFTCTRL, KEY_Z});
+        addToButtonMap(BTN_6, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTALT, KEY_Z});
+        addToButtonMap(BTN_7, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTSHIFT, KEY_Z});
+        addToButtonMap(BTN_8, EV_KEY, {KEY_V});
+        addToButtonMap(BTN_9, EV_KEY, {KEY_L});
+        addToButtonMap(BTN_SOUTH, EV_KEY, {KEY_LEFTCTRL, KEY_0});
+        addToButtonMap(BTN_EAST, EV_KEY, {KEY_LEFTCTRL, KEY_N});
+        addToButtonMap(BTN_C, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTSHIFT, KEY_N});
+        addToButtonMap(BTN_NORTH, EV_KEY, {KEY_LEFTCTRL, KEY_E});
+        addToButtonMap(BTN_WEST, EV_KEY, {KEY_F});
+        addToButtonMap(BTN_Z, EV_KEY, {KEY_D});
+        addToButtonMap(BTN_TL, EV_KEY, {KEY_X});
+        addToButtonMap(BTN_TR, EV_KEY, {KEY_LEFTCTRL, KEY_DELETE});
+        addToButtonMap(BTN_TL2, EV_KEY, {KEY_LEFTCTRL, KEY_C});
+        addToButtonMap(BTN_TR2, EV_KEY, {KEY_LEFTCTRL, KEY_V});
+
+        // Mapping the dials
+        addToDialMap(REL_WHEEL, -1, EV_KEY, {KEY_LEFTCTRL, KEY_MINUS});
+        addToDialMap(REL_WHEEL, 1, EV_KEY, {KEY_LEFTCTRL, KEY_EQUAL});
+        addToDialMap(REL_HWHEEL, -1, EV_KEY, {KEY_LEFTBRACE});
+        addToDialMap(REL_HWHEEL, 1, EV_KEY, {KEY_RIGHTBRACE});
     }
     jsonConfig = config;
 
+    std::vector<aliased_input_event> scanCodes;
     for (auto mapping : config["mapping"].items()) {
-        std::vector<int> scanCodes;
-        for (auto codes : mapping.value().items()) {
-            scanCodes.push_back(codes.value());
+        if (mapping.key() == "buttons") {
+            for (auto mappingButtons : mapping.value().items()) {
+                for (auto events : mappingButtons.value().items()) {
+                    for (auto codes: events.value().items()) {
+                        aliased_input_event newEvent{
+                                std::atoi(events.key().c_str()),
+                                codes.value()
+                        };
+                        scanCodes.push_back(newEvent);
+                    }
+                }
+                padMapping.setPadMap(std::atoi(mappingButtons.key().c_str()), scanCodes);
+                scanCodes.clear();
+            }
+        } else if (mapping.key() == "dials") {
+            for (auto mappingDials : mapping.value().items()) {
+                for (auto interceptValues : mappingDials.value().items()) {
+                    for (auto events : interceptValues.value().items()) {
+                        for (auto codes: events.value().items()) {
+                            aliased_input_event newEvent{
+                                    std::atoi(events.key().c_str()),
+                                    codes.value()
+                            };
+                            if (newEvent.event_type == EV_KEY){
+                                newEvent.event_data = 1;
+                            }
+                            scanCodes.push_back(newEvent);
+                        }
+                    }
+                    dialMapping.setDialMap(std::atoi(mappingDials.key().c_str()), interceptValues.key(), scanCodes);
+                    scanCodes.clear();
+                }
+            }
         }
-        padMapping.setPadMap(std::atoi(mapping.key().c_str()), scanCodes);
-        scanCodes.clear();
     }
 }
 
@@ -265,26 +307,48 @@ void artist_22r_pro::handleFrameEvent(libusb_device_handle *handle, unsigned cha
         // Reset back to decimal
         std::cout << std::dec;
 
+        bool shouldSyn = true;
+
         bool dialEvent = false;
         if (leftDialValue != 0) {
-            uinput_send(uinputPads[handle], EV_REL, REL_WHEEL, leftDialValue);
+            auto dialMap = dialMapping.getDialMap(EV_REL, REL_WHEEL, leftDialValue);
+            for (auto dmap : dialMap) {
+                uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, dmap.event_data);
+                // We have to handle key presses manually here because this device does not send reset events
+                if (dmap.event_type == EV_KEY) {
+                    uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+                    uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, 0);
+                    uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+                    shouldSyn = false;
+                }
+            }
             dialEvent = true;
         } else if (rightDialValue != 0) {
-            uinput_send(uinputPads[handle], EV_REL, REL_HWHEEL, rightDialValue);
+            auto dialMap = dialMapping.getDialMap(EV_REL, REL_HWHEEL, rightDialValue);
+            for (auto dmap : dialMap) {
+                uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, dmap.event_data);
+                // We have to handle key presses manually here because this device does not send reset events
+                if (dmap.event_type == EV_KEY) {
+                    uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+                    uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, 0);
+                    uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+                    shouldSyn = false;
+                }
+            }
             dialEvent = true;
         }
 
         if (button != 0) {
             auto padMap = padMapping.getPadMap(padButtonAliases[position - 1]);
             for (auto pmap : padMap) {
-                uinput_send(uinputPads[handle], EV_KEY, pmap, 1);
+                uinput_send(uinputPads[handle], pmap.event_type, pmap.event_value, 1);
             }
             lastPressedButton[handle] = position;
         } else if (!dialEvent) {
             if (lastPressedButton.find(handle) != lastPressedButton.end() && lastPressedButton[handle] > 0) {
                 auto padMap = padMapping.getPadMap(padButtonAliases[lastPressedButton[handle] - 1]);
                 for (auto pmap : padMap) {
-                    uinput_send(uinputPads[handle], EV_KEY, pmap, 0);
+                    uinput_send(uinputPads[handle], pmap.event_type, pmap.event_value, 0);
                 }
                 lastPressedButton[handle] = -1;
             } else {
@@ -292,6 +356,8 @@ void artist_22r_pro::handleFrameEvent(libusb_device_handle *handle, unsigned cha
             }
         }
 
-        uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+        if (shouldSyn) {
+            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+        }
     }
 }

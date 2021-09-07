@@ -38,6 +38,7 @@ event_handler::event_handler() {
 
     loadConfiguration();
     addHandler(new xp_pen_handler());
+    saveConfiguration();
 }
 
 event_handler::~event_handler() {

@@ -16,27 +16,32 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "pad_mapping.h"
+#include "dial_mapping.h"
 
-pad_mapping::pad_mapping() {
+dial_mapping::dial_mapping() {
 
 }
 
-std::vector<aliased_input_event> pad_mapping::getPadMap(int eventCode) {
-    auto record = eventPadMap.find(eventCode);
-    if (record != eventPadMap.end()) {
-        return eventPadMap.at(eventCode);
+std::vector<aliased_input_event> dial_mapping::getDialMap(int eventCode, int value, int data) {
+    auto record = eventDialMap.find(value);
+    if (record != eventDialMap.end()) {
+        std::string strvalue = std::to_string(data);
+        auto value = record->second.find(strvalue);
+        if (value != record->second.end()) {
+            return value->second;
+        }
     }
 
     std::vector<aliased_input_event> temp;
     aliased_input_event tempEvent {
-        0, eventCode
+        eventCode, value, data
     };
     temp.push_back(tempEvent);
 
     return temp;
 }
 
-void pad_mapping::setPadMap(int eventCode, const std::vector<aliased_input_event> &events) {
-    eventPadMap[eventCode] = events;
+void dial_mapping::setDialMap(int eventCode, std::string value, const std::vector<aliased_input_event> &events) {
+    eventDialMap[eventCode] = std::map<std::string, std::vector<aliased_input_event> >();
+    eventDialMap[eventCode][value] = events;
 }

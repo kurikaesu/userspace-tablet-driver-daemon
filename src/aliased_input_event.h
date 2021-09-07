@@ -16,23 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef XP_PEN_USERLAND_PAD_MAPPING_H
-#define XP_PEN_USERLAND_PAD_MAPPING_H
+#ifndef XP_PEN_USERLAND_ALIASED_INPUT_EVENT_H
+#define XP_PEN_USERLAND_ALIASED_INPUT_EVENT_H
 
-
-#include <vector>
-#include <map>
-#include "aliased_input_event.h"
-
-class pad_mapping {
+struct aliased_input_event {
 public:
-    pad_mapping();
-
-    std::vector<aliased_input_event> getPadMap(int eventCode);
-    void setPadMap(int eventCode, const std::vector<aliased_input_event>& events);
-private:
-    std::map<int, std::vector<aliased_input_event> > eventPadMap;
+    int event_type;
+    int event_value;
+    int event_data;
 };
 
-
-#endif //XP_PEN_USERLAND_PAD_MAPPING_H
+#endif //XP_PEN_USERLAND_ALIASED_INPUT_EVENT_H

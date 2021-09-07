@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <map>
 #include "transfer_handler.h"
 #include "pad_mapping.h"
+#include "dial_mapping.h"
 
 class artist_22r_pro : public transfer_handler {
 public:
@@ -51,6 +52,7 @@ private:
     std::vector<int> padButtonAliases;
 
     pad_mapping padMapping;
+    dial_mapping dialMapping;
     nlohmann::json jsonConfig;
 };
 
