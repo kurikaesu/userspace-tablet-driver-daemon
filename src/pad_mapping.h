@@ -1,5 +1,5 @@
 /*
-xp-pen-userland
+xp_pen_userland
 Copyright (C) 2021 - Aren Villanueva <https://github.com/kurikaesu/>
 
 This program is free software: you can redistribute it and/or modify
@@ -16,12 +16,22 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "event_handler.h"
+#ifndef XP_PEN_USERLAND_PAD_MAPPING_H
+#define XP_PEN_USERLAND_PAD_MAPPING_H
 
-int main() {
-//    event_handler eventHandler;
-//    return eventHandler.run();
-    event_handler* eventHandler = new event_handler();
-    eventHandler->run();
-    delete eventHandler;
-}
+
+#include <vector>
+#include <map>
+
+class pad_mapping {
+public:
+    pad_mapping();
+
+    std::vector<int> getPadMap(int eventCode);
+    void setPadMap(int eventCode, const std::vector<int>& events);
+private:
+    std::map<int, std::vector<int> > eventPadMap;
+};
+
+
+#endif //XP_PEN_USERLAND_PAD_MAPPING_H

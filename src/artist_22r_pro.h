@@ -23,13 +23,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <libusb-1.0/libusb.h>
 #include <map>
 #include "transfer_handler.h"
+#include "pad_mapping.h"
 
 class artist_22r_pro : public transfer_handler {
 public:
     artist_22r_pro();
+    ~artist_22r_pro();
 
     std::vector<int> handledProductIds();
     std::string getProductName(int productId);
+    void setConfig(nlohmann::json config);
+    nlohmann::json getConfig();
     int sendInitKeyOnInterface();
     bool attachToInterfaceId(int interfaceId);
     bool attachDevice(libusb_device_handle* handle);
@@ -45,6 +49,9 @@ private:
     std::map<libusb_device_handle*, int> uinputPads;
 
     std::vector<int> padButtonAliases;
+
+    pad_mapping padMapping;
+    nlohmann::json jsonConfig;
 };
 
 

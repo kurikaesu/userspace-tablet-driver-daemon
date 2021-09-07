@@ -34,6 +34,16 @@ artist_22r_pro::artist_22r_pro() {
     }
 }
 
+artist_22r_pro::~artist_22r_pro() {
+    for (auto pen : uinputPens) {
+        destroy_uinput_device(pen.second);
+    }
+
+    for (auto pad : uinputPads) {
+        destroy_uinput_device(pad.second);
+    }
+}
+
 std::vector<int> artist_22r_pro::handledProductIds() {
     return productIds;
 }
@@ -44,6 +54,52 @@ std::string artist_22r_pro::getProductName(int productId) {
     }
 
     return "Unknown XP-Pen Device";
+}
+
+void artist_22r_pro::setConfig(nlohmann::json config) {
+    if (!config.contains("mapping") || config["mapping"] == nullptr) {
+        config["mapping"] = nlohmann::json({});
+
+        auto addToMap = [&config](int key, std::vector<int> codes) {
+            config["mapping"][std::to_string(key)] = codes;
+        };
+
+        // We are going to emulate the default mapping of the device
+        addToMap(BTN_0, {KEY_B});
+        addToMap(BTN_1, {KEY_E});
+        addToMap(BTN_2, {KEY_LEFTALT});
+        addToMap(BTN_3, {KEY_SPACE});
+        addToMap(BTN_4, {KEY_LEFTCTRL, KEY_S});
+        addToMap(BTN_5, {KEY_LEFTCTRL, KEY_Z});
+        addToMap(BTN_6, {KEY_LEFTCTRL, KEY_LEFTALT, KEY_Z});
+        addToMap(BTN_7, {KEY_LEFTCTRL, KEY_LEFTSHIFT, KEY_Z});
+        addToMap(BTN_8, {KEY_V});
+        addToMap(BTN_9, {KEY_L});
+        addToMap(BTN_SOUTH, {KEY_LEFTCTRL, KEY_0});
+        addToMap(BTN_EAST, {KEY_LEFTCTRL, KEY_N});
+        addToMap(BTN_C, {KEY_LEFTCTRL, KEY_LEFTSHIFT, KEY_N});
+        addToMap(BTN_NORTH, {KEY_LEFTCTRL, KEY_E});
+        addToMap(BTN_WEST, {KEY_F});
+        addToMap(BTN_Z, {KEY_D});
+        addToMap(BTN_TL, {KEY_X});
+        addToMap(BTN_TR, {KEY_LEFTCTRL, KEY_DELETE});
+        addToMap(BTN_TL2, {KEY_LEFTCTRL, KEY_C});
+        addToMap(BTN_TR2, {KEY_LEFTCTRL, KEY_V});
+    }
+    jsonConfig = config;
+
+    for (auto mapping : config["mapping"].items()) {
+        std::vector<int> scanCodes;
+        for (auto codes : mapping.value().items()) {
+            scanCodes.push_back(codes.value());
+        }
+        padMapping.setPadMap(std::atoi(mapping.key().c_str()), scanCodes);
+        scanCodes.clear();
+    }
+}
+
+nlohmann::json artist_22r_pro::getConfig() {
+    return jsonConfig;
 }
 
 int artist_22r_pro::sendInitKeyOnInterface() {
@@ -219,11 +275,17 @@ void artist_22r_pro::handleFrameEvent(libusb_device_handle *handle, unsigned cha
         }
 
         if (button != 0) {
-            uinput_send(uinputPads[handle], EV_KEY, padButtonAliases[position], 1);
+            auto padMap = padMapping.getPadMap(padButtonAliases[position - 1]);
+            for (auto pmap : padMap) {
+                uinput_send(uinputPads[handle], EV_KEY, pmap, 1);
+            }
             lastPressedButton[handle] = position;
         } else if (!dialEvent) {
             if (lastPressedButton.find(handle) != lastPressedButton.end() && lastPressedButton[handle] > 0) {
-                uinput_send(uinputPads[handle], EV_KEY, padButtonAliases[lastPressedButton[handle]], 0);
+                auto padMap = padMapping.getPadMap(padButtonAliases[lastPressedButton[handle] - 1]);
+                for (auto pmap : padMap) {
+                    uinput_send(uinputPads[handle], EV_KEY, pmap, 0);
+                }
                 lastPressedButton[handle] = -1;
             } else {
                 std::cout << "Got a phantom button up event" << std::endl;

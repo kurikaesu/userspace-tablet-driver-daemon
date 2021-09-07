@@ -42,6 +42,31 @@ std::vector<int> xp_pen_handler::getProductIds() {
     return handledProducts;
 }
 
+std::string xp_pen_handler::vendorName() {
+    return "XP-Pen";
+}
+
+void xp_pen_handler::setConfig(nlohmann::json config) {
+    for (auto product : productHandlers) {
+        auto productString = std::to_string(product.first);
+        if (!config.contains(productString) || config[productString] == nullptr) {
+            config[productString] = nlohmann::json({});
+        }
+
+        product.second->setConfig(config[productString]);
+    }
+
+    jsonConfig = config;
+}
+
+nlohmann::json xp_pen_handler::getConfig() {
+    for (auto product : productHandlers) {
+        jsonConfig[std::to_string(product.first)] = product.second->getConfig();
+    }
+
+    return jsonConfig;
+}
+
 void xp_pen_handler::addHandler(transfer_handler *handler) {
     for (auto productId : handler->handledProductIds()) {
         productHandlers[productId] = handler;

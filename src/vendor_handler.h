@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <vector>
 #include <libusb-1.0/libusb.h>
+#include "includes/json.hpp"
 
 class vendor_handler {
 public:
@@ -28,6 +29,9 @@ public:
 
     virtual int getVendorId() { return 0x0000; };
     virtual std::vector<int> getProductIds() { return std::vector<int>(); };
+    virtual std::string vendorName() = 0;
+    virtual void setConfig(nlohmann::json config) {};
+    virtual nlohmann::json getConfig() { return nlohmann::json({}); };
     virtual bool handleProductAttach(libusb_device* device, const struct libusb_device_descriptor descriptor) { return false; };
     virtual void handleProductDetach(libusb_device* device, const struct libusb_device_descriptor descriptor) {};
 protected:

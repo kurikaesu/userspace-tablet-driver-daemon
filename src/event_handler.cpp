@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <csignal>
 #include <iostream>
+#include <fstream>
 #include "event_handler.h"
 #include "xp_pen_handler.h"
 #include "vendor_handler.h"
@@ -25,11 +26,51 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 bool event_handler::running = true;
 
+event_handler::event_handler() {
+    devices = new usb_devices();
+
+    std::ifstream driverConfig("/home/aren/.local/share/xp_pen_userland/driver.cfg", std::ifstream::in);
+
+    try {
+        driverConfig >> driverConfigJson;
+    } catch (nlohmann::detail::parse_error) {
+        std::cout << "No existing config so we will be creating a new one" << std::endl;
+    }
+
+    addHandler(new xp_pen_handler());
+}
+
+event_handler::~event_handler() {
+    for(auto handler : vendorHandlers) {
+        driverConfigJson[handler.second->vendorName()] = handler.second->getConfig();
+        delete handler.second;
+    }
+
+    std::ofstream driverConfig;
+    driverConfig.open("/home/aren/.local/share/xp_pen_userland/driver.cfg", std::ofstream::out);
+
+    driverConfig << driverConfigJson;
+    driverConfig.close();
+
+    delete devices;
+}
+
 void event_handler::sigHandler(int signo) {
     if (signo == SIGINT) {
         std::cout << "Caught SIGINT" << std::endl;
         running = false;
     }
+}
+
+void event_handler::addHandler(vendor_handler *handler) {
+    vendorHandlers[handler->getVendorId()] = handler;
+    if (!driverConfigJson.contains(handler->vendorName()) ||
+        driverConfigJson[handler->vendorName()] == nullptr) {
+
+        driverConfigJson[handler->vendorName()] = nlohmann::json({});
+    }
+
+    handler->setConfig(driverConfigJson[handler->vendorName()]);
 }
 
 int event_handler::hotplugCallback(struct libusb_context* context, struct libusb_device* device,
@@ -46,10 +87,6 @@ int event_handler::hotplugCallback(struct libusb_context* context, struct libusb
 }
 
 int event_handler::run() {
-    xp_pen_handler* xpPenHandler = new xp_pen_handler();
-    vendorHandlers[xpPenHandler->getVendorId()] = xpPenHandler;
-
-    devices = new usb_devices();
     auto supportedDevices = devices->getCandidateDevices(vendorHandlers);
 
     std::vector<libusb_hotplug_callback_handle> callbackHandles;
@@ -77,12 +114,6 @@ int event_handler::run() {
     for (auto callbackHandle : callbackHandles) {
         libusb_hotplug_deregister_callback(NULL, callbackHandle);
     }
-
-    for (auto vendorHandler : vendorHandlers) {
-        delete vendorHandler.second;
-    }
-
-    vendorHandlers.clear();
 
     return 0;
 }

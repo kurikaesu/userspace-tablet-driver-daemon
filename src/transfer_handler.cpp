@@ -212,8 +212,14 @@ int transfer_handler::create_pad(const uinput_pad_args& padArgs) {
     set_evbit(EV_ABS);
     set_evbit(EV_REL);
 
+    // This is for all of the pad buttons
     for (int index = 0; index < padArgs.padButtonAliases.size(); ++index) {
         set_keybit(padArgs.padButtonAliases[index]);
+    }
+
+    // But we also send through all the keys since they can be mapped
+    for (int index = KEY_RESERVED; index <= KEY_MICMUTE; ++index) {
+        set_keybit(index);
     }
 
     set_relbit(REL_X);
@@ -265,4 +271,8 @@ int transfer_handler::create_pad(const uinput_pad_args& padArgs) {
     ioctl(fd, UI_DEV_CREATE);
 
     return fd;
+}
+
+void transfer_handler::destroy_uinput_device(int fd) {
+    ioctl(fd, UI_DEV_DESTROY);
 }

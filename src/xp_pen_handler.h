@@ -33,6 +33,9 @@ public:
 
     int getVendorId();
     std::vector<int> getProductIds();
+    std::string vendorName();
+    void setConfig(nlohmann::json config);
+    nlohmann::json getConfig();
     bool handleProductAttach(libusb_device* device, const libusb_device_descriptor descriptor);
     void handleProductDetach(libusb_device* device, struct libusb_device_descriptor descriptor);
 private:
@@ -50,6 +53,8 @@ private:
     bool setupTransfers(libusb_device_handle* handle, unsigned char interface_number, int maxPacketSize, int productId);
 
     static void LIBUSB_CALL transferCallback(struct libusb_transfer* transfer);
+
+    nlohmann::json jsonConfig;
 };
 
 

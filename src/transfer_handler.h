@@ -25,11 +25,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <string>
 #include "uinput_pen_args.h"
 #include "uinput_pad_args.h"
+#include "includes/json.hpp"
 
 class transfer_handler {
 public:
     virtual std::vector<int> handledProductIds() = 0;
     virtual std::string getProductName(int productId) = 0;
+    virtual void setConfig(nlohmann::json config) = 0;
+    virtual nlohmann::json getConfig() = 0;
     virtual int sendInitKeyOnInterface() = 0;
     virtual bool attachToInterfaceId(int interfaceId) = 0;
     virtual bool attachDevice(libusb_device_handle* handle) = 0;
@@ -40,6 +43,7 @@ protected:
     virtual bool uinput_send(int fd, uint16_t type, uint16_t code, int32_t value);
     virtual int create_pen(const uinput_pen_args& penArgs);
     virtual int create_pad(const uinput_pad_args& padArgs);
+    virtual void destroy_uinput_device(int fd);
 };
 
 #endif //XP_PEN_USERLAND_TRANSFER_HANDLER_H

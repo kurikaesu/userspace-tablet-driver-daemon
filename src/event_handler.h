@@ -22,11 +22,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <libusb-1.0/libusb.h>
 #include <map>
+#include <fstream>
 #include "vendor_handler.h"
 #include "usb_devices.h"
+#include "includes/json.hpp"
 
 class event_handler {
 public:
+    event_handler();
+    ~event_handler();
     int run();
 
 private:
@@ -34,10 +38,15 @@ private:
     static int hotplugCallback(struct libusb_context* context, struct libusb_device* device,
                                        libusb_hotplug_event event, void* user_data);
 
+    void addHandler(vendor_handler* handler);
+
     static bool running;
 
     std::map<short, vendor_handler*> vendorHandlers;
     usb_devices *devices;
+
+    // Config related
+    nlohmann::json driverConfigJson;
 };
 
 
