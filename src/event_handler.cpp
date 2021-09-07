@@ -74,7 +74,7 @@ std::string event_handler::getConfigFileLocation() {
     std::stringstream configLocation;
     configLocation << getConfigLocation();
     configLocation << "/driver.cfg";
-    
+
     return configLocation.str();
 }
 

@@ -1,0 +1,1 @@
+KERNEL=="uinput", GROUP="plugdev", MODE="0660"

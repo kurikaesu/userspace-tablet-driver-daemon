@@ -11,6 +11,9 @@ Things on the TODO list:
 - Make a nice GUI to perform binding changes
 - Support more XP-Pen devices
 
+## Warning
+- This includes a 70-uinput-plugdev.rules file that gives users on your computer that are in the `plugdev` permission group access to uinput without SUDO. This is how I can make this driver run without having the user constantly enter their password each time.
+
 ## How to change bindings
 Without a GUI changing bindings is pretty annoying.
 Let's take the default binding of the top-left button on my 22R Pro:
