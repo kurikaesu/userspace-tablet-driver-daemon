@@ -8,14 +8,15 @@ It initializes the supported tablets with their default bindings but the binding
 
 Things on the TODO list:
 - Add binding support for 22R Pro dials
-- Make a nice GUI to perform binding changes
+- Make a nice GUI to perform binding changes. Current GUI is not "nice" but it is here: https://github.com/kurikaesu/xp-pen-userland-config-util
 - Support more XP-Pen devices
 
 ## Warning
 - This includes a 70-uinput-plugdev.rules file that gives users on your computer that are in the `plugdev` permission group access to uinput without SUDO. This is how I can make this driver run without having the user constantly enter their password each time.
 
 ## How to change bindings
-Without a GUI changing bindings is pretty annoying.
+Preferred way is to use the GUI: https://github.com/kurikaesu/xp-pen-userland-config-util
+You can change bindings manually by changing the JSON config:
 Let's take the default binding of the top-left button on my 22R Pro:
 
 ```
