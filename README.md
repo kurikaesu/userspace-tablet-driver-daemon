@@ -16,44 +16,4 @@ Things on the TODO list:
 
 ## How to change bindings
 Preferred way is to use the GUI: https://github.com/kurikaesu/xp-pen-userland-config-util
-You can change bindings manually by changing the JSON config:
-Let's take the default binding of the top-left button on my 22R Pro:
-
-```
-{
-  "XP-Pen": {
-    "2331": {
-      "mapping": {
-        "256": [
-          48
-        ]
-      }
-    }
-  }
-}
-```
-
-The actual button is represented as BTN_0 which has a code of '256'. Above it is mapped to the KEY_B with a code of '48'. Let's say I want to change that binding to... CTRL+SHIFT+Z. The mapping JSON would have to be updated like the following:
-
-```
-{
-  "XP-Pen": {
-    "2331": {
-      "mapping": {
-        "256": [
-          29,
-          42,
-          44
-        ]
-      }
-    }
-  }
-}
-```
-
-Key codes:
-- `29` = `KEY_LEFTCTRL`
-- `42` = `KEY_LEFTSHIFT`
-- `44` = `KEY_Z`
-
-With the config file changed, sending a `kill -SIGHUP $PID` to the process (where PID is the process ID) will make it reload the config and update the bindings on the fly. After this, pressing the button will produce the expected keypresses.
+You can change bindings manually by changing the JSON config but the format is currently changing too quickly to make effective documentation.
