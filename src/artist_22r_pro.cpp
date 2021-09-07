@@ -311,30 +311,53 @@ void artist_22r_pro::handleFrameEvent(libusb_device_handle *handle, unsigned cha
 
         bool dialEvent = false;
         if (leftDialValue != 0) {
+            bool send_reset = false;
             auto dialMap = dialMapping.getDialMap(EV_REL, REL_WHEEL, leftDialValue);
             for (auto dmap : dialMap) {
                 uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, dmap.event_data);
-                // We have to handle key presses manually here because this device does not send reset events
                 if (dmap.event_type == EV_KEY) {
-                    uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
-                    uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, 0);
-                    uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
-                    shouldSyn = false;
+                    send_reset = true;
                 }
             }
+
+            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+
+            if (send_reset) {
+                for (auto dmap : dialMap) {
+                    // We have to handle key presses manually here because this device does not send reset events
+                    if (dmap.event_type == EV_KEY) {
+                        uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, 0);
+                    }
+                }
+            }
+            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+
+            shouldSyn = false;
             dialEvent = true;
         } else if (rightDialValue != 0) {
+            bool send_reset = false;
             auto dialMap = dialMapping.getDialMap(EV_REL, REL_HWHEEL, rightDialValue);
             for (auto dmap : dialMap) {
                 uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, dmap.event_data);
-                // We have to handle key presses manually here because this device does not send reset events
                 if (dmap.event_type == EV_KEY) {
-                    uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
-                    uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, 0);
-                    uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
-                    shouldSyn = false;
+                    send_reset = true;
                 }
             }
+
+            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+
+            if (send_reset) {
+                for (auto dmap : dialMap) {
+                    // We have to handle key presses manually here because this device does not send reset events
+                    if (dmap.event_type == EV_KEY) {
+                        uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, 0);
+                    }
+                }
+            }
+
+            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+
+            shouldSyn = false;
             dialEvent = true;
         }
 
