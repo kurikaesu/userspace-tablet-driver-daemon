@@ -40,6 +40,8 @@ private:
 
     void addHandler(vendor_handler* handler);
 
+    std::string getConfigLocation();
+    std::string getConfigFileLocation();
     void loadConfiguration();
     void saveConfiguration();
 

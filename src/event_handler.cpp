@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <csignal>
 #include <iostream>
 #include <fstream>
+#include <filesystem>
 #include "event_handler.h"
 #include "xp_pen_handler.h"
 #include "vendor_handler.h"
@@ -61,8 +62,24 @@ void event_handler::sigHandler(int signo) {
     }
 }
 
+std::string event_handler::getConfigLocation() {
+    std::stringstream  configLocation;
+    configLocation << getenv("HOME");
+    configLocation << "/.local/share/xp_pen_userland";
+
+    return configLocation.str();
+}
+
+std::string event_handler::getConfigFileLocation() {
+    std::stringstream configLocation;
+    configLocation << getConfigLocation();
+    configLocation << "/driver.cfg";
+    
+    return configLocation.str();
+}
+
 void event_handler::loadConfiguration() {
-    std::ifstream driverConfig("/home/aren/.local/share/xp_pen_userland/driver.cfg", std::ifstream::in);
+    std::ifstream driverConfig(getConfigFileLocation(), std::ifstream::in);
 
     try {
         driverConfig >> driverConfigJson;
@@ -82,8 +99,10 @@ void event_handler::loadConfiguration() {
 }
 
 void event_handler::saveConfiguration() {
+    std::filesystem::create_directories(getConfigLocation());
+
     std::ofstream driverConfig;
-    driverConfig.open("/home/aren/.local/share/xp_pen_userland/driver.cfg", std::ofstream::out);
+    driverConfig.open(getConfigFileLocation(), std::ofstream::out);
 
     driverConfig << driverConfigJson;
     driverConfig.close();
