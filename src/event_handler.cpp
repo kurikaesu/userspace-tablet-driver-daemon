@@ -25,18 +25,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "usb_devices.h"
 
 bool event_handler::running = true;
+event_handler* event_handler::instance = nullptr;
 
 event_handler::event_handler() {
-    devices = new usb_devices();
-
-    std::ifstream driverConfig("/home/aren/.local/share/xp_pen_userland/driver.cfg", std::ifstream::in);
-
-    try {
-        driverConfig >> driverConfigJson;
-    } catch (nlohmann::detail::parse_error) {
-        std::cout << "No existing config so we will be creating a new one" << std::endl;
+    if (instance != nullptr) {
+        throw instance;
     }
 
+    instance = this;
+    devices = new usb_devices();
+
+    loadConfiguration();
     addHandler(new xp_pen_handler());
 }
 
@@ -46,12 +45,7 @@ event_handler::~event_handler() {
         delete handler.second;
     }
 
-    std::ofstream driverConfig;
-    driverConfig.open("/home/aren/.local/share/xp_pen_userland/driver.cfg", std::ofstream::out);
-
-    driverConfig << driverConfigJson;
-    driverConfig.close();
-
+    saveConfiguration();
     delete devices;
 }
 
@@ -60,6 +54,39 @@ void event_handler::sigHandler(int signo) {
         std::cout << "Caught SIGINT" << std::endl;
         running = false;
     }
+
+    if (signo == SIGHUP) {
+        std::cout << "Reloading configuration" << std::endl;
+        instance->loadConfiguration();
+    }
+}
+
+void event_handler::loadConfiguration() {
+    std::ifstream driverConfig("/home/aren/.local/share/xp_pen_userland/driver.cfg", std::ifstream::in);
+
+    try {
+        driverConfig >> driverConfigJson;
+    } catch (nlohmann::detail::parse_error) {
+        std::cout << "No existing config so we will be creating a new one" << std::endl;
+    }
+
+    for(auto handler : vendorHandlers) {
+        if (!driverConfigJson.contains(handler.second->vendorName()) ||
+            driverConfigJson[handler.second->vendorName()] == nullptr) {
+
+            driverConfigJson[handler.second->vendorName()] = nlohmann::json({});
+        }
+
+        handler.second->setConfig(driverConfigJson[handler.second->vendorName()]);
+    }
+}
+
+void event_handler::saveConfiguration() {
+    std::ofstream driverConfig;
+    driverConfig.open("/home/aren/.local/share/xp_pen_userland/driver.cfg", std::ofstream::out);
+
+    driverConfig << driverConfigJson;
+    driverConfig.close();
 }
 
 void event_handler::addHandler(vendor_handler *handler) {
@@ -104,6 +131,7 @@ int event_handler::run() {
     }
 
     signal(SIGINT, sigHandler);
+    signal(SIGHUP, sigHandler);
 
     while (running) {
         devices->handleEvents();

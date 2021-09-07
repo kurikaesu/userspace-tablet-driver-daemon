@@ -40,7 +40,11 @@ private:
 
     void addHandler(vendor_handler* handler);
 
+    void loadConfiguration();
+    void saveConfiguration();
+
     static bool running;
+    static event_handler* instance;
 
     std::map<short, vendor_handler*> vendorHandlers;
     usb_devices *devices;
