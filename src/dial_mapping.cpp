@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "dial_mapping.h"
+#include <iostream>
 
 dial_mapping::dial_mapping() {
 
@@ -42,6 +43,9 @@ std::vector<aliased_input_event> dial_mapping::getDialMap(int eventCode, int val
 }
 
 void dial_mapping::setDialMap(int eventCode, std::string value, const std::vector<aliased_input_event> &events) {
-    eventDialMap[eventCode] = std::map<std::string, std::vector<aliased_input_event> >();
+    if (eventDialMap.find(eventCode) == eventDialMap.end()) {
+        eventDialMap[eventCode] = std::map<std::string, std::vector<aliased_input_event> >();
+    }
+
     eventDialMap[eventCode][value] = events;
 }
