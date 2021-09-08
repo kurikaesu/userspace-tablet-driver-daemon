@@ -21,11 +21,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xp_pen_handler.h"
 #include "transfer_handler_pair.h"
 #include "artist_22r_pro.h"
+#include "artist_13_3_pro.h"
 
 xp_pen_handler::xp_pen_handler() {
     std::cout << "xp_pen_handler initialized" << std::endl;
 
     addHandler(new artist_22r_pro());
+    addHandler(new artist_13_3_pro());
 }
 
 xp_pen_handler::~xp_pen_handler() {
@@ -202,6 +204,8 @@ void xp_pen_handler::cleanupDevice(device_interface_pair *pair) {
 }
 
 void xp_pen_handler::sendInitKey(libusb_device_handle *handle, int interface_number) {
+    std::cout << "Sending init key on endpont " << interface_number << std::endl;
+
     unsigned char key[] = {0x02, 0xb0, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     int sentBytes;
     int ret = libusb_interrupt_transfer(handle, interface_number | LIBUSB_ENDPOINT_OUT, key, sizeof(key), &sentBytes, 1000);
@@ -217,6 +221,8 @@ void xp_pen_handler::sendInitKey(libusb_device_handle *handle, int interface_num
 }
 
 bool xp_pen_handler::setupTransfers(libusb_device_handle *handle, unsigned char interface_number, int maxPacketSize, int productId) {
+    std::cout << "Setting up transfers on endpoint " << (int)interface_number << std::endl;
+
     struct libusb_transfer* transfer = libusb_alloc_transfer(0);
     if (transfer == NULL) {
         std::cout << "Could not allocate a transfer for interface " << interface_number << std::endl;
@@ -239,7 +245,7 @@ bool xp_pen_handler::setupTransfers(libusb_device_handle *handle, unsigned char 
     transfer->flags |= LIBUSB_TRANSFER_FREE_BUFFER;
     int ret = libusb_submit_transfer(transfer);
     if (ret != LIBUSB_SUCCESS) {
-        std::cout << "Could not submit transfer on interface " << interface_number << " ret: " << ret << " errno: " << errno << std::endl;
+        std::cout << "Could not submit transfer on interface " << (int)interface_number << " ret: " << ret << " errno: " << errno << std::endl;
         return false;
     }
 

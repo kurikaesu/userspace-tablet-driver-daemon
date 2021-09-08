@@ -57,6 +57,11 @@ void event_handler::sigHandler(int signo) {
         running = false;
     }
 
+    if (signo == SIGTERM) {
+        std::cout << "Caught SIGTERM" << std::endl;
+        running = false;
+    }
+
     if (signo == SIGHUP) {
         std::cout << "Reloading configuration" << std::endl;
         instance->loadConfiguration();
@@ -151,6 +156,7 @@ int event_handler::run() {
     }
 
     signal(SIGINT, sigHandler);
+    signal(SIGTERM, sigHandler);
     signal(SIGHUP, sigHandler);
 
     while (running) {
