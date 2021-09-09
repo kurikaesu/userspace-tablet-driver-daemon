@@ -21,18 +21,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #include "transfer_handler.h"
-#include "pad_mapping.h"
-#include "dial_mapping.h"
 
 class artist_13_3_pro : public transfer_handler {
 public:
     artist_13_3_pro();
     ~artist_13_3_pro();
 
-    std::vector<int> handledProductIds();
     std::string getProductName(int productId);
     void setConfig(nlohmann::json config);
-    nlohmann::json getConfig();
     int sendInitKeyOnInterface();
     bool attachToInterfaceId(int interfaceId);
     bool attachDevice(libusb_device_handle* handle);
@@ -41,17 +37,6 @@ public:
 private:
     void handleDigitizerEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
     void handleFrameEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
-
-    std::vector<int> productIds;
-    std::map<libusb_device_handle*, long> lastPressedButton;
-    std::map<libusb_device_handle*, int> uinputPens;
-    std::map<libusb_device_handle*, int> uinputPads;
-
-    std::vector<int> padButtonAliases;
-
-    pad_mapping padMapping;
-    dial_mapping dialMapping;
-    nlohmann::json jsonConfig;
 };
 
 

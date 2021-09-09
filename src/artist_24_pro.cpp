@@ -1,5 +1,5 @@
 /*
-xp-pen-userland
+xp_pen_userland
 Copyright (C) 2021 - Aren Villanueva <https://github.com/kurikaesu/>
 
 This program is free software: you can redistribute it and/or modify
@@ -17,13 +17,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <iostream>
-#include <cstring>
 #include <unistd.h>
-#include <linux/uinput.h>
-#include "artist_22r_pro.h"
+#include "artist_24_pro.h"
 
-artist_22r_pro::artist_22r_pro() {
-    productIds.push_back(0x091b);
+artist_24_pro::artist_24_pro() {
+    productIds.push_back(0x092d);
 
     for (int currentAssignedButton = BTN_0; currentAssignedButton <= BTN_9; ++currentAssignedButton) {
         padButtonAliases.push_back(currentAssignedButton);
@@ -34,19 +32,19 @@ artist_22r_pro::artist_22r_pro() {
     }
 }
 
-artist_22r_pro::~artist_22r_pro() {
+artist_24_pro::~artist_24_pro() {
 
 }
 
-std::string artist_22r_pro::getProductName(int productId) {
-    if (productId == 0x091b) {
-        return "XP-Pen Artist 22R Pro";
+std::string artist_24_pro::getProductName(int productId) {
+    if (productId == 0x092d) {
+        return "XP-Pen Artist 24 Pro";
     }
 
     return "Unknown XP-Pen Device";
 }
 
-void artist_22r_pro::setConfig(nlohmann::json config) {
+void artist_24_pro::setConfig(nlohmann::json config) {
     if (!config.contains("mapping") || config["mapping"] == nullptr) {
         config["mapping"] = nlohmann::json({});
 
@@ -130,11 +128,11 @@ void artist_22r_pro::setConfig(nlohmann::json config) {
     }
 }
 
-int artist_22r_pro::sendInitKeyOnInterface() {
+int artist_24_pro::sendInitKeyOnInterface() {
     return 0x02;
 }
 
-bool artist_22r_pro::attachToInterfaceId(int interfaceId) {
+bool artist_24_pro::attachToInterfaceId(int interfaceId) {
     switch (interfaceId) {
         case 2:
             return true;
@@ -143,7 +141,7 @@ bool artist_22r_pro::attachToInterfaceId(int interfaceId) {
     }
 }
 
-bool artist_22r_pro::attachDevice(libusb_device_handle *handle) {
+bool artist_24_pro::attachDevice(libusb_device_handle *handle) {
     unsigned char* buf = new unsigned char[12];
 
     // We need to get a few more bits of information
@@ -156,31 +154,31 @@ bool artist_22r_pro::attachDevice(libusb_device_handle *handle) {
     int maxPressure = (buf[9] << 8) + buf[8];
 
     unsigned short vendorId = 0x28bd;
-    unsigned short productId = 0xf91b;
+    unsigned short productId = 0xf92d;
     unsigned short versionId = 0x0001;
 
     struct uinput_pen_args penArgs {
-        .maxWidth = maxWidth,
-        .maxHeight = maxHeight,
-        .maxPressure = maxPressure,
-        .maxTiltX = 60,
-        .maxTiltY = 60,
-        .vendorId = vendorId,
-        .productId = productId,
-        .versionId = versionId,
-        {"XP-Pen Artist 22R Pro"},
+            .maxWidth = maxWidth,
+            .maxHeight = maxHeight,
+            .maxPressure = maxPressure,
+            .maxTiltX = 60,
+            .maxTiltY = 60,
+            .vendorId = vendorId,
+            .productId = productId,
+            .versionId = versionId,
+            {"XP-Pen Artist 24 Pro"},
     };
 
     struct uinput_pad_args padArgs {
-        .padButtonAliases = padButtonAliases,
-        .hasWheel = true,
-        .hasHWheel = true,
-        .wheelMax = 1,
-        .hWheelMax = 1,
-        .vendorId = vendorId,
-        .productId = productId,
-        .versionId = versionId,
-        {"XP-Pen Artist 22R Pro Pad"},
+            .padButtonAliases = padButtonAliases,
+            .hasWheel = true,
+            .hasHWheel = true,
+            .wheelMax = 1,
+            .hWheelMax = 1,
+            .vendorId = vendorId,
+            .productId = productId,
+            .versionId = versionId,
+            {"XP-Pen Artist 24 Pro Pad"},
     };
 
     uinputPens[handle] = create_pen(penArgs);
@@ -189,7 +187,7 @@ bool artist_22r_pro::attachDevice(libusb_device_handle *handle) {
     return true;
 }
 
-void artist_22r_pro::detachDevice(libusb_device_handle *handle) {
+void artist_24_pro::detachDevice(libusb_device_handle *handle) {
     auto lastButtonRecord = lastPressedButton.find(handle);
     if (lastButtonRecord != lastPressedButton.end()) {
         lastPressedButton.erase(lastButtonRecord);
@@ -208,7 +206,7 @@ void artist_22r_pro::detachDevice(libusb_device_handle *handle) {
     }
 }
 
-bool artist_22r_pro::handleTransferData(libusb_device_handle* handle, unsigned char *data, size_t dataLen) {
+bool artist_24_pro::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     switch (data[0]) {
         // Unified interface
         case 0x02:
@@ -224,7 +222,7 @@ bool artist_22r_pro::handleTransferData(libusb_device_handle* handle, unsigned c
     return true;
 }
 
-void artist_22r_pro::handleDigitizerEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+void artist_24_pro::handleDigitizerEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     if (data[1] < 0xb0) {
         // Extract the X and Y position
         int penX = (data[3] << 8) + data[2];
@@ -267,7 +265,7 @@ void artist_22r_pro::handleDigitizerEvent(libusb_device_handle *handle, unsigned
     }
 }
 
-void artist_22r_pro::handleFrameEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+void artist_24_pro::handleFrameEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     if (data[1] >= 0xf0) {
         // Extract the button being pressed (If there is one)
         long button = (data[4] << 16) + (data[3] << 8) + data[2];

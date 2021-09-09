@@ -26,13 +26,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "uinput_pen_args.h"
 #include "uinput_pad_args.h"
 #include "includes/json.hpp"
+#include "pad_mapping.h"
+#include "dial_mapping.h"
 
 class transfer_handler {
 public:
-    virtual std::vector<int> handledProductIds() = 0;
+    virtual ~transfer_handler();
+
+    virtual std::vector<int> handledProductIds();
     virtual std::string getProductName(int productId) = 0;
     virtual void setConfig(nlohmann::json config) = 0;
-    virtual nlohmann::json getConfig() = 0;
+    virtual nlohmann::json getConfig();
     virtual int sendInitKeyOnInterface() = 0;
     virtual bool attachToInterfaceId(int interfaceId) = 0;
     virtual bool attachDevice(libusb_device_handle* handle) = 0;
@@ -44,6 +48,19 @@ protected:
     virtual int create_pen(const uinput_pen_args& penArgs);
     virtual int create_pad(const uinput_pad_args& padArgs);
     virtual void destroy_uinput_device(int fd);
+
+    std::vector<int> productIds;
+
+    std::map<libusb_device_handle*, int> uinputPens;
+    std::map<libusb_device_handle*, int> uinputPads;
+
+    std::map<libusb_device_handle*, long> lastPressedButton;
+
+    std::vector<int> padButtonAliases;
+
+    pad_mapping padMapping;
+    dial_mapping dialMapping;
+    nlohmann::json jsonConfig;
 };
 
 #endif //XP_PEN_USERLAND_TRANSFER_HANDLER_H

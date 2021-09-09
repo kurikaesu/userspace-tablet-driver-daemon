@@ -23,6 +23,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <cstring>
 #include "transfer_handler.h"
 
+transfer_handler::~transfer_handler() {
+    for (auto pen : uinputPens) {
+        destroy_uinput_device(pen.second);
+    }
+
+    for (auto pad : uinputPads) {
+        destroy_uinput_device(pad.second);
+    }
+}
+
+std::vector<int> transfer_handler::handledProductIds() {
+    return productIds;
+}
+
+nlohmann::json transfer_handler::getConfig() {
+    return jsonConfig;
+}
+
 bool transfer_handler::uinput_send(int fd, uint16_t type, uint16_t code, int32_t value) {
     struct input_event event = {
             .type = type,
