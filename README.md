@@ -3,6 +3,7 @@
 This repo currently houses a command-line only utility that creates a userspace driver for the following models:
 - Artist 22R Pro
 - Artist 13.3 Pro
+- Artist 12 Pro (Unconfirmed, needs testing)
 - Artist 24 Pro (Unconfirmed, needs testing)
 
 It initializes the supported tablets with their default bindings but the bindings can be changed by modifying the configuration file:

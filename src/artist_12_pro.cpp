@@ -16,32 +16,30 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <iostream>
 #include <unistd.h>
+#include <iostream>
 #include <string>
-#include "artist_13_3_pro.h"
+#include "artist_12_pro.h"
 
-artist_13_3_pro::artist_13_3_pro() {
-    productIds.push_back(0x092b);
-
+artist_12_pro::artist_12_pro() {
     for (int currentAssignedButton = BTN_0; currentAssignedButton < BTN_8; ++currentAssignedButton) {
         padButtonAliases.push_back(currentAssignedButton);
     }
 }
 
-artist_13_3_pro::~artist_13_3_pro() {
+artist_12_pro::~artist_12_pro() {
 
 }
 
-std::string artist_13_3_pro::getProductName(int productId) {
-    if (productId == 0x092b) {
-        return "XP-Pen Artist 13.3 Pro";
+std::string artist_12_pro::getProductName(int productId) {
+    if (productId == 0x080a) {
+        return "XP-Pen Artist 12 Pro";
     }
 
     return "Unknown XP-Pen Device";
 }
 
-void artist_13_3_pro::setConfig(nlohmann::json config) {
+void artist_12_pro::setConfig(nlohmann::json config) {
     if (!config.contains("mapping") || config["mapping"] == nullptr) {
         config["mapping"] = nlohmann::json({});
 
@@ -109,11 +107,11 @@ void artist_13_3_pro::setConfig(nlohmann::json config) {
     }
 }
 
-int artist_13_3_pro::sendInitKeyOnInterface() {
+int artist_12_pro::sendInitKeyOnInterface() {
     return 0x02;
 }
 
-bool artist_13_3_pro::attachToInterfaceId(int interfaceId) {
+bool artist_12_pro::attachToInterfaceId(int interfaceId) {
     switch (interfaceId){
         case 2:
             return true;
@@ -123,7 +121,7 @@ bool artist_13_3_pro::attachToInterfaceId(int interfaceId) {
     }
 }
 
-bool artist_13_3_pro::attachDevice(libusb_device_handle *handle) {
+bool artist_12_pro::attachDevice(libusb_device_handle *handle) {
     unsigned char* buf = new unsigned char[12];
 
     // We need to get a few more bits of information
@@ -136,7 +134,7 @@ bool artist_13_3_pro::attachDevice(libusb_device_handle *handle) {
     int maxPressure = (buf[9] << 8) + buf[8];
 
     unsigned short vendorId = 0x28bd;
-    unsigned short productId = 0xf92b;
+    unsigned short productId = 0xf80a;
     unsigned short versionId = 0x0001;
 
     struct uinput_pen_args penArgs {
@@ -148,7 +146,7 @@ bool artist_13_3_pro::attachDevice(libusb_device_handle *handle) {
             .vendorId = vendorId,
             .productId = productId,
             .versionId = versionId,
-            {"XP-Pen Artist 13.3 Pro"},
+            {"XP-Pen Artist 12 Pro"},
     };
 
     struct uinput_pad_args padArgs {
@@ -160,7 +158,7 @@ bool artist_13_3_pro::attachDevice(libusb_device_handle *handle) {
             .vendorId = vendorId,
             .productId = productId,
             .versionId = versionId,
-            {"XP-Pen Artist 13.3 Pro Pad"},
+            {"XP-Pen Artist 12 Pro Pad"},
     };
 
     uinputPens[handle] = create_pen(penArgs);
@@ -169,7 +167,7 @@ bool artist_13_3_pro::attachDevice(libusb_device_handle *handle) {
     return true;
 }
 
-void artist_13_3_pro::detachDevice(libusb_device_handle *handle) {
+void artist_12_pro::detachDevice(libusb_device_handle *handle) {
     auto uinputPenRecord = uinputPens.find(handle);
     if (uinputPenRecord != uinputPens.end()) {
         close(uinputPens[handle]);
@@ -183,7 +181,7 @@ void artist_13_3_pro::detachDevice(libusb_device_handle *handle) {
     }
 }
 
-bool artist_13_3_pro::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+bool artist_12_pro::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     switch (data[0]) {
         case 0x02:
             handleDigitizerEvent(handle, data, dataLen);
@@ -197,7 +195,7 @@ bool artist_13_3_pro::handleTransferData(libusb_device_handle *handle, unsigned 
     return true;
 }
 
-void artist_13_3_pro::handleDigitizerEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+void artist_12_pro::handleDigitizerEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     if (data[1] < 0xb0) {
         // Extract the X and Y position
         int penX = (data[3] << 8) + data[2];
@@ -240,7 +238,7 @@ void artist_13_3_pro::handleDigitizerEvent(libusb_device_handle *handle, unsigne
     }
 }
 
-void artist_13_3_pro::handleFrameEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+void artist_12_pro::handleFrameEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     if (data[1] >= 0xf0) {
         long button = data[2];
         // Only 8 buttons on this device

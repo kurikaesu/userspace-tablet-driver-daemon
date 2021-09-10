@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "artist_22r_pro.h"
 #include "artist_13_3_pro.h"
 #include "artist_24_pro.h"
+#include "artist_12_pro.h"
 
 xp_pen_handler::xp_pen_handler() {
     std::cout << "xp_pen_handler initialized" << std::endl;
@@ -30,6 +31,7 @@ xp_pen_handler::xp_pen_handler() {
     addHandler(new artist_22r_pro());
     addHandler(new artist_13_3_pro());
     addHandler(new artist_24_pro());
+    addHandler(new artist_12_pro());
 }
 
 xp_pen_handler::~xp_pen_handler() {
