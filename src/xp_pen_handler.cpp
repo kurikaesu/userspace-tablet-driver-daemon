@@ -18,12 +18,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <iostream>
 #include <algorithm>
+#include <thread>
 #include "xp_pen_handler.h"
 #include "transfer_handler_pair.h"
 #include "artist_22r_pro.h"
 #include "artist_13_3_pro.h"
 #include "artist_24_pro.h"
 #include "artist_12_pro.h"
+#include "deco_pro_small.h"
+#include "deco_pro_medium.h"
 
 xp_pen_handler::xp_pen_handler() {
     std::cout << "xp_pen_handler initialized" << std::endl;
@@ -32,6 +35,8 @@ xp_pen_handler::xp_pen_handler() {
     addHandler(new artist_13_3_pro());
     addHandler(new artist_24_pro());
     addHandler(new artist_12_pro());
+    addHandler(new deco_pro_small());
+    addHandler(new deco_pro_medium());
 }
 
 xp_pen_handler::~xp_pen_handler() {
@@ -82,15 +87,30 @@ void xp_pen_handler::addHandler(transfer_handler *handler) {
 
 bool xp_pen_handler::handleProductAttach(libusb_device* device, const libusb_device_descriptor descriptor) {
     libusb_device_handle* handle = NULL;
-    device_interface_pair* interfacePair = NULL;
+    device_interface_pair* interfacePair = nullptr;
+    const int maxRetries = 5;
+    int currentAttept = 0;
 
     if (std::find(handledProducts.begin(), handledProducts.end(), descriptor.idProduct) != handledProducts.end()) {
         std::cout << "Handling " << productHandlers[descriptor.idProduct]->getProductName(descriptor.idProduct) << std::endl;
-        interfacePair = claimDevice(device, handle, descriptor);
-        deviceInterfaces.push_back(interfacePair);
-        deviceInterfaceMap[device] = interfacePair;
+        while (interfacePair == nullptr  && currentAttept < maxRetries) {
+            interfacePair = claimDevice(device, handle, descriptor);
+            if (interfacePair == nullptr) {
+                std::cout << "Could not claim device on attempt " << currentAttept << ". Detaching and then waiting" << std::endl;
+                handleProductDetach(device, descriptor);
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+                ++currentAttept;
+            }
+        }
 
-        return true;
+        if (interfacePair != nullptr) {
+            deviceInterfaces.push_back(interfacePair);
+            deviceInterfaceMap[device] = interfacePair;
+            return true;
+        }
+
+        std::cout << "Giving up" << std::endl;
+        return false;
     }
 
     std::cout << "Unknown product " << descriptor.idProduct << std::endl;
@@ -145,19 +165,27 @@ device_interface_pair* xp_pen_handler::claimDevice(libusb_device *device, libusb
                 continue;
             }
 
-            err = libusb_detach_kernel_driver(handle, interface_number);
-            if (LIBUSB_SUCCESS == err) {
-                deviceInterface->detachedInterfaces.push_back(interface_number);
+            if (libusb_kernel_driver_active(handle, interface_number)) {
+                err = libusb_detach_kernel_driver(handle, interface_number);
+                if (LIBUSB_SUCCESS == err) {
+                    deviceInterface->detachedInterfaces.push_back(interface_number);
+                } else {
+                    std::cout << "Got " << err << " when detaching kernel driver" << std::endl;
+                }
             }
 
-            if (libusb_claim_interface(handle, interface_number) == LIBUSB_SUCCESS) {
+            err = libusb_claim_interface(handle, interface_number);
+            if (LIBUSB_SUCCESS == err) {
                 deviceInterface->claimedInterfaces.push_back(interface_number);
 
                 // Even though we claim the interface, we only actually care about specific ones. We still do
                 // the claim so that no other driver mangles events while we are handling it
                 if (productHandlers[descriptor.idProduct]->attachToInterfaceId(interface_number)) {
                     // Attach to our handler
-                    productHandlers[descriptor.idProduct]->attachDevice(handle);
+                    if (!productHandlers[descriptor.idProduct]->attachDevice(handle, interface_number)) {
+                        delete deviceInterface;
+                        return nullptr;
+                    }
 
                     const libusb_interface_descriptor *interfaceDescriptor =
                             configDescriptor->interface[interface_number].altsetting;
@@ -188,6 +216,10 @@ device_interface_pair* xp_pen_handler::claimDevice(libusb_device *device, libusb
 
                     std::cout << std::dec << "Setup completed on interface " << (int)interface_number << std::endl;
                 }
+            } else {
+                std::cout << "Could not claim interface " << (int)interface_number << " retcode: " << err << " errno: " << errno << std::endl;
+                delete deviceInterface;
+                return nullptr;
             }
         }
     } else {

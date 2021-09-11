@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <string>
 #include "uinput_pen_args.h"
 #include "uinput_pad_args.h"
+#include "uinput_pointer_args.h"
 #include "includes/json.hpp"
 #include "pad_mapping.h"
 #include "dial_mapping.h"
@@ -39,7 +40,7 @@ public:
     virtual nlohmann::json getConfig();
     virtual int sendInitKeyOnInterface() = 0;
     virtual bool attachToInterfaceId(int interfaceId) = 0;
-    virtual bool attachDevice(libusb_device_handle* handle) = 0;
+    virtual bool attachDevice(libusb_device_handle* handle, int interfaceId) = 0;
     virtual void detachDevice(libusb_device_handle* handle) = 0;
     virtual bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen) = 0;
 
@@ -47,12 +48,14 @@ protected:
     virtual bool uinput_send(int fd, uint16_t type, uint16_t code, int32_t value);
     virtual int create_pen(const uinput_pen_args& penArgs);
     virtual int create_pad(const uinput_pad_args& padArgs);
+    virtual int create_pointer(const uinput_pointer_args& pointerArgs);
     virtual void destroy_uinput_device(int fd);
 
     std::vector<int> productIds;
 
     std::map<libusb_device_handle*, int> uinputPens;
     std::map<libusb_device_handle*, int> uinputPads;
+    std::map<libusb_device_handle*, int> uinputPointers;
 
     std::map<libusb_device_handle*, long> lastPressedButton;
 

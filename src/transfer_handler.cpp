@@ -242,6 +242,8 @@ int transfer_handler::create_pad(const uinput_pad_args& padArgs) {
 
     set_relbit(REL_X);
     set_relbit(REL_Y);
+    set_absbit(ABS_X);
+    set_absbit(ABS_Y);
     set_relbit(REL_WHEEL);
     set_relbit(REL_HWHEEL);
 
@@ -284,6 +286,50 @@ int transfer_handler::create_pad(const uinput_pad_args& padArgs) {
     };
 
     memcpy(uinput_setup.name, padArgs.productName, UINPUT_MAX_NAME_SIZE);
+
+    ioctl(fd, UI_DEV_SETUP, &uinput_setup);
+    ioctl(fd, UI_DEV_CREATE);
+
+    return fd;
+}
+
+int transfer_handler::create_pointer(const uinput_pointer_args &pointerArgs) {
+    int fd = -1;
+    fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
+    if (fd < 0) {
+        std::cout << "Could not create uinput pointer" << std::endl;
+        return false;
+    }
+
+    ioctl(fd, UI_SET_EVBIT, EV_KEY);
+    ioctl(fd, UI_SET_KEYBIT, BTN_LEFT);
+    ioctl(fd, UI_SET_EVBIT, EV_REL);
+    ioctl(fd, UI_SET_RELBIT, REL_X);
+    ioctl(fd, UI_SET_RELBIT, REL_Y);
+    ioctl(fd, UI_SET_RELBIT, REL_WHEEL);
+
+    // Setup relative wheel
+    struct uinput_abs_setup uinput_abs_setup = (struct uinput_abs_setup) {
+            .code = REL_WHEEL,
+            .absinfo = {
+                    .value = 0,
+                    .minimum = -pointerArgs.wheelMax,
+                    .maximum = pointerArgs.wheelMax,
+            },
+    };
+
+    ioctl(fd, UI_ABS_SETUP, uinput_abs_setup);
+
+    struct uinput_setup uinput_setup = (struct uinput_setup) {
+            .id ={
+                    .bustype = BUS_USB,
+                    .vendor = pointerArgs.vendorId,
+                    .product = pointerArgs.productId,
+                    .version = pointerArgs.versionId,
+            },
+    };
+
+    memcpy(uinput_setup.name, pointerArgs.productName, UINPUT_MAX_NAME_SIZE);
 
     ioctl(fd, UI_DEV_SETUP, &uinput_setup);
     ioctl(fd, UI_DEV_CREATE);

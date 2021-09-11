@@ -18,33 +18,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <iostream>
 #include <unistd.h>
-#include "artist_24_pro.h"
+#include "deco_pro.h"
 
-artist_24_pro::artist_24_pro() {
-    productIds.push_back(0x092d);
-
-    for (int currentAssignedButton = BTN_0; currentAssignedButton <= BTN_9; ++currentAssignedButton) {
-        padButtonAliases.push_back(currentAssignedButton);
-    }
-
-    for (int currentAssignedButton = BTN_A; currentAssignedButton <= BTN_SELECT; ++currentAssignedButton) {
+deco_pro::deco_pro() {
+    for (int currentAssignedButton = BTN_0; currentAssignedButton < BTN_8; ++currentAssignedButton) {
         padButtonAliases.push_back(currentAssignedButton);
     }
 }
 
-artist_24_pro::~artist_24_pro() {
-
-}
-
-std::string artist_24_pro::getProductName(int productId) {
-    if (productId == 0x092d) {
-        return "XP-Pen Artist 24 Pro";
-    }
-
+std::string deco_pro::getProductName(int productId) {
     return "Unknown XP-Pen Device";
 }
 
-void artist_24_pro::setConfig(nlohmann::json config) {
+void deco_pro::setConfig(nlohmann::json config) {
     if (!config.contains("mapping") || config["mapping"] == nullptr) {
         config["mapping"] = nlohmann::json({});
 
@@ -59,33 +45,19 @@ void artist_24_pro::setConfig(nlohmann::json config) {
             config["mapping"]["dials"][std::to_string(dial)][strvalue][evstring] = codes;
         };
 
-        // We are going to emulate the default mapping of the device
         addToButtonMap(BTN_0, EV_KEY, {KEY_B});
         addToButtonMap(BTN_1, EV_KEY, {KEY_E});
-        addToButtonMap(BTN_2, EV_KEY, {KEY_LEFTALT});
-        addToButtonMap(BTN_3, EV_KEY, {KEY_SPACE});
-        addToButtonMap(BTN_4, EV_KEY, {KEY_LEFTCTRL, KEY_S});
-        addToButtonMap(BTN_5, EV_KEY, {KEY_LEFTCTRL, KEY_Z});
-        addToButtonMap(BTN_6, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTALT, KEY_Z});
-        addToButtonMap(BTN_7, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTSHIFT, KEY_Z});
-        addToButtonMap(BTN_8, EV_KEY, {KEY_V});
-        addToButtonMap(BTN_9, EV_KEY, {KEY_L});
-        addToButtonMap(BTN_SOUTH, EV_KEY, {KEY_LEFTCTRL, KEY_0});
-        addToButtonMap(BTN_EAST, EV_KEY, {KEY_LEFTCTRL, KEY_N});
-        addToButtonMap(BTN_C, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTSHIFT, KEY_N});
-        addToButtonMap(BTN_NORTH, EV_KEY, {KEY_LEFTCTRL, KEY_E});
-        addToButtonMap(BTN_WEST, EV_KEY, {KEY_F});
-        addToButtonMap(BTN_Z, EV_KEY, {KEY_D});
-        addToButtonMap(BTN_TL, EV_KEY, {KEY_X});
-        addToButtonMap(BTN_TR, EV_KEY, {KEY_LEFTCTRL, KEY_DELETE});
-        addToButtonMap(BTN_TL2, EV_KEY, {KEY_LEFTCTRL, KEY_C});
-        addToButtonMap(BTN_TR2, EV_KEY, {KEY_LEFTCTRL, KEY_V});
+        addToButtonMap(BTN_2, EV_KEY, {KEY_SPACE});
+        addToButtonMap(BTN_3, EV_KEY, {KEY_LEFTALT});
+        addToButtonMap(BTN_4, EV_KEY, {KEY_V});
+        addToButtonMap(BTN_5, EV_KEY, {KEY_LEFTCTRL, KEY_S});
+        addToButtonMap(BTN_6, EV_KEY, {KEY_LEFTCTRL, KEY_Z});
+        addToButtonMap(BTN_7, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTALT, KEY_N});
 
-        // Mapping the dials
         addToDialMap(REL_WHEEL, -1, EV_KEY, {KEY_LEFTCTRL, KEY_MINUS});
         addToDialMap(REL_WHEEL, 1, EV_KEY, {KEY_LEFTCTRL, KEY_EQUAL});
-        addToDialMap(REL_HWHEEL, -1, EV_KEY, {KEY_LEFTBRACE});
-        addToDialMap(REL_HWHEEL, 1, EV_KEY, {KEY_RIGHTBRACE});
+        addToDialMap(REL_HWHEEL, -1, EV_KEY, {KEY_LEFTCTRL, KEY_MINUS});
+        addToDialMap(REL_HWHEEL, 1, EV_KEY, {KEY_LEFTCTRL, KEY_EQUAL});
     }
     jsonConfig = config;
 
@@ -128,72 +100,23 @@ void artist_24_pro::setConfig(nlohmann::json config) {
     }
 }
 
-int artist_24_pro::sendInitKeyOnInterface() {
+int deco_pro::sendInitKeyOnInterface() {
     return 0x02;
 }
 
-bool artist_24_pro::attachToInterfaceId(int interfaceId) {
-    switch (interfaceId) {
+bool deco_pro::attachToInterfaceId(int interfaceId) {
+    switch (interfaceId){
         case 2:
+            return true;
+
+        case 0:
             return true;
         default:
             return false;
     }
 }
 
-bool artist_24_pro::attachDevice(libusb_device_handle *handle, int interfaceId) {
-    unsigned char* buf = new unsigned char[12];
-
-    // We need to get a few more bits of information
-    if (libusb_get_string_descriptor(handle, 0x64, 0x0409, buf, 12) != 12) {
-        std::cout << "Could not get descriptor" << std::endl;
-        return false;
-    }
-
-    int maxWidth = (buf[3] << 8) + buf[2];
-    int maxHeight = (buf[5] << 8) + buf[4];
-    int maxPressure = (buf[9] << 8) + buf[8];
-
-    unsigned short vendorId = 0x28bd;
-    unsigned short productId = 0xf92d;
-    unsigned short versionId = 0x0001;
-
-    struct uinput_pen_args penArgs {
-            .maxWidth = maxWidth,
-            .maxHeight = maxHeight,
-            .maxPressure = maxPressure,
-            .maxTiltX = 60,
-            .maxTiltY = 60,
-            .vendorId = vendorId,
-            .productId = productId,
-            .versionId = versionId,
-            {"XP-Pen Artist 24 Pro"},
-    };
-
-    struct uinput_pad_args padArgs {
-            .padButtonAliases = padButtonAliases,
-            .hasWheel = true,
-            .hasHWheel = true,
-            .wheelMax = 1,
-            .hWheelMax = 1,
-            .vendorId = vendorId,
-            .productId = productId,
-            .versionId = versionId,
-            {"XP-Pen Artist 24 Pro Pad"},
-    };
-
-    uinputPens[handle] = create_pen(penArgs);
-    uinputPads[handle] = create_pad(padArgs);
-
-    return true;
-}
-
-void artist_24_pro::detachDevice(libusb_device_handle *handle) {
-    auto lastButtonRecord = lastPressedButton.find(handle);
-    if (lastButtonRecord != lastPressedButton.end()) {
-        lastPressedButton.erase(lastButtonRecord);
-    }
-
+void deco_pro::detachDevice(libusb_device_handle *handle) {
     auto uinputPenRecord = uinputPens.find(handle);
     if (uinputPenRecord != uinputPens.end()) {
         close(uinputPens[handle]);
@@ -205,15 +128,23 @@ void artist_24_pro::detachDevice(libusb_device_handle *handle) {
         close(uinputPads[handle]);
         uinputPads.erase(uinputPadRecord);
     }
+
+    auto uinputPointerRecord = uinputPointers.find(handle);
+    if (uinputPointerRecord != uinputPointers.end()) {
+        close(uinputPointers[handle]);
+        uinputPointers.erase(uinputPointerRecord);
+    }
 }
 
-bool artist_24_pro::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+bool deco_pro::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     switch (data[0]) {
-        // Unified interface
         case 0x02:
             handleDigitizerEvent(handle, data, dataLen);
-            handleFrameEvent(handle, data, dataLen);
+            handleUnifiedFrameEvent(handle, data, dataLen);
+            break;
 
+        case 0x01:
+            handleNonUnifiedFrameEvent(handle, data, dataLen);
             break;
 
         default:
@@ -223,7 +154,7 @@ bool artist_24_pro::handleTransferData(libusb_device_handle *handle, unsigned ch
     return true;
 }
 
-void artist_24_pro::handleDigitizerEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+void deco_pro::handleDigitizerEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     if (data[1] < 0xb0) {
         // Extract the X and Y position
         int penX = (data[3] << 8) + data[2];
@@ -266,36 +197,35 @@ void artist_24_pro::handleDigitizerEvent(libusb_device_handle *handle, unsigned 
     }
 }
 
-void artist_24_pro::handleFrameEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+void deco_pro::handleUnifiedFrameEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     if (data[1] >= 0xf0) {
-        // Extract the button being pressed (If there is one)
-        long button = (data[4] << 16) + (data[3] << 8) + data[2];
-        // Grab the first bit set in the button long which tells us the button number
-        long position = ffsl(button);
+        long button = data[2];
+        // Only 8 buttons on this device
+        long position = ffsl(data[2]);
 
-        // Take the left dial
-        short leftDialValue = 0;
+        // Take the dial
+        short dialValue = 0;
         if (0x01 & data[7]) {
-            leftDialValue = 1;
+            dialValue = 1;
         } else if (0x02 & data[7]) {
-            leftDialValue = -1;
+            dialValue = -1;
         }
 
-        // Take the right dial
-        short rightDialValue = 0;
-        if (0x10 & data[7]) {
-            rightDialValue = 1;
-        } else if (0x20 & data[7]) {
-            rightDialValue = -1;
+        // Take the touch value
+        short touchValue = 0;
+        if (0x04 & data[7]) {
+            touchValue = 1;
+        } else if (0x08 & data[7]) {
+            touchValue = -1;
         }
 
         bool shouldSyn = true;
         bool dialEvent = false;
 
-        if (leftDialValue != 0) {
+        if (dialValue != 0) {
             bool send_reset = false;
-            auto dialMap = dialMapping.getDialMap(EV_REL, REL_WHEEL, leftDialValue);
-            for (auto dmap : dialMap) {
+            auto dialMap = dialMapping.getDialMap(EV_REL, REL_WHEEL, dialValue);
+            for (auto dmap: dialMap) {
                 uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, dmap.event_data);
                 if (dmap.event_type == EV_KEY) {
                     send_reset = true;
@@ -305,7 +235,7 @@ void artist_24_pro::handleFrameEvent(libusb_device_handle *handle, unsigned char
             uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
 
             if (send_reset) {
-                for (auto dmap : dialMap) {
+                for (auto dmap: dialMap) {
                     // We have to handle key presses manually here because this device does not send reset events
                     if (dmap.event_type == EV_KEY) {
                         uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, 0);
@@ -316,10 +246,12 @@ void artist_24_pro::handleFrameEvent(libusb_device_handle *handle, unsigned char
 
             shouldSyn = false;
             dialEvent = true;
-        } else if (rightDialValue != 0) {
+        }
+
+        if (touchValue != 0) {
             bool send_reset = false;
-            auto dialMap = dialMapping.getDialMap(EV_REL, REL_HWHEEL, rightDialValue);
-            for (auto dmap : dialMap) {
+            auto touchMap = dialMapping.getDialMap(EV_REL, REL_HWHEEL, touchValue);
+            for (auto dmap: touchMap) {
                 uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, dmap.event_data);
                 if (dmap.event_type == EV_KEY) {
                     send_reset = true;
@@ -329,14 +261,13 @@ void artist_24_pro::handleFrameEvent(libusb_device_handle *handle, unsigned char
             uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
 
             if (send_reset) {
-                for (auto dmap : dialMap) {
+                for (auto dmap: touchMap) {
                     // We have to handle key presses manually here because this device does not send reset events
                     if (dmap.event_type == EV_KEY) {
                         uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, 0);
                     }
                 }
             }
-
             uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
 
             shouldSyn = false;
@@ -356,8 +287,6 @@ void artist_24_pro::handleFrameEvent(libusb_device_handle *handle, unsigned char
                     uinput_send(uinputPads[handle], pmap.event_type, pmap.event_value, 0);
                 }
                 lastPressedButton[handle] = -1;
-            } else {
-                std::cout << "Got a phantom button up event" << std::endl;
             }
         }
 
@@ -365,4 +294,33 @@ void artist_24_pro::handleFrameEvent(libusb_device_handle *handle, unsigned char
             uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
         }
     }
+}
+
+void deco_pro::handleNonUnifiedFrameEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+    long touchX = data[2] - data[3];
+    long touchY = data[4] - data[5];
+
+    bool tapped = data[1] & 0x01;
+
+    char rollerValue = data[6];
+
+    if (touchX != 0 || touchY != 0) {
+        uinput_send(uinputPointers[handle], EV_REL, REL_X, touchX);
+        uinput_send(uinputPointers[handle], EV_REL, REL_Y, touchY);
+        uinput_send(uinputPointers[handle], EV_SYN, SYN_REPORT, 1);
+    }
+
+    if (tapped) {
+        uinput_send(uinputPointers[handle], EV_KEY, BTN_LEFT, 1);
+        wasTapping = true;
+    } else if (wasTapping) {
+        uinput_send(uinputPointers[handle], EV_KEY, BTN_LEFT, 0);
+        wasTapping = false;
+    }
+
+    if (rollerValue != 0) {
+        uinput_send(uinputPointers[handle], EV_REL, REL_WHEEL, rollerValue);
+    }
+
+    uinput_send(uinputPointers[handle], EV_SYN, SYN_REPORT, 1);
 }

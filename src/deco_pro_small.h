@@ -1,5 +1,5 @@
 /*
-xp-pen-userland
+xp_pen_userland
 Copyright (C) 2021 - Aren Villanueva <https://github.com/kurikaesu/>
 
 This program is free software: you can redistribute it and/or modify
@@ -16,28 +16,19 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef XP_PEN_USERLAND_ARTIST_22R_PRO_H
-#define XP_PEN_USERLAND_ARTIST_22R_PRO_H
+#ifndef XP_PEN_USERLAND_DECO_PRO_SMALL_H
+#define XP_PEN_USERLAND_DECO_PRO_SMALL_H
 
 
-#include "transfer_handler.h"
+#include "deco_pro.h"
 
-class artist_22r_pro : public transfer_handler {
+class deco_pro_small : public deco_pro {
 public:
-    artist_22r_pro();
-    ~artist_22r_pro();
+    deco_pro_small();
 
     std::string getProductName(int productId);
-    void setConfig(nlohmann::json config);
-    int sendInitKeyOnInterface();
-    bool attachToInterfaceId(int interfaceId);
     bool attachDevice(libusb_device_handle* handle, int interfaceId);
-    void detachDevice(libusb_device_handle* handle);
-    bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
-private:
-    void handleDigitizerEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
-    void handleFrameEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
 };
 
 
-#endif //XP_PEN_USERLAND_ARTIST_22R_PRO_H
+#endif //XP_PEN_USERLAND_DECO_PRO_SMALL_H
