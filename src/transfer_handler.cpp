@@ -242,8 +242,6 @@ int transfer_handler::create_pad(const uinput_pad_args& padArgs) {
 
     set_relbit(REL_X);
     set_relbit(REL_Y);
-    set_absbit(ABS_X);
-    set_absbit(ABS_Y);
     set_relbit(REL_WHEEL);
     set_relbit(REL_HWHEEL);
 
