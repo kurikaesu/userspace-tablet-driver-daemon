@@ -29,6 +29,10 @@ void usb_devices::handleEvents() {
     libusb_handle_events_completed(context, NULL);
 }
 
+libusb_context* usb_devices::getContext() {
+    return context;
+}
+
 std::map<short, std::vector<short> > usb_devices::getCandidateDevices(const std::map<short, vendor_handler*> vendorHandlers) {
     std::map<short, std::vector<short> > supportedDevices;
     ssize_t num = libusb_get_device_list(context, &lusb_list);

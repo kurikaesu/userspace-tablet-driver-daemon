@@ -22,9 +22,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <libusb-1.0/libusb.h>
 #include <map>
+#include <deque>
 #include <fstream>
 #include "vendor_handler.h"
 #include "usb_devices.h"
+#include "hotplug_event.h"
 #include "includes/json.hpp"
 
 class event_handler {
@@ -50,6 +52,8 @@ private:
 
     std::map<short, vendor_handler*> vendorHandlers;
     usb_devices *devices;
+
+    std::deque<hotplug_event> hotplugEvents;
 
     // Config related
     nlohmann::json driverConfigJson;

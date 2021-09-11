@@ -128,13 +128,8 @@ void event_handler::addHandler(vendor_handler *handler) {
 int event_handler::hotplugCallback(struct libusb_context* context, struct libusb_device* device,
                     libusb_hotplug_event event, void* user_data) {
     std::cout << "Got hotplug event" << std::endl;
-    if (LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED == event) {
-        event_handler* eventHandler = (event_handler*)user_data;
-        eventHandler->devices->handleDeviceAttach(eventHandler->vendorHandlers, device);
-    } else if (LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT == event) {
-        event_handler* eventHandler = (event_handler*)user_data;
-        eventHandler->devices->handleDeviceDetach(eventHandler->vendorHandlers, device);
-    }
+    event_handler* eventHandler = (event_handler*)user_data;
+    eventHandler->hotplugEvents.push_back({event, device});
     return 0;
 }
 
@@ -145,7 +140,7 @@ int event_handler::run() {
     for (auto vendorProducts : supportedDevices) {
         for (auto product : vendorProducts.second) {
             libusb_hotplug_callback_handle callbackHandle;
-            if (libusb_hotplug_register_callback(NULL,
+            if (libusb_hotplug_register_callback(devices->getContext(),
                                                  static_cast<libusb_hotplug_event>(LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED |
                                                                                    LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT),
                                                  static_cast<libusb_hotplug_flag>(0), vendorProducts.first, product, LIBUSB_HOTPLUG_MATCH_ANY,
@@ -161,6 +156,16 @@ int event_handler::run() {
 
     while (running) {
         devices->handleEvents();
+        // Handle all new device attach events
+        while (hotplugEvents.size() > 0) {
+            auto event = hotplugEvents.front();
+            if (event.event == LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED) {
+                devices->handleDeviceAttach(vendorHandlers, event.device);
+            } else if (event.event == LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT) {
+                devices->handleDeviceDetach(vendorHandlers, event.device);
+            }
+            hotplugEvents.pop_front();
+        }
     }
 
     std::cout << "Shutting down" << std::endl;

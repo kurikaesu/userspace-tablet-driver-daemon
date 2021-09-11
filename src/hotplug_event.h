@@ -1,5 +1,5 @@
 /*
-xp-pen-userland
+xp_pen_userland
 Copyright (C) 2021 - Aren Villanueva <https://github.com/kurikaesu/>
 
 This program is free software: you can redistribute it and/or modify
@@ -16,28 +16,17 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef XP_PEN_USERLAND_USB_DEVICES_H
-#define XP_PEN_USERLAND_USB_DEVICES_H
+#ifndef XP_PEN_USERLAND_HOTPLUG_EVENT_H
+#define XP_PEN_USERLAND_HOTPLUG_EVENT_H
+
 
 #include <libusb-1.0/libusb.h>
-#include <map>
-#include "vendor_handler.h"
 
-class usb_devices {
+struct hotplug_event {
 public:
-    usb_devices();
-
-    libusb_context* getContext();
-
-    void handleEvents();
-
-    std::map<short, std::vector<short> > getCandidateDevices(const std::map<short, vendor_handler*> vendorHandlers);
-    void handleDeviceAttach(const std::map<short, vendor_handler*> vendorHandlers, struct libusb_device* device);
-    void handleDeviceDetach(const std::map<short, vendor_handler *> vendorHandlers, struct libusb_device* device);
-private:
-    libusb_context *context = NULL;
-    libusb_device **lusb_list = NULL;
+    libusb_hotplug_event event;
+    struct libusb_device* device;
 };
 
 
-#endif //XP_PEN_USERLAND_USB_DEVICES_H
+#endif //XP_PEN_USERLAND_HOTPLUG_EVENT_H
