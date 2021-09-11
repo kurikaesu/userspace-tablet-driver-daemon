@@ -5,6 +5,8 @@ This repo currently houses a command-line only utility that creates a userspace 
 - Artist 13.3 Pro
 - Artist 12 Pro (Unconfirmed, needs testing)
 - Artist 24 Pro (Unconfirmed, needs testing)
+- Deco Pro SM (You will need to use the proprietary driver to change the touch type to "Customized" in order to get bindings)
+- Deco Pro MD (Unconfirmed. Same deal as SM version)
 
 It initializes the supported tablets with their default bindings but the bindings can be changed by modifying the configuration file:
 `$HOME/.local/share/xp_pen_userland/driver.cfg`
