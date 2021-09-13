@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.16)
 project(xp_pen_userland)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -9,7 +9,7 @@ install(TARGETS xp_pen_userland DESTINATION bin)
 
 set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
 set(CPACK_INSTALLED_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/config;.")
-set(CPACK_RESOURCE_FILE_LICENSE "LICENSE")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 set(CPACK_STRIP_FILES "xp_pen_userland")
 set(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_VERSION_MAJOR "0")
