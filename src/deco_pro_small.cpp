@@ -26,7 +26,7 @@ deco_pro_small::deco_pro_small()
 
 std::string deco_pro_small::getProductName(int productId) {
     if (productId == 0x0909) {
-        return "XP-Pen Deco Pro SM";
+        return "XP-Pen Deco Pro S";
     }
 
     return deco_pro::getProductName(productId);
@@ -59,7 +59,7 @@ bool deco_pro_small::attachDevice(libusb_device_handle *handle, int interfaceId)
                 .vendorId = vendorId,
                 .productId = productId,
                 .versionId = versionId,
-                {"XP-Pen Deco Pro SM"},
+                {"XP-Pen Deco Pro S"},
         };
 
         struct uinput_pad_args padArgs{
@@ -71,7 +71,7 @@ bool deco_pro_small::attachDevice(libusb_device_handle *handle, int interfaceId)
                 .vendorId = vendorId,
                 .productId = productId,
                 .versionId = versionId,
-                {"XP-Pen Deco Pro SM Pad"},
+                {"XP-Pen Deco Pro S Pad"},
         };
 
         uinputPens[handle] = create_pen(penArgs);
@@ -84,7 +84,7 @@ bool deco_pro_small::attachDevice(libusb_device_handle *handle, int interfaceId)
                 .vendorId = vendorId,
                 .productId = productId,
                 .versionId = versionId,
-                {"XP-Pen Deco Pro SM Pointer"},
+                {"XP-Pen Deco Pro S Pointer"},
         };
 
         uinputPointers[handle] = create_pointer(pointerArgs);
