@@ -16,10 +16,20 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#if __has_include(<filesystem>)
+  #include <filesystem>
+  namespace filesystem = std::filesystem;
+#elif __has_include(<experimental/filesystem>)
+  #include <experimental/filesystem>
+  namespace filesystem = std::experimental::filesystem;
+#else
+  error "Missing the <filesystem> header."
+#endif
+
+
 #include <csignal>
 #include <iostream>
 #include <fstream>
-#include <filesystem>
 #include "event_handler.h"
 #include "xp_pen_handler.h"
 #include "vendor_handler.h"
@@ -105,7 +115,7 @@ void event_handler::loadConfiguration() {
 }
 
 void event_handler::saveConfiguration() {
-    std::filesystem::create_directories(getConfigLocation());
+    filesystem::create_directories(getConfigLocation());
 
     std::ofstream driverConfig;
     driverConfig.open(getConfigFileLocation(), std::ofstream::out);

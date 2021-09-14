@@ -45,7 +45,7 @@ public:
     virtual bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen) = 0;
 
 protected:
-    virtual bool uinput_send(int fd, uint16_t type, uint16_t code, int32_t value);
+    virtual bool uinput_send(int fd, uint16_t type, uint16_t code, uint16_t value);
     virtual int create_pen(const uinput_pen_args& penArgs);
     virtual int create_pad(const uinput_pad_args& padArgs);
     virtual int create_pointer(const uinput_pointer_args& pointerArgs);

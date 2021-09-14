@@ -19,8 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "event_handler.h"
 
 int main() {
-//    event_handler eventHandler;
-//    return eventHandler.run();
     event_handler* eventHandler = new event_handler();
     eventHandler->run();
     delete eventHandler;
