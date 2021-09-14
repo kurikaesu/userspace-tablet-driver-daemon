@@ -41,8 +41,11 @@ nlohmann::json transfer_handler::getConfig() {
     return jsonConfig;
 }
 
-bool transfer_handler::uinput_send(int fd, uint16_t type, uint16_t code, int32_t value) {
+bool transfer_handler::uinput_send(int fd, uint16_t type, uint16_t code, uint16_t value) {
+    struct timeval timestamp;
+    gettimeofday(&timestamp, NULL);
     struct input_event event = {
+            .time = timestamp,
             .type = type,
             .code = code,
             .value = value
