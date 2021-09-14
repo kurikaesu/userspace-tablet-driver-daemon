@@ -51,7 +51,7 @@ jobs:
           command: |
             VERSION="v$(cat /root/project/artifacts/version)-bleeding-${CIRCLE_SHA1}"
             rm -f /root/project/artifacts/version
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -n ${VERSION} -delete -prerelease ${VERSION} /root/project/artifacts/
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -n ${VERSION} -delete -prerelease nightly /root/project/artifacts/
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
