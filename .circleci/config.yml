@@ -62,7 +62,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
     jobs:
       - build-ubuntu-bionic-package
       - upload-packages-to-github:
