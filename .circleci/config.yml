@@ -49,7 +49,8 @@ jobs:
       - run:
           name: "Publish to github"
           command: |
-            VERSION="v$(cat /root/project/artifacts/version)-bleeding-${CIRCLE_SHA1}"
+            HASH="${CIRCLE_SHA1}"
+            VERSION="v$(cat /root/project/artifacts/version)-bleeding-${HASH:0:7}"
             rm -f /root/project/artifacts/version
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -n ${VERSION} -delete -prerelease nightly /root/project/artifacts/
 # Invoke jobs via workflows
