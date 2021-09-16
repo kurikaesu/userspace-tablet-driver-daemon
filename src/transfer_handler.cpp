@@ -57,6 +57,25 @@ bool transfer_handler::uinput_send(int fd, uint16_t type, uint16_t code, uint16_
     return true;
 }
 
+void transfer_handler::detachDevice(libusb_device_handle *handle) {
+    auto lastButtonRecord = lastPressedButton.find(handle);
+    if (lastButtonRecord != lastPressedButton.end()) {
+        lastPressedButton.erase(lastButtonRecord);
+    }
+
+    auto uinputPenRecord = uinputPens.find(handle);
+    if (uinputPenRecord != uinputPens.end()) {
+        close(uinputPens[handle]);
+        uinputPens.erase(uinputPenRecord);
+    }
+
+    auto uinputPadRecord = uinputPads.find(handle);
+    if (uinputPadRecord != uinputPads.end()) {
+        close(uinputPads[handle]);
+        uinputPads.erase(uinputPadRecord);
+    }
+}
+
 int transfer_handler::create_pen(const uinput_pen_args& penArgs) {
     int fd = -1;
     fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
@@ -340,4 +359,44 @@ int transfer_handler::create_pointer(const uinput_pointer_args &pointerArgs) {
 
 void transfer_handler::destroy_uinput_device(int fd) {
     ioctl(fd, UI_DEV_DESTROY);
+}
+
+void transfer_handler::submitMapping(const nlohmann::json& config) {
+    std::vector<aliased_input_event> scanCodes;
+    for (auto mapping : config["mapping"].items()) {
+        if (mapping.key() == "buttons") {
+            for (auto mappingButtons : mapping.value().items()) {
+                for (auto events : mappingButtons.value().items()) {
+                    for (auto codes: events.value().items()) {
+                        aliased_input_event newEvent{
+                                std::atoi(events.key().c_str()),
+                                codes.value()
+                        };
+                        scanCodes.push_back(newEvent);
+                    }
+                }
+                padMapping.setPadMap(std::atoi(mappingButtons.key().c_str()), scanCodes);
+                scanCodes.clear();
+            }
+        } else if (mapping.key() == "dials") {
+            for (auto mappingDials : mapping.value().items()) {
+                for (auto interceptValues : mappingDials.value().items()) {
+                    for (auto events : interceptValues.value().items()) {
+                        for (auto codes: events.value().items()) {
+                            aliased_input_event newEvent{
+                                    std::atoi(events.key().c_str()),
+                                    codes.value()
+                            };
+                            if (newEvent.event_type == EV_KEY){
+                                newEvent.event_data = 1;
+                            }
+                            scanCodes.push_back(newEvent);
+                        }
+                    }
+                    dialMapping.setDialMap(std::atoi(mappingDials.key().c_str()), interceptValues.key(), scanCodes);
+                    scanCodes.clear();
+                }
+            }
+        }
+    }
 }

@@ -41,7 +41,7 @@ public:
     virtual int sendInitKeyOnInterface() = 0;
     virtual bool attachToInterfaceId(int interfaceId) = 0;
     virtual bool attachDevice(libusb_device_handle* handle, int interfaceId) = 0;
-    virtual void detachDevice(libusb_device_handle* handle) = 0;
+    virtual void detachDevice(libusb_device_handle* handle);
     virtual bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen) = 0;
 
 protected:
@@ -50,6 +50,8 @@ protected:
     virtual int create_pad(const uinput_pad_args& padArgs);
     virtual int create_pointer(const uinput_pointer_args& pointerArgs);
     virtual void destroy_uinput_device(int fd);
+
+    virtual void submitMapping(const nlohmann::json& config);
 
     std::vector<int> productIds;
 

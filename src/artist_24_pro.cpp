@@ -89,43 +89,7 @@ void artist_24_pro::setConfig(nlohmann::json config) {
     }
     jsonConfig = config;
 
-    std::vector<aliased_input_event> scanCodes;
-    for (auto mapping : config["mapping"].items()) {
-        if (mapping.key() == "buttons") {
-            for (auto mappingButtons : mapping.value().items()) {
-                for (auto events : mappingButtons.value().items()) {
-                    for (auto codes: events.value().items()) {
-                        aliased_input_event newEvent{
-                                std::atoi(events.key().c_str()),
-                                codes.value()
-                        };
-                        scanCodes.push_back(newEvent);
-                    }
-                }
-                padMapping.setPadMap(std::atoi(mappingButtons.key().c_str()), scanCodes);
-                scanCodes.clear();
-            }
-        } else if (mapping.key() == "dials") {
-            for (auto mappingDials : mapping.value().items()) {
-                for (auto interceptValues : mappingDials.value().items()) {
-                    for (auto events : interceptValues.value().items()) {
-                        for (auto codes: events.value().items()) {
-                            aliased_input_event newEvent{
-                                    std::atoi(events.key().c_str()),
-                                    codes.value()
-                            };
-                            if (newEvent.event_type == EV_KEY){
-                                newEvent.event_data = 1;
-                            }
-                            scanCodes.push_back(newEvent);
-                        }
-                    }
-                    dialMapping.setDialMap(std::atoi(mappingDials.key().c_str()), interceptValues.key(), scanCodes);
-                    scanCodes.clear();
-                }
-            }
-        }
-    }
+    submitMapping(jsonConfig);
 }
 
 int artist_24_pro::sendInitKeyOnInterface() {
@@ -186,25 +150,6 @@ bool artist_24_pro::attachDevice(libusb_device_handle *handle, int interfaceId) 
     uinputPads[handle] = create_pad(padArgs);
 
     return true;
-}
-
-void artist_24_pro::detachDevice(libusb_device_handle *handle) {
-    auto lastButtonRecord = lastPressedButton.find(handle);
-    if (lastButtonRecord != lastPressedButton.end()) {
-        lastPressedButton.erase(lastButtonRecord);
-    }
-
-    auto uinputPenRecord = uinputPens.find(handle);
-    if (uinputPenRecord != uinputPens.end()) {
-        close(uinputPens[handle]);
-        uinputPens.erase(uinputPenRecord);
-    }
-
-    auto uinputPadRecord = uinputPads.find(handle);
-    if (uinputPadRecord != uinputPads.end()) {
-        close(uinputPads[handle]);
-        uinputPads.erase(uinputPadRecord);
-    }
 }
 
 bool artist_24_pro::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {

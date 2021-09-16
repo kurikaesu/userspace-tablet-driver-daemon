@@ -61,43 +61,7 @@ void deco_pro::setConfig(nlohmann::json config) {
     }
     jsonConfig = config;
 
-    std::vector<aliased_input_event> scanCodes;
-    for (auto mapping : config["mapping"].items()) {
-        if (mapping.key() == "buttons") {
-            for (auto mappingButtons : mapping.value().items()) {
-                for (auto events : mappingButtons.value().items()) {
-                    for (auto codes: events.value().items()) {
-                        aliased_input_event newEvent{
-                                std::atoi(events.key().c_str()),
-                                codes.value()
-                        };
-                        scanCodes.push_back(newEvent);
-                    }
-                }
-                padMapping.setPadMap(std::atoi(mappingButtons.key().c_str()), scanCodes);
-                scanCodes.clear();
-            }
-        } else if (mapping.key() == "dials") {
-            for (auto mappingDials : mapping.value().items()) {
-                for (auto interceptValues : mappingDials.value().items()) {
-                    for (auto events : interceptValues.value().items()) {
-                        for (auto codes: events.value().items()) {
-                            aliased_input_event newEvent{
-                                    std::atoi(events.key().c_str()),
-                                    codes.value()
-                            };
-                            if (newEvent.event_type == EV_KEY){
-                                newEvent.event_data = 1;
-                            }
-                            scanCodes.push_back(newEvent);
-                        }
-                    }
-                    dialMapping.setDialMap(std::atoi(mappingDials.key().c_str()), interceptValues.key(), scanCodes);
-                    scanCodes.clear();
-                }
-            }
-        }
-    }
+    submitMapping(jsonConfig);
 }
 
 int deco_pro::sendInitKeyOnInterface() {
@@ -113,26 +77,6 @@ bool deco_pro::attachToInterfaceId(int interfaceId) {
             return true;
         default:
             return false;
-    }
-}
-
-void deco_pro::detachDevice(libusb_device_handle *handle) {
-    auto uinputPenRecord = uinputPens.find(handle);
-    if (uinputPenRecord != uinputPens.end()) {
-        close(uinputPens[handle]);
-        uinputPens.erase(uinputPenRecord);
-    }
-
-    auto uinputPadRecord = uinputPads.find(handle);
-    if (uinputPadRecord != uinputPads.end()) {
-        close(uinputPads[handle]);
-        uinputPads.erase(uinputPadRecord);
-    }
-
-    auto uinputPointerRecord = uinputPointers.find(handle);
-    if (uinputPointerRecord != uinputPointers.end()) {
-        close(uinputPointers[handle]);
-        uinputPointers.erase(uinputPointerRecord);
     }
 }
 
