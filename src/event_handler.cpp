@@ -179,6 +179,10 @@ int event_handler::run() {
             }
             hotplugEvents.pop_front();
         }
+
+        // Handle any new incoming socket communications
+        socketServer.handleConnections();
+        socketServer.handleMessages(&messageQueue);
     }
 
     std::cout << "Shutting down" << std::endl;

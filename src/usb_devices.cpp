@@ -26,7 +26,10 @@ usb_devices::usb_devices() {
 }
 
 void usb_devices::handleEvents() {
-    libusb_handle_events_completed(context, NULL);
+    struct timeval tv;
+    tv.tv_sec = 0;
+    tv.tv_usec = 1;
+    libusb_handle_events_timeout_completed(context, &tv, NULL);
 }
 
 libusb_context* usb_devices::getContext() {

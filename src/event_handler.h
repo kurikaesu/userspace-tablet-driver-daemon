@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "usb_devices.h"
 #include "hotplug_event.h"
 #include "includes/json.hpp"
+#include "socket_server.h"
 
 class event_handler {
 public:
@@ -57,6 +58,9 @@ private:
 
     // Config related
     nlohmann::json driverConfigJson;
+
+    socket_server socketServer;
+    unix_socket_message_queue messageQueue;
 };
 
 
