@@ -52,12 +52,11 @@ event_handler::event_handler() {
 }
 
 event_handler::~event_handler() {
+    saveConfiguration();
     for(auto handler : vendorHandlers) {
-        driverConfigJson[handler.second->vendorName()] = handler.second->getConfig();
         delete handler.second;
     }
 
-    saveConfiguration();
     delete devices;
 }
 
@@ -115,6 +114,10 @@ void event_handler::loadConfiguration() {
 }
 
 void event_handler::saveConfiguration() {
+    for(auto handler : vendorHandlers) {
+        driverConfigJson[handler.second->vendorName()] = handler.second->getConfig();
+    }
+
     filesystem::create_directories(getConfigLocation());
 
     std::ofstream driverConfig;
