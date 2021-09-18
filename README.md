@@ -11,6 +11,8 @@ This repo currently houses a command-line only utility that creates a userspace 
 It initializes the supported tablets with their default bindings but the bindings can be changed by modifying the configuration file:
 `$HOME/.local/share/xp_pen_userland/driver.cfg`
 
+This driver also listens to a unix socket at `$HOME/.local/var/run/xp_pen_userland.sock` that takes in messages of format `struct unix_socket_message`: https://github.com/kurikaesu/xp-pen-userland/blob/main/src/unix_socket_message.h. It is possible to receive a response from messages sent to devices as long as the response expected flag is set.
+
 Things on the TODO list:
 - Make a nice GUI to perform binding changes. Current GUI is not "nice" but it is here: https://github.com/kurikaesu/xp-pen-userland-config-util
 - Support more XP-Pen devices
