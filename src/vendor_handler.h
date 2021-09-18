@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <libusb-1.0/libusb.h>
 #include "includes/json.hpp"
+#include "unix_socket_message_queue.h"
 
 class vendor_handler {
 public:
@@ -32,6 +33,8 @@ public:
     virtual std::string vendorName() = 0;
     virtual void setConfig(nlohmann::json config) {};
     virtual nlohmann::json getConfig() { return nlohmann::json({}); };
+    virtual void setMessageQueue(unix_socket_message_queue* queue);
+    virtual void handleMessages() { };
     virtual bool handleProductAttach(libusb_device* device, const struct libusb_device_descriptor descriptor) { return false; };
     virtual void handleProductDetach(libusb_device* device, const struct libusb_device_descriptor descriptor) {};
 protected:
@@ -39,6 +42,8 @@ protected:
     virtual bool setupInfiniteIdle(libusb_device_handle* handle, unsigned char interface_number);
 
     virtual bool setupTransfers(libusb_device_handle* handle, unsigned char interface_number, int maxPacketSize, int productId) { return false; };
+
+    unix_socket_message_queue* messageQueue;
 };
 
 #endif //XP_PEN_USERLAND_VENDOR_HANDLER_H

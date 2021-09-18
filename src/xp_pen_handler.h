@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "vendor_handler.h"
 #include "device_interface_pair.h"
 #include "transfer_handler.h"
+#include "transfer_setup_data.h"
 
 class xp_pen_handler : public vendor_handler {
 public:
@@ -36,6 +37,7 @@ public:
     std::string vendorName();
     void setConfig(nlohmann::json config);
     nlohmann::json getConfig();
+    void handleMessages();
     bool handleProductAttach(libusb_device* device, const libusb_device_descriptor descriptor);
     void handleProductDetach(libusb_device* device, struct libusb_device_descriptor descriptor);
 private:
@@ -55,6 +57,9 @@ private:
     static void LIBUSB_CALL transferCallback(struct libusb_transfer* transfer);
 
     nlohmann::json jsonConfig;
+
+    std::vector<transfer_setup_data> transfersSetUp;
+    std::vector<libusb_transfer*> libusbTransfers;
 };
 
 

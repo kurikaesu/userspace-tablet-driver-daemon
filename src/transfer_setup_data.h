@@ -16,25 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef XP_PEN_USERLAND_UNIX_SOCKET_MESSAGE_QUEUE_H
-#define XP_PEN_USERLAND_UNIX_SOCKET_MESSAGE_QUEUE_H
+#ifndef XP_PEN_USERLAND_TRANSFER_SETUP_DATA_H
+#define XP_PEN_USERLAND_TRANSFER_SETUP_DATA_H
 
-
-#include "unix_socket_message.h"
-#include <vector>
-#include <map>
-
-class unix_socket_message_queue {
-public:
-    unix_socket_message_queue();
-    ~unix_socket_message_queue();
-
-    void addMessage(unix_socket_message* message);
-    std::vector<unix_socket_message*> getMessagesFor(message_destination destination, short vendor);
-    std::vector<unix_socket_message*> getResponses();
-private:
-    std::map<message_destination, std::map<short, std::vector<unix_socket_message*> > > messages;
+struct transfer_setup_data {
+    libusb_device_handle *handle;
+    unsigned char interface_number;
+    int maxPacketSize;
+    int productId;
 };
 
-
-#endif //XP_PEN_USERLAND_UNIX_SOCKET_MESSAGE_QUEUE_H
+#endif //XP_PEN_USERLAND_TRANSFER_SETUP_DATA_H

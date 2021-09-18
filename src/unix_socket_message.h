@@ -19,16 +19,35 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef XP_PEN_USERLAND_UNIX_SOCKET_MESSAGE_H
 #define XP_PEN_USERLAND_UNIX_SOCKET_MESSAGE_H
 
+enum message_destination {
+    driver = 0,
+    gui
+};
+
 struct unix_socket_message {
-    short destination;
+    message_destination destination;
+    short vendor;
+    short device;
+    short interface;
     long length;
+    bool expectResponse;
+    long responseLength;
+    short responseInterface;
+    int originatingSocket;
     long signature;
-    char* data;
+    unsigned char* data;
 };
 
 struct unix_socket_message_header {
-    short destination;
+    message_destination destination;
+    short vendor;
+    short device;
+    short interface;
     long length;
+    bool expectResponse;
+    long responseLength;
+    short responseInterface;
+    int originatingSocket;
     long signature;
 };
 

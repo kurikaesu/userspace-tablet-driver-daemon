@@ -19,6 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include "vendor_handler.h"
 
+void vendor_handler::setMessageQueue(unix_socket_message_queue *queue) {
+    messageQueue = queue;
+}
+
 bool vendor_handler::setupReportProtocol(libusb_device_handle* handle, unsigned char interface_number) {
     int err = libusb_control_transfer(handle,
                                   0x21,

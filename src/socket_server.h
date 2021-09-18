@@ -30,7 +30,9 @@ public:
 
     void handleConnections();
     void handleMessages(unix_socket_message_queue* messageQueue);
+    void handleResponses(unix_socket_message_queue* messageQueue);
 
+    static long versionSignature;
 private:
     int sock;
     bool enabled;

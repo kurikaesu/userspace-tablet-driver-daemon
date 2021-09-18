@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include <cstring>
 #include "transfer_handler.h"
+#include "socket_server.h"
 
 transfer_handler::~transfer_handler() {
     for (auto pen : uinputPens) {
@@ -74,6 +75,52 @@ void transfer_handler::detachDevice(libusb_device_handle *handle) {
         close(uinputPads[handle]);
         uinputPads.erase(uinputPadRecord);
     }
+}
+
+std::vector<unix_socket_message*> transfer_handler::handleMessage(unix_socket_message *message) {
+    std::vector<unix_socket_message*> responses;
+
+    for (auto pens : uinputPens) {
+        int sentBytes;
+        int ret = libusb_interrupt_transfer(pens.first, message->interface | LIBUSB_ENDPOINT_OUT, message->data, message->length, &sentBytes, 1000);
+        if (ret != LIBUSB_SUCCESS) {
+            std::cout << "Failed to send message on interface " << message->interface << " ret: " << ret << " errno: " << errno << std::endl;
+            return std::vector<unix_socket_message*>();
+        }
+
+        if (sentBytes != message->length) {
+            std::cout << "Didn't send all of the message on interface " << message->interface << " only sent " << sentBytes << std::endl;
+            return std::vector<unix_socket_message*>();
+        }
+
+        if (message->expectResponse) {
+            unix_socket_message* response = new unix_socket_message();
+            response->destination = message_destination::gui;
+            response->vendor = message->vendor;
+            response->device = message->device;
+            response->interface = message->interface;
+            response->length = message->responseLength;
+            response->originatingSocket = message->originatingSocket;
+            response->signature = socket_server::versionSignature;
+            response->data = new unsigned char[response->length];
+            int actual_length;
+            int ret = libusb_interrupt_transfer(pens.first, message->responseInterface | LIBUSB_ENDPOINT_IN, response->data, response->length, &actual_length, 1000);
+            if (ret != LIBUSB_SUCCESS) {
+                std::cout << "Could not receive response on interface " << message->responseInterface << " ret: " << ret << " errno: " << errno << std::endl;
+                delete[] response->data;
+                delete response;
+            } else {
+                if (actual_length != message->responseLength) {
+                    std::cout << "Got a response of " << actual_length << " bytes. Expected " << message->responseLength
+                              << std::endl;
+                } else {
+                    responses.push_back(response);
+                }
+            }
+        }
+    }
+
+    return responses;
 }
 
 int transfer_handler::create_pen(const uinput_pen_args& penArgs) {

@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "artist_12_pro.h"
 #include "deco_pro_small.h"
 #include "deco_pro_medium.h"
+#include "transfer_setup_data.h"
 
 xp_pen_handler::xp_pen_handler() {
     std::cout << "xp_pen_handler initialized" << std::endl;
@@ -76,6 +77,42 @@ nlohmann::json xp_pen_handler::getConfig() {
     }
 
     return jsonConfig;
+}
+
+void xp_pen_handler::handleMessages() {
+    auto messages = messageQueue->getMessagesFor(message_destination::driver, getVendorId());
+    size_t handledMessages = 0;
+    size_t totalMessages = messages.size();
+
+    if (totalMessages > 0) {
+        // Cancel transfers first
+        for (auto transfer: libusbTransfers) {
+            libusb_cancel_transfer(transfer);
+        }
+
+        libusbTransfers.clear();
+
+        for (auto message: messages) {
+            auto handler = productHandlers.find(message->device);
+            if (handler != productHandlers.end()) {
+                auto responses = handler->second->handleMessage(message);
+                delete message;
+
+                for (auto response: responses) {
+                    messageQueue->addMessage(response);
+                }
+
+                handledMessages++;
+            }
+        }
+
+        // Re-enable transfers
+        for (auto setupData: transfersSetUp) {
+            setupTransfers(setupData.handle, setupData.interface_number, setupData.maxPacketSize, setupData.productId);
+        }
+
+        std::cout << "Handled " << handledMessages << " out of " << totalMessages << " messages." << std::endl;
+    }
 }
 
 void xp_pen_handler::addHandler(transfer_handler *handler) {
@@ -210,6 +247,13 @@ device_interface_pair* xp_pen_handler::claimDevice(libusb_device *device, libusb
                         }
 
                         if ((ep->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_IN) {
+                            struct transfer_setup_data setupData {
+                                handle,
+                                ep->bEndpointAddress,
+                                ep->wMaxPacketSize,
+                                descriptor.idProduct
+                            };
+                            transfersSetUp.push_back(setupData);
                             setupTransfers(handle, ep->bEndpointAddress, ep->wMaxPacketSize, descriptor.idProduct);
                         }
                     }
@@ -257,8 +301,6 @@ void xp_pen_handler::sendInitKey(libusb_device_handle *handle, int interface_num
 }
 
 bool xp_pen_handler::setupTransfers(libusb_device_handle *handle, unsigned char interface_number, int maxPacketSize, int productId) {
-    std::cout << "Setting up transfers on endpoint " << (int)interface_number << std::endl;
-
     struct libusb_transfer* transfer = libusb_alloc_transfer(0);
     if (transfer == NULL) {
         std::cout << "Could not allocate a transfer for interface " << interface_number << std::endl;
@@ -284,6 +326,8 @@ bool xp_pen_handler::setupTransfers(libusb_device_handle *handle, unsigned char 
         std::cout << "Could not submit transfer on interface " << (int)interface_number << " ret: " << ret << " errno: " << errno << std::endl;
         return false;
     }
+
+    libusbTransfers.push_back(transfer);
 
     return true;
 }
@@ -312,6 +356,9 @@ void xp_pen_handler::transferCallback(struct libusb_transfer *transfer) {
             std::cout << "Could not resubmit my transfer" << std::endl;
         }
 
+        break;
+
+    case LIBUSB_TRANSFER_CANCELLED:
         break;
 
     default:

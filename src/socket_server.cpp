@@ -39,6 +39,9 @@ namespace filesystem = std::filesystem;
 #include "socket_server.h"
 #include "unix_socket_message.h"
 
+// Magic number we use to signify our packets
+long socket_server::versionSignature = 53784359345776669L;
+
 socket_server::socket_server() {
     sock = socket(AF_UNIX, SOCK_STREAM, 0);
     enabled = sock != -1;
@@ -119,6 +122,7 @@ void socket_server::handleConnections() {
                 break;
             }
 
+            std::cout << "Got new socket connection" << std::endl;
             connectedSockets.push_back(newConnection);
         }
     }
@@ -127,9 +131,13 @@ void socket_server::handleConnections() {
 void socket_server::handleMessages(unix_socket_message_queue* messageQueue) {
     int socketCount = connectedSockets.size();
     if (socketCount > 0) {
-
-        struct pollfd *fds = new pollfd[socketCount];
+        struct pollfd *fds = static_cast<struct pollfd*>(calloc(socketCount, sizeof(struct pollfd)));
         char headerBuffer[sizeof(unix_socket_message_header)];
+
+        for (int i = 0; i < socketCount; ++i) {
+            fds[i].fd = connectedSockets[i];
+            fds[i].events = POLLIN;
+        }
 
         int res = poll(fds, socketCount, 0);
         if (res > 0) {
@@ -137,13 +145,13 @@ void socket_server::handleMessages(unix_socket_message_queue* messageQueue) {
                 if (fds[idx].revents != 0) {
                     if (fds[idx].revents & POLLIN) {
                         ssize_t s = read(fds[idx].fd, headerBuffer, sizeof(headerBuffer));
-                        if (s != sizeof(headerBuffer)) {
+                        if (s == sizeof(headerBuffer)) {
                             // Validate the signature
-                            struct unix_socket_message *message = new unix_socket_message;
-                            memcpy(&message, headerBuffer, sizeof(headerBuffer));
+                            struct unix_socket_message *message = new unix_socket_message();
+                            memcpy(message, headerBuffer, sizeof(headerBuffer));
 
-                            if (message->signature == 53784359345776669L) {
-                                message->data = new char[message->length];
+                            if (message->signature == versionSignature) {
+                                message->data = new unsigned char[message->length];
                                 ssize_t totalRead = 0;
                                 bool failed = false;
 
@@ -156,13 +164,32 @@ void socket_server::handleMessages(unix_socket_message_queue* messageQueue) {
                                         delete message;
                                         failed = true;
                                         break;
+                                    } else if (s == 0) {
+                                        // We reached the end but not all read
+                                        std::cout << "We only read a total of " << totalRead << " when we expected " << message->length << std::endl;
+                                        delete[] message->data;
+                                        delete message;
+                                        failed = true;
+                                        break;
                                     }
                                     totalRead += s;
                                 }
 
                                 if (!failed) {
+                                    message->originatingSocket = fds[idx].fd;
                                     messageQueue->addMessage(message);
                                 }
+                            }
+                        } else {
+                            if (s == 0) {
+                                std::cout << "Connection closed on socket" << std::endl;
+                                auto record = std::find(connectedSockets.begin(), connectedSockets.end(), fds[idx].fd);
+                                if (record != connectedSockets.end()) {
+                                    connectedSockets.erase(record);
+                                }
+                                close(fds[idx].fd);
+                            } else {
+                                std::cout << "Could not get all header bytes. Only received " << s << std::endl;
                             }
                         }
                     } else {
@@ -175,7 +202,37 @@ void socket_server::handleMessages(unix_socket_message_queue* messageQueue) {
                 }
             }
         }
+    }
+}
 
-        delete[] fds;
+void socket_server::handleResponses(unix_socket_message_queue *messageQueue) {
+    auto responses = messageQueue->getResponses();
+    for (auto response : responses) {
+        ssize_t written = 0;
+        ssize_t s = 0;
+        bool failed = false;
+
+        while (written < sizeof(unix_socket_message_header)) {
+            s = write(response->originatingSocket, response + written, sizeof(unix_socket_message_header) - written);
+            if (s <= 0) {
+                failed = true;
+                std::cout << "Failed sending response header" << std::endl;
+                break;
+            }
+
+            written += s;
+        }
+
+        written = 0;
+        while (!failed && written < response->length) {
+            s = write(response->originatingSocket, response->data + written, response->length - written);
+
+            if (s <= 0) {
+                std::cout << "Failed sending the data of the response" << std::endl;
+                break;
+            }
+
+            written += s;
+        }
     }
 }

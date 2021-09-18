@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "includes/json.hpp"
 #include "pad_mapping.h"
 #include "dial_mapping.h"
+#include "unix_socket_message.h"
 
 class transfer_handler {
 public:
@@ -43,7 +44,7 @@ public:
     virtual bool attachDevice(libusb_device_handle* handle, int interfaceId) = 0;
     virtual void detachDevice(libusb_device_handle* handle);
     virtual bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen) = 0;
-
+    virtual std::vector<unix_socket_message*> handleMessage(unix_socket_message* message);
 protected:
     virtual bool uinput_send(int fd, uint16_t type, uint16_t code, uint16_t value);
     virtual int create_pen(const uinput_pen_args& penArgs);

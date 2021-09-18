@@ -136,6 +136,7 @@ void event_handler::addHandler(vendor_handler *handler) {
     }
 
     handler->setConfig(driverConfigJson[handler->vendorName()]);
+    handler->setMessageQueue(&messageQueue);
 }
 
 int event_handler::hotplugCallback(struct libusb_context* context, struct libusb_device* device,
@@ -183,6 +184,14 @@ int event_handler::run() {
         // Handle any new incoming socket communications
         socketServer.handleConnections();
         socketServer.handleMessages(&messageQueue);
+
+        // Have all the vendor handlers process messages
+        for (auto handler: vendorHandlers) {
+            handler.second->handleMessages();
+        }
+
+        // Handle any responses to socket comms
+        socketServer.handleResponses(&messageQueue);
     }
 
     std::cout << "Shutting down" << std::endl;
