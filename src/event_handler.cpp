@@ -190,6 +190,9 @@ int event_handler::run() {
             handler.second->handleMessages();
         }
 
+        // Handle messages directed to the event handler
+        handleMessages();
+
         // Handle any responses to socket comms
         socketServer.handleResponses(&messageQueue);
     }
@@ -201,4 +204,45 @@ int event_handler::run() {
     }
 
     return 0;
+}
+
+void event_handler::handleMessages() {
+    auto messages = messageQueue.getMessagesFor(message_destination::eventHandler, 0x0000);
+    for (auto message : messages) {
+        auto response = new unix_socket_message;
+        response->destination = message_destination::gui;
+        response->vendor = message->vendor;
+        response->device = message->device;
+        response->interface = message->interface;
+        response->length = message->responseLength;
+        response->originatingSocket = message->originatingSocket;
+        response->signature = socket_server::versionSignature;
+        unsigned char* writePointer = nullptr;
+
+        switch (message->device) {
+            // Get connected devices
+            case 0x0001:
+                std::cout << "Handling get connected devices request" << std::endl;
+                response->data = new unsigned char[4096];
+                memset(response->data, 0, 4096);
+                writePointer = response->data;
+                for (auto handler: vendorHandlers) {
+                    auto devices = handler.second->getConnectedDevices();
+                    for (auto device : devices) {
+                        memcpy(writePointer, &handler.first, sizeof(handler.first));
+                        writePointer+=sizeof(handler.first);
+                        memcpy(writePointer, &device, sizeof(device));
+                        writePointer+=sizeof(device);
+                    }
+                }
+                response->length = writePointer - response->data;
+
+                messageQueue.addMessage(response);
+
+                break;
+
+            default:
+                break;
+        }
+    }
 }

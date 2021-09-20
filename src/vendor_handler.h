@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define XP_PEN_USERLAND_VENDOR_HANDLER_H
 
 #include <vector>
+#include <set>
 #include <libusb-1.0/libusb.h>
 #include "includes/json.hpp"
 #include "unix_socket_message_queue.h"
@@ -35,6 +36,7 @@ public:
     virtual nlohmann::json getConfig() { return nlohmann::json({}); };
     virtual void setMessageQueue(unix_socket_message_queue* queue);
     virtual void handleMessages() { };
+    virtual std::set<short> getConnectedDevices() { return std::set<short>(); }
     virtual bool handleProductAttach(libusb_device* device, const struct libusb_device_descriptor descriptor) { return false; };
     virtual void handleProductDetach(libusb_device* device, const struct libusb_device_descriptor descriptor) {};
 protected:

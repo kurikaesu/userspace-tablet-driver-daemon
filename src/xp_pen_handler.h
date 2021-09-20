@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <libusb-1.0/libusb.h>
 #include <vector>
+#include <set>
 #include <map>
 #include "vendor_handler.h"
 #include "device_interface_pair.h"
@@ -38,6 +39,7 @@ public:
     void setConfig(nlohmann::json config);
     nlohmann::json getConfig();
     void handleMessages();
+    std::set<short> getConnectedDevices();
     bool handleProductAttach(libusb_device* device, const libusb_device_descriptor descriptor);
     void handleProductDetach(libusb_device* device, struct libusb_device_descriptor descriptor);
 private:

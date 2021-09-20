@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include <algorithm>
 #include <thread>
+#include <set>
 #include "xp_pen_handler.h"
 #include "transfer_handler_pair.h"
 #include "artist_22r_pro.h"
@@ -115,6 +116,16 @@ void xp_pen_handler::handleMessages() {
 
         std::cout << "Handled " << handledMessages << " out of " << totalMessages << " messages." << std::endl;
     }
+}
+
+std::set<short> xp_pen_handler::getConnectedDevices() {
+    std::set<short> connectedDevices;
+
+    for (auto device : deviceInterfaceMap) {
+        connectedDevices.insert(device.second->productId);
+    }
+
+    return connectedDevices;
 }
 
 void xp_pen_handler::addHandler(transfer_handler *handler) {
@@ -272,6 +283,7 @@ device_interface_pair* xp_pen_handler::claimDevice(libusb_device *device, libusb
         std::cout << "libusb_open returned error " << err << std::endl;
     }
 
+    deviceInterface->productId = descriptor.idProduct;
     return deviceInterface;
 }
 

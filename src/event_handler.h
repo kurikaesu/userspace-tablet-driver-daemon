@@ -48,6 +48,8 @@ private:
     void loadConfiguration();
     void saveConfiguration();
 
+    void handleMessages();
+
     static bool running;
     static event_handler* instance;
 

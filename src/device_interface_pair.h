@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 struct device_interface_pair {
 public:
     libusb_device_handle* deviceHandle;
+    short productId;
     std::vector<short> detachedInterfaces;
     std::vector<short> claimedInterfaces;
 };

@@ -151,28 +151,31 @@ void socket_server::handleMessages(unix_socket_message_queue* messageQueue) {
                             memcpy(message, headerBuffer, sizeof(headerBuffer));
 
                             if (message->signature == versionSignature) {
-                                message->data = new unsigned char[message->length];
-                                ssize_t totalRead = 0;
                                 bool failed = false;
+                                if (message->length > 0) {
+                                    message->data = new unsigned char[message->length];
+                                    ssize_t totalRead = 0;
 
-                                while (totalRead < message->length) {
-                                    s = read(fds[idx].fd, message->data + totalRead, message->length - totalRead);
+                                    while (totalRead < message->length) {
+                                        s = read(fds[idx].fd, message->data + totalRead, message->length - totalRead);
 
-                                    if (s == -1) {
-                                        // Handle something going wrong
-                                        delete[] message->data;
-                                        delete message;
-                                        failed = true;
-                                        break;
-                                    } else if (s == 0) {
-                                        // We reached the end but not all read
-                                        std::cout << "We only read a total of " << totalRead << " when we expected " << message->length << std::endl;
-                                        delete[] message->data;
-                                        delete message;
-                                        failed = true;
-                                        break;
+                                        if (s == -1) {
+                                            // Handle something going wrong
+                                            delete[] message->data;
+                                            delete message;
+                                            failed = true;
+                                            break;
+                                        } else if (s == 0) {
+                                            // We reached the end but not all read
+                                            std::cout << "We only read a total of " << totalRead << " when we expected "
+                                                      << message->length << std::endl;
+                                            delete[] message->data;
+                                            delete message;
+                                            failed = true;
+                                            break;
+                                        }
+                                        totalRead += s;
                                     }
-                                    totalRead += s;
                                 }
 
                                 if (!failed) {
@@ -234,5 +237,8 @@ void socket_server::handleResponses(unix_socket_message_queue *messageQueue) {
 
             written += s;
         }
+
+        delete[] response->data;
+        delete response;
     }
 }

@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 enum message_destination {
     driver = 0,
+    eventHandler,
     gui
 };
 
