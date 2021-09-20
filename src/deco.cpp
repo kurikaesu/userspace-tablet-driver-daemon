@@ -148,6 +148,14 @@ void deco::handleUnifiedFrameEvent(libusb_device_handle *handle, unsigned char *
                 uinput_send(uinputPads[handle], pmap.event_type, pmap.event_value, 1);
             }
             lastPressedButton[handle] = position;
+        }  else {
+            if (lastPressedButton.find(handle) != lastPressedButton.end() && lastPressedButton[handle] > 0) {
+                auto padMap = padMapping.getPadMap(padButtonAliases[lastPressedButton[handle] - 1]);
+                for (auto pmap : padMap) {
+                    uinput_send(uinputPads[handle], pmap.event_type, pmap.event_value, 0);
+                }
+                lastPressedButton[handle] = -1;
+            }
         }
 
         // This should always send the SYN no matter what
