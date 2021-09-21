@@ -102,20 +102,32 @@ void event_handler::loadConfiguration() {
         std::cout << "No existing config so we will be creating a new one" << std::endl;
     }
 
-    for(auto handler : vendorHandlers) {
-        if (!driverConfigJson.contains(handler.second->vendorName()) ||
-            driverConfigJson[handler.second->vendorName()] == nullptr) {
+    if (!driverConfigJson.contains("deviceConfigurations")) {
+        driverConfigJson["deviceConfigurations"] = nlohmann::json({});
+    }
 
-            driverConfigJson[handler.second->vendorName()] = nlohmann::json({});
+    // Upgrade the previous version of the config file if it exists
+    if (driverConfigJson.contains("XP-Pen")) {
+        driverConfigJson["deviceConfigurations"]["10429"] = nlohmann::json(driverConfigJson["XP-Pen"]);
+        driverConfigJson.erase("XP-Pen");
+    }
+
+    for(auto handler : vendorHandlers) {
+        auto vendorIdString = std::to_string(handler.second->getVendorId());
+        if (!driverConfigJson["deviceConfigurations"].contains(vendorIdString) ||
+            driverConfigJson["deviceConfigurations"][vendorIdString] == nullptr) {
+
+            driverConfigJson["deviceConfigurations"][vendorIdString] = nlohmann::json({});
         }
 
-        handler.second->setConfig(driverConfigJson[handler.second->vendorName()]);
+        handler.second->setConfig(driverConfigJson["deviceConfigurations"][vendorIdString]);
     }
 }
 
 void event_handler::saveConfiguration() {
     for(auto handler : vendorHandlers) {
-        driverConfigJson[handler.second->vendorName()] = handler.second->getConfig();
+        auto vendorIdString = std::to_string(handler.second->getVendorId());
+        driverConfigJson["deviceConfigurations"][vendorIdString] = handler.second->getConfig();
     }
 
     filesystem::create_directories(getConfigLocation());
@@ -129,13 +141,14 @@ void event_handler::saveConfiguration() {
 
 void event_handler::addHandler(vendor_handler *handler) {
     vendorHandlers[handler->getVendorId()] = handler;
-    if (!driverConfigJson.contains(handler->vendorName()) ||
-        driverConfigJson[handler->vendorName()] == nullptr) {
-
-        driverConfigJson[handler->vendorName()] = nlohmann::json({});
+    auto vendorIdString = std::to_string(handler->getVendorId());
+    if (!driverConfigJson["deviceConfigurations"].contains(vendorIdString) ||
+        driverConfigJson["deviceConfigurations"][vendorIdString] == nullptr) {
+        
+        driverConfigJson["deviceConfigurations"][vendorIdString] = nlohmann::json({});
     }
 
-    handler->setConfig(driverConfigJson[handler->vendorName()]);
+    handler->setConfig(driverConfigJson["deviceConfigurations"][vendorIdString]);
     handler->setMessageQueue(&messageQueue);
 }
 
@@ -238,6 +251,12 @@ void event_handler::handleMessages() {
                 response->length = writePointer - response->data;
 
                 messageQueue.addMessage(response);
+
+                break;
+
+            case 0x0002:
+                std::cout << "Handling reload configuration request" << std::endl;
+                loadConfiguration();
 
                 break;
 

@@ -144,6 +144,7 @@ void socket_server::handleMessages(unix_socket_message_queue* messageQueue) {
             for (int idx = 0; idx < socketCount; ++idx) {
                 if (fds[idx].revents != 0) {
                     if (fds[idx].revents & POLLIN) {
+                        memset(headerBuffer, 0, sizeof(unix_socket_message_header));
                         ssize_t s = read(fds[idx].fd, headerBuffer, sizeof(headerBuffer));
                         if (s == sizeof(headerBuffer)) {
                             // Validate the signature
@@ -182,6 +183,8 @@ void socket_server::handleMessages(unix_socket_message_queue* messageQueue) {
                                     message->originatingSocket = fds[idx].fd;
                                     messageQueue->addMessage(message);
                                 }
+                            } else {
+                                std::cout << "Ignoring packet because we got a signature of " << message->signature << " when it should be " << versionSignature << std::endl;
                             }
                         } else {
                             if (s == 0) {
@@ -192,7 +195,11 @@ void socket_server::handleMessages(unix_socket_message_queue* messageQueue) {
                                 }
                                 close(fds[idx].fd);
                             } else {
-                                std::cout << "Could not get all header bytes. Only received " << s << std::endl;
+                                std::cout << "Could not get all header bytes. Expected " << sizeof(unix_socket_message_header) << " but only received " << s << std::endl;
+                                for (int i = 0; i < s; ++i) {
+                                    std::cout << std::hex << std::setfill('0') << headerBuffer[i] << ":";
+                                }
+                                std::cout << std::endl;
                             }
                         }
                     } else {
