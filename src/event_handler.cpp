@@ -144,7 +144,7 @@ void event_handler::addHandler(vendor_handler *handler) {
     auto vendorIdString = std::to_string(handler->getVendorId());
     if (!driverConfigJson["deviceConfigurations"].contains(vendorIdString) ||
         driverConfigJson["deviceConfigurations"][vendorIdString] == nullptr) {
-        
+
         driverConfigJson["deviceConfigurations"][vendorIdString] = nlohmann::json({});
     }
 

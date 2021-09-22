@@ -35,6 +35,7 @@ namespace filesystem = std::filesystem;
 #include <unistd.h>
 #include <fcntl.h>
 #include <iostream>
+#include <iomanip>
 #include <poll.h>
 #include "socket_server.h"
 #include "unix_socket_message.h"
