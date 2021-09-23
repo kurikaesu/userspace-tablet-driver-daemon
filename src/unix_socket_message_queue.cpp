@@ -1,5 +1,5 @@
 /*
-xp_pen_userland
+userspace_tablet_driver_daemon
 Copyright (C) 2021 - Aren Villanueva <https://github.com/kurikaesu/>
 
 This program is free software: you can redistribute it and/or modify

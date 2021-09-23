@@ -1,5 +1,5 @@
 /*
-userspace-tablet-driver-daemon
+userspace_tablet_driver_daemon
 Copyright (C) 2021 - Aren Villanueva <https://github.com/kurikaesu/>
 
 This program is free software: you can redistribute it and/or modify
@@ -16,16 +16,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef USERSPACE_TABLET_DRIVER_DAEMON_ARTIST_22R_PRO_H
-#define USERSPACE_TABLET_DRIVER_DAEMON_ARTIST_22R_PRO_H
+#ifndef USERSPACE_TABLET_DRIVER_DAEMON_HUION_TABLET_H
+#define USERSPACE_TABLET_DRIVER_DAEMON_HUION_TABLET_H
 
 
 #include "transfer_handler.h"
 
-class artist_22r_pro : public transfer_handler {
+class huion_tablet : public transfer_handler {
 public:
-    artist_22r_pro();
-    ~artist_22r_pro();
+    huion_tablet();
+    ~huion_tablet();
 
     std::string getProductName(int productId);
     void setConfig(nlohmann::json config);
@@ -35,8 +35,8 @@ public:
     bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
 private:
     void handleDigitizerEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
-    void handleFrameEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
+    void handlePadEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
 };
 
 
-#endif //USERSPACE_TABLET_DRIVER_DAEMON_ARTIST_22R_PRO_H
+#endif //USERSPACE_TABLET_DRIVER_DAEMON_HUION_TABLET_H

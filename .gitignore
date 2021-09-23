@@ -41,7 +41,7 @@ cmake_install.cmake
 CPackConfig.cmake
 CPackSourceConfig.cmake
 Makefile
-xp_pen_userland
-xp_pen_userland-*.deb
+userspace_tablet_driver_daemon
+userspace_tablet_driver_daemon*.deb
 install_manifest.txt
 *.cbp

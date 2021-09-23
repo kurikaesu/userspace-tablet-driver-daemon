@@ -16,19 +16,29 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef USERSPACE_TABLET_DRIVER_DAEMON_DECO_01V2_H
-#define USERSPACE_TABLET_DRIVER_DAEMON_DECO_01V2_H
+#ifndef USERSPACE_TABLET_DRIVER_DAEMON_HUION_HANDLER_H
+#define USERSPACE_TABLET_DRIVER_DAEMON_HUION_HANDLER_H
 
 
-#include "deco.h"
+#include "vendor_handler.h"
 
-class deco_01v2 : public deco {
+class huion_handler : public vendor_handler {
 public:
-    deco_01v2();
+    huion_handler();
+    ~huion_handler();
 
-    std::string getProductName(int productId);
-    bool attachDevice(libusb_device_handle* handle, int interfaceId);
+    int getVendorId();
+    std::vector<int> getProductIds();
+    std::string vendorName();
+    void setConfig(nlohmann::json config);
+    nlohmann::json getConfig();
+    void handleMessages();
+    std::set<short> getConnectedDevices();
+    bool handleProductAttach(libusb_device* device, const libusb_device_descriptor descriptor);
+    void handleProductDetach(libusb_device* device, struct libusb_device_descriptor descriptor);
+private:
+
 };
 
 
-#endif //USERSPACE_TABLET_DRIVER_DAEMON_DECO_01V2_H
+#endif //USERSPACE_TABLET_DRIVER_DAEMON_HUION_HANDLER_H

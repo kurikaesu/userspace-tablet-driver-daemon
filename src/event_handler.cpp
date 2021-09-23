@@ -1,5 +1,5 @@
 /*
-xp-pen-userland
+userspace-tablet-driver-daemon
 Copyright (C) 2021 - Aren Villanueva <https://github.com/kurikaesu/>
 
 This program is free software: you can redistribute it and/or modify
@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xp_pen_handler.h"
 #include "vendor_handler.h"
 #include "usb_devices.h"
+#include "huion_handler.h"
 
 bool event_handler::running = true;
 event_handler* event_handler::instance = nullptr;
@@ -48,6 +49,7 @@ event_handler::event_handler() {
 
     loadConfiguration();
     addHandler(new xp_pen_handler());
+    addHandler(new huion_handler());
     saveConfiguration();
 }
 
@@ -80,7 +82,7 @@ void event_handler::sigHandler(int signo) {
 std::string event_handler::getConfigLocation() {
     std::stringstream  configLocation;
     configLocation << getenv("HOME");
-    configLocation << "/.local/share/xp_pen_userland";
+    configLocation << "/.local/share/userspace_tablet_driver_daemon";
 
     return configLocation.str();
 }

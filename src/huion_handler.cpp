@@ -1,5 +1,5 @@
 /*
-userspace-tablet-driver-daemon
+userspace_tablet_driver_daemon
 Copyright (C) 2021 - Aren Villanueva <https://github.com/kurikaesu/>
 
 This program is free software: you can redistribute it and/or modify
@@ -17,45 +17,34 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <iostream>
-#include <algorithm>
 #include <thread>
-#include <set>
-#include "xp_pen_handler.h"
-#include "transfer_handler_pair.h"
-#include "artist_22r_pro.h"
-#include "artist_13_3_pro.h"
-#include "artist_24_pro.h"
-#include "artist_12_pro.h"
-#include "deco_pro_small.h"
-#include "deco_pro_medium.h"
-#include "transfer_setup_data.h"
-#include "deco_01v2.h"
+#include "huion_handler.h"
+#include "device_interface_pair.h"
+#include "huion_tablet.h"
 
-xp_pen_handler::xp_pen_handler() {
-    std::cout << "xp_pen_handler initialized" << std::endl;
+huion_handler::huion_handler() {
+    std::cout << "huion_handler initialized" << std::endl;
 
-    addHandler(new artist_22r_pro());
-    addHandler(new artist_13_3_pro());
-    addHandler(new artist_24_pro());
-    addHandler(new artist_12_pro());
-    addHandler(new deco_pro_small());
-    addHandler(new deco_pro_medium());
-    addHandler(new deco_01v2());
+    addHandler(new huion_tablet());
 }
 
-int xp_pen_handler::getVendorId() {
-    return 0x28bd;
+huion_handler::~huion_handler() noexcept {
+
 }
 
-std::vector<int> xp_pen_handler::getProductIds() {
+int huion_handler::getVendorId() {
+    return 0x256c;
+}
+
+std::vector<int> huion_handler::getProductIds() {
     return handledProducts;
 }
 
-std::string xp_pen_handler::vendorName() {
-    return "XP-Pen";
+std::string huion_handler::vendorName() {
+    return "Huion";
 }
 
-void xp_pen_handler::setConfig(nlohmann::json config) {
+void huion_handler::setConfig(nlohmann::json config) {
     for (auto product : productHandlers) {
         auto productString = std::to_string(product.first);
         if (!config.contains(productString) || config[productString] == nullptr) {
@@ -68,7 +57,7 @@ void xp_pen_handler::setConfig(nlohmann::json config) {
     jsonConfig = config;
 }
 
-nlohmann::json xp_pen_handler::getConfig() {
+nlohmann::json huion_handler::getConfig() {
     for (auto product : productHandlers) {
         jsonConfig[std::to_string(product.first)] = product.second->getConfig();
     }
@@ -76,53 +65,17 @@ nlohmann::json xp_pen_handler::getConfig() {
     return jsonConfig;
 }
 
-void xp_pen_handler::handleMessages() {
-    auto messages = messageQueue->getMessagesFor(message_destination::driver, getVendorId());
-    size_t handledMessages = 0;
-    size_t totalMessages = messages.size();
+void huion_handler::handleMessages() {
 
-    if (totalMessages > 0) {
-        // Cancel transfers first
-        for (auto transfer: libusbTransfers) {
-            libusb_cancel_transfer(transfer);
-        }
-
-        libusbTransfers.clear();
-
-        for (auto message: messages) {
-            auto handler = productHandlers.find(message->device);
-            if (handler != productHandlers.end()) {
-                auto responses = handler->second->handleMessage(message);
-                delete message;
-
-                for (auto response: responses) {
-                    messageQueue->addMessage(response);
-                }
-
-                handledMessages++;
-            }
-        }
-
-        // Re-enable transfers
-        for (auto setupData: transfersSetUp) {
-            setupTransfers(setupData.handle, setupData.interface_number, setupData.maxPacketSize, setupData.productId);
-        }
-
-        std::cout << "Handled " << handledMessages << " out of " << totalMessages << " messages." << std::endl;
-    }
 }
 
-std::set<short> xp_pen_handler::getConnectedDevices() {
+std::set<short> huion_handler::getConnectedDevices() {
     std::set<short> connectedDevices;
-
-    for (auto device : deviceInterfaceMap) {
-        connectedDevices.insert(device.second->productId);
-    }
 
     return connectedDevices;
 }
 
-bool xp_pen_handler::handleProductAttach(libusb_device* device, const libusb_device_descriptor descriptor) {
+bool huion_handler::handleProductAttach(libusb_device* device, const libusb_device_descriptor descriptor) {
     libusb_device_handle* handle = NULL;
     device_interface_pair* interfacePair = nullptr;
     const int maxRetries = 5;
@@ -155,7 +108,7 @@ bool xp_pen_handler::handleProductAttach(libusb_device* device, const libusb_dev
     return false;
 }
 
-void xp_pen_handler::handleProductDetach(libusb_device *device, struct libusb_device_descriptor descriptor) {
+void huion_handler::handleProductDetach(libusb_device *device, struct libusb_device_descriptor descriptor) {
     for (auto deviceObj : deviceInterfaceMap) {
         if (deviceObj.first == device) {
             std::cout << "Handling device detach" << std::endl;
@@ -179,22 +132,5 @@ void xp_pen_handler::handleProductDetach(libusb_device *device, struct libusb_de
 
             break;
         }
-    }
-}
-
-void xp_pen_handler::sendInitKey(libusb_device_handle *handle, int interface_number) {
-    std::cout << "Sending init key on endpont " << interface_number << std::endl;
-
-    unsigned char key[] = {0x02, 0xb0, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    int sentBytes;
-    int ret = libusb_interrupt_transfer(handle, interface_number | LIBUSB_ENDPOINT_OUT, key, sizeof(key), &sentBytes, 1000);
-    if (ret != LIBUSB_SUCCESS) {
-        std::cout << "Failed to send key on interface " << interface_number << " ret: " << ret << " errno: " << errno << std::endl;
-        return;
-    }
-
-    if (sentBytes != sizeof(key)) {
-        std::cout << "Didn't send all of the key on interface " << interface_number << " only sent " << sentBytes << std::endl;
-        return;
     }
 }

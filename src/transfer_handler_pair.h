@@ -1,5 +1,5 @@
 /*
-xp-pen-userland
+userspace-tablet-driver-daemon
 Copyright (C) 2021 - Aren Villanueva <https://github.com/kurikaesu/>
 
 This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef XP_PEN_USERLAND_TRANSFER_HANDLER_PAIR_H
-#define XP_PEN_USERLAND_TRANSFER_HANDLER_PAIR_H
+#ifndef USERSPACE_TABLET_DRIVER_DAEMON_TRANSFER_HANDLER_PAIR_H
+#define USERSPACE_TABLET_DRIVER_DAEMON_TRANSFER_HANDLER_PAIR_H
 
 struct transfer_handler_pair {
 public:
@@ -25,4 +25,4 @@ public:
     transfer_handler* transferHandler;
 };
 
-#endif //XP_PEN_USERLAND_TRANSFER_HANDLER_PAIR_H
+#endif //USERSPACE_TABLET_DRIVER_DAEMON_TRANSFER_HANDLER_PAIR_H

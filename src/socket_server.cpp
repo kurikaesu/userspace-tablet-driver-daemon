@@ -1,5 +1,5 @@
 /*
-xp_pen_userland
+userspace_tablet_driver_daemon
 Copyright (C) 2021 - Aren Villanueva <https://github.com/kurikaesu/>
 
 This program is free software: you can redistribute it and/or modify
@@ -68,7 +68,7 @@ socket_server::socket_server() {
     filesystem::create_directories(socketLocationDir.str());
     std::stringstream  socketLocation;
     socketLocation << socketLocationDir.str();
-    socketLocation << "xp_pen_userland.sock";
+    socketLocation << "userspace_tablet_driver_daemon.sock";
 
     enabled = remove(socketLocation.str().c_str()) != -1;
 
@@ -106,7 +106,7 @@ socket_server::~socket_server() {
 
     std::stringstream  socketLocation;
     socketLocation << getenv("HOME");
-    socketLocation << "/.local/var/run/xp_pen_userland.sock";
+    socketLocation << "/.local/var/run/userspace_tablet_driver_daemon.sock";
 
     remove(socketLocation.str().c_str());
 }
@@ -198,7 +198,7 @@ void socket_server::handleMessages(unix_socket_message_queue* messageQueue) {
                             } else {
                                 std::cout << "Could not get all header bytes. Expected " << sizeof(unix_socket_message_header) << " but only received " << s << std::endl;
                                 for (int i = 0; i < s; ++i) {
-                                    std::cout << std::hex << std::setfill('0') << headerBuffer[i] << ":";
+                                    std::cout << std::hex << std::setfill('0')  << std::setw(2) << (int)headerBuffer[i] << ":";
                                 }
                                 std::cout << std::endl;
                             }

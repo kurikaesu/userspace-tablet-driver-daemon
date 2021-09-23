@@ -1,5 +1,5 @@
 /*
-xp_pen_userland
+userspace_tablet_driver_daemon
 Copyright (C) 2021 - Aren Villanueva <https://github.com/kurikaesu/>
 
 This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef XP_PEN_USERLAND_HOTPLUG_EVENT_H
-#define XP_PEN_USERLAND_HOTPLUG_EVENT_H
+#ifndef USERSPACE_TABLET_DRIVER_DAEMON_HOTPLUG_EVENT_H
+#define USERSPACE_TABLET_DRIVER_DAEMON_HOTPLUG_EVENT_H
 
 
 #include <libusb-1.0/libusb.h>
@@ -29,4 +29,4 @@ public:
 };
 
 
-#endif //XP_PEN_USERLAND_HOTPLUG_EVENT_H
+#endif //USERSPACE_TABLET_DRIVER_DAEMON_HOTPLUG_EVENT_H

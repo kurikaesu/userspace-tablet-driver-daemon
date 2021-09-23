@@ -1,5 +1,5 @@
 /*
-xp-pen-userland
+userspace-tablet-driver-daemon
 Copyright (C) 2021 - Aren Villanueva <https://github.com/kurikaesu/>
 
 This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef XP_PEN_USERLAND_TRANSFER_HANDLER_H
-#define XP_PEN_USERLAND_TRANSFER_HANDLER_H
+#ifndef USERSPACE_TABLET_DRIVER_DAEMON_TRANSFER_HANDLER_H
+#define USERSPACE_TABLET_DRIVER_DAEMON_TRANSFER_HANDLER_H
 
 #include <cstdint>
 #include <libusb-1.0/libusb.h>
@@ -46,7 +46,7 @@ public:
     virtual bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen) = 0;
     virtual std::vector<unix_socket_message*> handleMessage(unix_socket_message* message);
 protected:
-    virtual bool uinput_send(int fd, uint16_t type, uint16_t code, uint16_t value);
+    virtual bool uinput_send(int fd, uint16_t type, uint16_t code, int32_t value);
     virtual int create_pen(const uinput_pen_args& penArgs);
     virtual int create_pad(const uinput_pad_args& padArgs);
     virtual int create_pointer(const uinput_pointer_args& pointerArgs);
@@ -69,4 +69,4 @@ protected:
     nlohmann::json jsonConfig;
 };
 
-#endif //XP_PEN_USERLAND_TRANSFER_HANDLER_H
+#endif //USERSPACE_TABLET_DRIVER_DAEMON_TRANSFER_HANDLER_H

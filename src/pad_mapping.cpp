@@ -1,5 +1,5 @@
 /*
-xp_pen_userland
+userspace_tablet_driver_daemon
 Copyright (C) 2021 - Aren Villanueva <https://github.com/kurikaesu/>
 
 This program is free software: you can redistribute it and/or modify
@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <linux/input.h>
 #include "pad_mapping.h"
 
 pad_mapping::pad_mapping() {
@@ -30,7 +31,7 @@ std::vector<aliased_input_event> pad_mapping::getPadMap(int eventCode) {
 
     std::vector<aliased_input_event> temp;
     aliased_input_event tempEvent {
-        0, eventCode
+        EV_KEY, eventCode
     };
     temp.push_back(tempEvent);
 

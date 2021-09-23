@@ -1,5 +1,5 @@
 /*
-xp_pen_userland
+userspace_tablet_driver_daemon
 Copyright (C) 2021 - Aren Villanueva <https://github.com/kurikaesu/>
 
 This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef XP_PEN_USERLAND_UNIX_SOCKET_MESSAGE_H
-#define XP_PEN_USERLAND_UNIX_SOCKET_MESSAGE_H
+#ifndef USERSPACE_TABLET_DRIVER_DAEMON_UNIX_SOCKET_MESSAGE_H
+#define USERSPACE_TABLET_DRIVER_DAEMON_UNIX_SOCKET_MESSAGE_H
 
 enum message_destination {
     driver = 0,
@@ -52,4 +52,4 @@ struct unix_socket_message_header {
     long signature;
 };
 
-#endif //XP_PEN_USERLAND_UNIX_SOCKET_MESSAGE_H
+#endif //USERSPACE_TABLET_DRIVER_DAEMON_UNIX_SOCKET_MESSAGE_H
