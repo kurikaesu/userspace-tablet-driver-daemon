@@ -88,7 +88,7 @@ int huion_tablet::sendInitKeyOnInterface() {
 }
 
 bool huion_tablet::attachToInterfaceId(int interfaceId) {
-    return interfaceId == 0;
+    return true;
 }
 
 std::string huion_tablet::getDeviceNameFromFirmware(std::wstring firmwareName) {
@@ -96,6 +96,8 @@ std::string huion_tablet::getDeviceNameFromFirmware(std::wstring firmwareName) {
         return "Huion WH1409 v2";
     } else if (firmwareName == L"HUION_T191_190619") {
         return "Huion H1161";
+    } else if (firmwareName == L"HUION_T153_160524 ") {
+        return "Huion WH1409 (2048)";
     }
 
     return "Unknown device";
@@ -106,6 +108,8 @@ int huion_tablet::getAliasedDeviceIdFromFirmware(std::wstring firmwareName) {
         return 0x0188;
     } else if (firmwareName == L"HUION_T191_190619") {
         return 0x0191;
+    } else if (firmwareName == L"HUION_T153_160524") {
+        return 0x0153;
     }
 
     return 0x0000;
@@ -122,112 +126,121 @@ std::set<int> huion_tablet::getConnectedAliasedDevices() {
 }
 
 bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId) {
-    unsigned char* buffer = new unsigned char[200];
-    memset(buffer, 0, 200);
+    // We only attach once so that we don't create multiple virtual devices
+    if (interfaceId == 0) {
+        unsigned char *buffer = new unsigned char[200];
+        memset(buffer, 0, 200);
 
-    // Extract the firmware name
-    int descriptorLength = libusb_get_string_descriptor(handle, 0xc9, 0x0409, buffer, 130);
-    if (descriptorLength < 36) {
-        std::cout << "Could not get firmware descriptor. Returned descriptor length was "  << descriptorLength << std::endl;
-        delete [] buffer;
-        return false;
-    }
-
-    if (buffer[1] != 0x03) {
-        std::cout << "Descriptor response wasn't a string" << std::endl;
-    }
-    int dataLength = buffer[0];
-    wchar_t * firmwareName = new wchar_t [dataLength];
-    for (int i = 0, j = 2; i < descriptorLength; ++i, j+=2) {
-        firmwareName[i] = (buffer[j+1] << 8) + buffer[j];
-    }
-
-    std::wstring firmware((wchar_t *)firmwareName);
-    delete [] firmwareName;
-    std::wcout << "Got firmware " << firmware << std::endl;
-
-    std::string deviceName = getDeviceNameFromFirmware(firmware);
-    // Store the device name relationship to the handle
-    handleToDeviceName[handle] = deviceName;
-    handleToAliasedDeviceId[handle] = getAliasedDeviceIdFromFirmware(firmware);
-
-    // We need to get a few more bits of information
-    if (libusb_get_string_descriptor(handle, 200, 0x0409, buffer, 32) < 18) {
-        std::cout << "Could not get descriptor" << std::endl;
-        // Let's see which descriptors are actually available
-        for (int i = 1; i < 0xff ; ++i) {
-            memset(buffer, 0, 12);
-            int stringLength = libusb_get_string_descriptor(handle, i, 0x0409, buffer, 12);
-            if (stringLength < 0) {
-                std::cout << "Could not get descriptor on index " << i << std::endl;
-            } else {
-                std::cout << "Descriptor " << i << " has length " << stringLength << std::endl;
-            }
+        // Extract the firmware name
+        int descriptorLength = libusb_get_string_descriptor(handle, 0xc9, 0x0409, buffer, 130);
+        if (descriptorLength < 36) {
+            std::cout << "Could not get firmware descriptor. Returned descriptor length was " << descriptorLength
+                      << std::endl;
+            delete[] buffer;
+            return false;
         }
 
-        delete [] buffer;
-        return false;
+        if (buffer[1] != 0x03) {
+            std::cout << "Descriptor response wasn't a string" << std::endl;
+        }
+        int dataLength = buffer[0];
+        wchar_t *firmwareName = new wchar_t[dataLength];
+        for (int i = 0, j = 2; i < descriptorLength; ++i, j += 2) {
+            firmwareName[i] = (buffer[j + 1] << 8) + buffer[j];
+        }
+
+        std::wstring firmware((wchar_t *) firmwareName);
+        delete[] firmwareName;
+        std::wcout << "Got firmware " << firmware << std::endl;
+
+        std::string deviceName = getDeviceNameFromFirmware(firmware);
+        // Store the device name relationship to the handle
+        handleToDeviceName[handle] = deviceName;
+        handleToAliasedDeviceId[handle] = getAliasedDeviceIdFromFirmware(firmware);
+
+        // We need to get a few more bits of information
+        if (libusb_get_string_descriptor(handle, 200, 0x0409, buffer, 32) < 18) {
+            std::cout << "Could not get descriptor" << std::endl;
+            // Let's see which descriptors are actually available
+            for (int i = 1; i < 0xff; ++i) {
+                memset(buffer, 0, 12);
+                int stringLength = libusb_get_string_descriptor(handle, i, 0x0409, buffer, 12);
+                if (stringLength < 0) {
+                    std::cout << "Could not get descriptor on index " << i << std::endl;
+                } else {
+                    std::cout << "Descriptor " << i << " has length " << stringLength << std::endl;
+                }
+            }
+
+            delete[] buffer;
+            return false;
+        }
+
+        int maxWidth = (buffer[4] << 16) + (buffer[3] << 8) + buffer[2];
+        int maxHeight = (buffer[7] << 16) + (buffer[6] << 8) + buffer[5];
+        int maxPressure = (buffer[9] << 8) + buffer[8];
+
+        std::cout << deviceName << " configured with max-width: " << maxWidth << " max-height: " << maxHeight
+                  << " max-pressure: " << maxPressure << std::endl;
+
+        unsigned short vendorId = 0x256c;
+        unsigned short productId = 0xf06e;
+        unsigned short versionId = 0x0001;
+
+        struct uinput_pen_args penArgs{
+                .maxWidth = maxWidth,
+                .maxHeight = maxHeight,
+                .maxPressure = maxPressure,
+                .maxTiltX = 60,
+                .maxTiltY = 60,
+                .vendorId = vendorId,
+                .productId = productId,
+                .versionId = versionId,
+        };
+
+        memset(penArgs.productName, 0, UINPUT_MAX_NAME_SIZE);
+        memcpy(penArgs.productName, deviceName.c_str(), deviceName.length());
+
+        struct uinput_pad_args padArgs{
+                .padButtonAliases = padButtonAliases,
+                .hasWheel = true,
+                .hasHWheel = true,
+                .wheelMax = 1,
+                .hWheelMax = 1,
+                .vendorId = vendorId,
+                .productId = productId,
+                .versionId = versionId,
+        };
+
+        std::stringstream padName;
+        padName << deviceName;
+        padName << " Pad";
+        std::string padNameString = padName.str();
+
+        memset(padArgs.productName, 0, UINPUT_MAX_NAME_SIZE);
+        memcpy(padArgs.productName, padNameString.c_str(), padNameString.length());
+
+        uinputPens[handle] = create_pen(penArgs);
+        uinputPads[handle] = create_pad(padArgs);
+
+        delete[] buffer;
     }
-
-    int maxWidth = (buffer[4] << 16) + (buffer[3] << 8) + buffer[2];
-    int maxHeight = (buffer[7] << 16) + (buffer[6] << 8) + buffer[5];
-    int maxPressure = (buffer[9] << 8) + buffer[8];
-
-    std::cout << deviceName << " configured with max-width: " << maxWidth << " max-height: " << maxHeight << " max-pressure: " << maxPressure << std::endl;
-
-    unsigned short vendorId = 0x256c;
-    unsigned short productId = 0xf06e;
-    unsigned short versionId = 0x0001;
-
-    struct uinput_pen_args penArgs {
-            .maxWidth = maxWidth,
-            .maxHeight = maxHeight,
-            .maxPressure = maxPressure,
-            .maxTiltX = 60,
-            .maxTiltY = 60,
-            .vendorId = vendorId,
-            .productId = productId,
-            .versionId = versionId,
-    };
-
-    memset(penArgs.productName, 0, UINPUT_MAX_NAME_SIZE);
-    memcpy(penArgs.productName, deviceName.c_str(), deviceName.length());
-
-    struct uinput_pad_args padArgs {
-            .padButtonAliases = padButtonAliases,
-            .hasWheel = true,
-            .hasHWheel = true,
-            .wheelMax = 1,
-            .hWheelMax = 1,
-            .vendorId = vendorId,
-            .productId = productId,
-            .versionId = versionId,
-    };
-
-    std::stringstream padName;
-    padName << deviceName;
-    padName << " Pad";
-    std::string padNameString = padName.str();
-
-    memset(padArgs.productName, 0, UINPUT_MAX_NAME_SIZE);
-    memcpy(padArgs.productName, padNameString.c_str(), padNameString.length());
-
-    uinputPens[handle] = create_pen(penArgs);
-    uinputPads[handle] = create_pad(padArgs);
-
-    delete [] buffer;
 
     return true;
 }
 
 bool huion_tablet::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
-//    std::cout << std::dec << "Got transfer of data length: " << (int)dataLen << " data: ";
-//    for (int i = 0; i < dataLen; ++i) {
-//        std::cout << std::hex << std::setfill('0')  << std::setw(2) << (int)data[i] << ":";
-//    }
-//    std::cout << std::endl;
+    std::cout << std::dec << "Got transfer of data length: " << (int)dataLen << " data: ";
+    for (int i = 0; i < dataLen; ++i) {
+        std::cout << std::hex << std::setfill('0')  << std::setw(2) << (int)data[i] << ":";
+    }
+    std::cout << std::endl;
 
     switch (data[0]) {
+        case 0x07:
+            handleDigitizerEventV3(handle, data, dataLen);
+            return true;
+
         case 0x08:
         case 0x0a:
             break;
@@ -243,6 +256,7 @@ bool huion_tablet::handleTransferData(libusb_device_handle *handle, unsigned cha
         case 0x82:
         case 0x84:
             handleDigitizerEventV2(handle, data, dataLen);
+            handlePadEventV1(handle, data, dataLen);
             break;
 
         case 0xc0:
@@ -253,7 +267,7 @@ bool huion_tablet::handleTransferData(libusb_device_handle *handle, unsigned cha
             break;
 
         case 0xe0:
-            handlePadEvent(handle, data, dataLen);
+            handlePadEventV1(handle, data, dataLen);
 
             break;
         default:
@@ -338,34 +352,73 @@ void huion_tablet::handleDigitizerEventV2(libusb_device_handle *handle, unsigned
     uinput_send(uinputPens[handle], EV_SYN, SYN_REPORT, 1);
 }
 
-void huion_tablet::handlePadEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen) {
-    // Extract the button being pressed (If there is one)
-    long button = (data[5] << 8) + data[4];
-    // Grab the first bit set in the button long which tells us the button number
-    long position = ffsl(button);
+void huion_tablet::handleDigitizerEventV3(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+    if (data[1] < 0xa0) {
+        // Extract the X and Y position
+        int penX = (data[3] << 8) + data[2];
+        int penY = (data[5] << 8) + data[4];
 
-    bool shouldSyn = true;
-    bool dialEvent = false;
+        // Check to see if the pen is touching
+        int pressure;
+        if (0x01 & data[1]) {
+            // Grab the pressure amount
+            pressure = (data[7] << 8) + data[6];
 
-    if (button != 0) {
-        auto padMap = padMapping.getPadMap(padButtonAliases[position - 1]);
-        for (auto pmap : padMap) {
-            uinput_send(uinputPads[handle], pmap.event_type, pmap.event_value, 1);
-        }
-        lastPressedButton[handle] = position;
-    } else if (!dialEvent) {
-        if (lastPressedButton.find(handle) != lastPressedButton.end() && lastPressedButton[handle] > 0) {
-            auto padMap = padMapping.getPadMap(padButtonAliases[lastPressedButton[handle] - 1]);
-            for (auto pmap : padMap) {
-                uinput_send(uinputPads[handle], pmap.event_type, pmap.event_value, 0);
-            }
-            lastPressedButton[handle] = -1;
+            uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 1);
+            uinput_send(uinputPens[handle], EV_ABS, ABS_PRESSURE, pressure);
         } else {
-            std::cout << "Got a phantom button up event" << std::endl;
+            uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 0);
         }
-    }
 
-    if (shouldSyn) {
-        uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+        // Check to see if the stylus buttons are being pressed
+        if (0x02 & data[1]) {
+            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 1);
+            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 0);
+        } else if (0x04 & data[1]) {
+            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 0);
+            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 1);
+        } else {
+            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 0);
+            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 0);
+        }
+
+        uinput_send(uinputPens[handle], EV_ABS, ABS_X, penX);
+        uinput_send(uinputPens[handle], EV_ABS, ABS_Y, penY);
+
+        uinput_send(uinputPens[handle], EV_SYN, SYN_REPORT, 1);
+    }
+}
+
+void huion_tablet::handlePadEventV1(libusb_device_handle* handle, unsigned char* data, size_t dataLen) {
+    if (data[1] == 0xe0) {
+        // Extract the button being pressed (If there is one)
+        long button = (data[5] << 8) + data[4];
+        // Grab the first bit set in the button long which tells us the button number
+        long position = ffsl(button);
+
+        bool shouldSyn = true;
+        bool dialEvent = false;
+
+        if (button != 0) {
+            auto padMap = padMapping.getPadMap(padButtonAliases[position - 1]);
+            for (auto pmap: padMap) {
+                uinput_send(uinputPads[handle], pmap.event_type, pmap.event_value, 1);
+            }
+            lastPressedButton[handle] = position;
+        } else if (!dialEvent) {
+            if (lastPressedButton.find(handle) != lastPressedButton.end() && lastPressedButton[handle] > 0) {
+                auto padMap = padMapping.getPadMap(padButtonAliases[lastPressedButton[handle] - 1]);
+                for (auto pmap: padMap) {
+                    uinput_send(uinputPads[handle], pmap.event_type, pmap.event_value, 0);
+                }
+                lastPressedButton[handle] = -1;
+            } else {
+                std::cout << "Got a phantom button up event" << std::endl;
+            }
+        }
+
+        if (shouldSyn) {
+            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+        }
     }
 }

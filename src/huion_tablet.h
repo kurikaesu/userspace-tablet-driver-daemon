@@ -38,7 +38,8 @@ public:
 private:
     void handleDigitizerEventV1(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
     void handleDigitizerEventV2(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
-    void handlePadEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
+    void handleDigitizerEventV3(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
+    void handlePadEventV1(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
 
     std::string getDeviceNameFromFirmware(std::wstring firmwareName);
     int getAliasedDeviceIdFromFirmware(std::wstring firmwareName);
