@@ -1,1 +1,2 @@
-SUBSYSTEM=="usb", ATTR{idVendor}=="256c", GROUP="users", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTR{idVendor}=="28bd", GROUP="users", TAG+="uaccess"
+
