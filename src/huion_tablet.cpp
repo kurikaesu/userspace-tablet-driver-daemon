@@ -230,15 +230,16 @@ bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId) {
 }
 
 bool huion_tablet::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
-    std::cout << std::dec << "Got transfer of data length: " << (int)dataLen << " data: ";
-    for (int i = 0; i < dataLen; ++i) {
-        std::cout << std::hex << std::setfill('0')  << std::setw(2) << (int)data[i] << ":";
-    }
-    std::cout << std::endl;
+//    std::cout << std::dec << "Got transfer of data length: " << (int)dataLen << " data: ";
+//    for (int i = 0; i < dataLen; ++i) {
+//        std::cout << std::hex << std::setfill('0')  << std::setw(2) << (int)data[i] << ":";
+//    }
+//    std::cout << std::endl;
 
     switch (data[0]) {
         case 0x07:
             handleDigitizerEventV3(handle, data, dataLen);
+            handlePadEventV1(handle, data, dataLen);
             return true;
 
         case 0x08:
@@ -256,7 +257,6 @@ bool huion_tablet::handleTransferData(libusb_device_handle *handle, unsigned cha
         case 0x82:
         case 0x84:
             handleDigitizerEventV2(handle, data, dataLen);
-            handlePadEventV1(handle, data, dataLen);
             break;
 
         case 0xc0:
