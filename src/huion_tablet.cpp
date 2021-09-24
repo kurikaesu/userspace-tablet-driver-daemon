@@ -96,7 +96,7 @@ std::string huion_tablet::getDeviceNameFromFirmware(std::wstring firmwareName) {
         return "Huion WH1409 v2";
     } else if (firmwareName == L"HUION_T191_190619") {
         return "Huion H1161";
-    } else if (firmwareName == L"HUION_T153_160524 ") {
+    } else if (firmwareName == L"HUION_T153_160524") {
         return "Huion WH1409 (2048)";
     }
 
