@@ -10,6 +10,7 @@ This repo currently houses a command-line only utility that creates a userspace 
 - Deco 01v2 (Unconfirmed, needs testing)
 - Huion WH1409 v2
 - Huion WH1409 (2048 pressure level version)
+- Huion H1161
 
 It initializes the supported tablets with their default bindings but the bindings can be changed by modifying the configuration file:
 `$HOME/.local/share/userspace_tablet_driver_daemon/driver.cfg`
