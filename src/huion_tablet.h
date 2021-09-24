@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define USERSPACE_TABLET_DRIVER_DAEMON_HUION_TABLET_H
 
 
+#include <set>
 #include "transfer_handler.h"
 
 class huion_tablet : public transfer_handler {
@@ -33,9 +34,17 @@ public:
     bool attachToInterfaceId(int interfaceId);
     bool attachDevice(libusb_device_handle* handle, int interfaceId);
     bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
+    std::set<int> getConnectedAliasedDevices();
 private:
-    void handleDigitizerEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
+    void handleDigitizerEventV1(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
+    void handleDigitizerEventV2(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
     void handlePadEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
+
+    std::string getDeviceNameFromFirmware(std::wstring firmwareName);
+    int getAliasedDeviceIdFromFirmware(std::wstring firmwareName);
+
+    std::map<libusb_device_handle*, std::string> handleToDeviceName;
+    std::map<libusb_device_handle*, int> handleToAliasedDeviceId;
 };
 
 

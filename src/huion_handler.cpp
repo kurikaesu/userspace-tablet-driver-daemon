@@ -72,6 +72,12 @@ void huion_handler::handleMessages() {
 std::set<short> huion_handler::getConnectedDevices() {
     std::set<short> connectedDevices;
 
+    // We only want aliased devices
+    for (auto devInterface : deviceInterfaceMap) {
+        auto aliasedDevices = static_cast<huion_tablet*>(productHandlers[devInterface.second->productId])->getConnectedAliasedDevices();
+        connectedDevices.insert(aliasedDevices.begin(), aliasedDevices.end());
+    }
+
     return connectedDevices;
 }
 

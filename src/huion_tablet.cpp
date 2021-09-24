@@ -22,6 +22,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 huion_tablet::huion_tablet() {
     productIds.push_back(0x006e);
+    productIds.push_back(0x006d);
+
+    // Aliased product ids
+    productIds.push_back(0x0188);
+    productIds.push_back(0x0191);
 
     for (int currentAssignedButton = BTN_0; currentAssignedButton <= BTN_9; ++currentAssignedButton) {
         padButtonAliases.push_back(currentAssignedButton);
@@ -37,7 +42,7 @@ huion_tablet::~huion_tablet() noexcept {
 }
 
 std::string huion_tablet::getProductName(int productId) {
-    if (productId == 0x006e) {
+    if (productId == 0x006e || productId == 0x006d) {
         return "Huion tablet";
     }
 
@@ -86,16 +91,73 @@ bool huion_tablet::attachToInterfaceId(int interfaceId) {
     return interfaceId == 0;
 }
 
+std::string huion_tablet::getDeviceNameFromFirmware(std::wstring firmwareName) {
+    if (firmwareName == L"HUION_T188_180718") {
+        return "Huion WH1409 v2";
+    } else if (firmwareName == L"HUION_T191_190619") {
+        return "Huion H1161";
+    }
+
+    return "Unknown device";
+}
+
+int huion_tablet::getAliasedDeviceIdFromFirmware(std::wstring firmwareName) {
+    if (firmwareName == L"HUION_T188_180718") {
+        return 0x0188;
+    } else if (firmwareName == L"HUION_T191_190619") {
+        return 0x0191;
+    }
+
+    return 0x0000;
+}
+
+std::set<int> huion_tablet::getConnectedAliasedDevices() {
+    std::set<int> connectedAliases;
+    for (auto pair : handleToAliasedDeviceId) {
+        connectedAliases.insert(pair.second);
+        std::cout << "Connected device: " << pair.second << std::endl;
+    }
+
+    return connectedAliases;
+}
+
 bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId) {
-    unsigned char* buf = new unsigned char[32];
+    unsigned char* buffer = new unsigned char[200];
+    memset(buffer, 0, 200);
+
+    // Extract the firmware name
+    int descriptorLength = libusb_get_string_descriptor(handle, 0xc9, 0x0409, buffer, 130);
+    if (descriptorLength < 36) {
+        std::cout << "Could not get firmware descriptor. Returned descriptor length was "  << descriptorLength << std::endl;
+        delete [] buffer;
+        return false;
+    }
+
+    if (buffer[1] != 0x03) {
+        std::cout << "Descriptor response wasn't a string" << std::endl;
+    }
+    int dataLength = buffer[0];
+    wchar_t * firmwareName = new wchar_t [dataLength];
+    for (int i = 0, j = 2; i < descriptorLength; ++i, j+=2) {
+        firmwareName[i] = (buffer[j+1] << 8) + buffer[j];
+    }
+
+    std::wstring firmware((wchar_t *)firmwareName);
+    delete [] firmwareName;
+    std::wcout << "Got firmware " << firmware << std::endl;
+
+    std::string deviceName = getDeviceNameFromFirmware(firmware);
+    // Store the device name relationship to the handle
+    handleToDeviceName[handle] = deviceName;
+    handleToAliasedDeviceId[handle] = getAliasedDeviceIdFromFirmware(firmware);
 
     // We need to get a few more bits of information
-    if (libusb_get_string_descriptor(handle, 200, 0x0409, buf, 32) < 18) {
+    if (libusb_get_string_descriptor(handle, 200, 0x0409, buffer, 32) < 18) {
         std::cout << "Could not get descriptor" << std::endl;
         // Let's see which descriptors are actually available
         for (int i = 1; i < 0xff ; ++i) {
-            memset(buf, 0, 12);
-            int stringLength = libusb_get_string_descriptor(handle, i, 0x0409, buf, 12);
+            memset(buffer, 0, 12);
+            int stringLength = libusb_get_string_descriptor(handle, i, 0x0409, buffer, 12);
             if (stringLength < 0) {
                 std::cout << "Could not get descriptor on index " << i << std::endl;
             } else {
@@ -103,14 +165,15 @@ bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId) {
             }
         }
 
+        delete [] buffer;
         return false;
     }
 
-    int maxWidth = (buf[4] << 16) + (buf[3] << 8) + buf[2];
-    int maxHeight = (buf[7] << 16) + (buf[6] << 8) + buf[5];
-    int maxPressure = (buf[9] << 8) + buf[8];
+    int maxWidth = (buffer[4] << 16) + (buffer[3] << 8) + buffer[2];
+    int maxHeight = (buffer[7] << 16) + (buffer[6] << 8) + buffer[5];
+    int maxPressure = (buffer[9] << 8) + buffer[8];
 
-    std::cout << "Huion tablet configured with max-width: " << maxWidth << " max-height: " << maxHeight << " max-pressure: " << maxPressure << std::endl;
+    std::cout << deviceName << " configured with max-width: " << maxWidth << " max-height: " << maxHeight << " max-pressure: " << maxPressure << std::endl;
 
     unsigned short vendorId = 0x256c;
     unsigned short productId = 0xf06e;
@@ -125,8 +188,10 @@ bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId) {
             .vendorId = vendorId,
             .productId = productId,
             .versionId = versionId,
-            {"Huion Tablet"},
     };
+
+    memset(penArgs.productName, 0, UINPUT_MAX_NAME_SIZE);
+    memcpy(penArgs.productName, deviceName.c_str(), deviceName.length());
 
     struct uinput_pad_args padArgs {
             .padButtonAliases = padButtonAliases,
@@ -137,11 +202,20 @@ bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId) {
             .vendorId = vendorId,
             .productId = productId,
             .versionId = versionId,
-            {"Huion Tablet Pad"},
     };
+
+    std::stringstream padName;
+    padName << deviceName;
+    padName << " Pad";
+    std::string padNameString = padName.str();
+
+    memset(padArgs.productName, 0, UINPUT_MAX_NAME_SIZE);
+    memcpy(padArgs.productName, padNameString.c_str(), padNameString.length());
 
     uinputPens[handle] = create_pen(penArgs);
     uinputPads[handle] = create_pad(padArgs);
+
+    delete [] buffer;
 
     return true;
 }
@@ -155,7 +229,7 @@ bool huion_tablet::handleTransferData(libusb_device_handle *handle, unsigned cha
 
     switch (data[0]) {
         case 0x08:
-
+        case 0x0a:
             break;
 
         default:
@@ -168,7 +242,14 @@ bool huion_tablet::handleTransferData(libusb_device_handle *handle, unsigned cha
         case 0x81:
         case 0x82:
         case 0x84:
-            handleDigitizerEvent(handle, data, dataLen);
+            handleDigitizerEventV2(handle, data, dataLen);
+            break;
+
+        case 0xc0:
+        case 0xc1:
+        case 0xc2:
+        case 0xc4:
+            handleDigitizerEventV1(handle, data, dataLen);
             break;
 
         case 0xe0:
@@ -182,7 +263,41 @@ bool huion_tablet::handleTransferData(libusb_device_handle *handle, unsigned cha
     return true;
 }
 
-void huion_tablet::handleDigitizerEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+void huion_tablet::handleDigitizerEventV1(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+    int penX = (data[3] << 8) + data[2];
+    int penY = (data[5] << 8) + data[4];
+
+    // Check to see if the pen is touching
+    int pressure;
+    if (0x01 & data[1]) {
+        // Grab the pressure amount
+        pressure = (data[7] << 8) + data[6];
+
+        uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 1);
+        uinput_send(uinputPens[handle], EV_ABS, ABS_PRESSURE, pressure);
+    } else {
+        uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 0);
+    }
+
+    // Check to see if the stylus buttons are being pressed
+    if (0x02 & data[1]) {
+        uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 1);
+        uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 0);
+    } else if (0x04 & data[1]) {
+        uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 0);
+        uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 1);
+    } else {
+        uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 0);
+        uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 0);
+    }
+
+    uinput_send(uinputPens[handle], EV_ABS, ABS_X, penX);
+    uinput_send(uinputPens[handle], EV_ABS, ABS_Y, penY);
+
+    uinput_send(uinputPens[handle], EV_SYN, SYN_REPORT, 1);
+}
+
+void huion_tablet::handleDigitizerEventV2(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     // Extract the X and Y position
     int penX = (data[8] << 16) + (data[3] << 8) + data[2];
     int penY = (data[5] << 8) + data[4];

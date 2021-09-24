@@ -45,6 +45,7 @@ public:
     virtual void detachDevice(libusb_device_handle* handle);
     virtual bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen) = 0;
     virtual std::vector<unix_socket_message*> handleMessage(unix_socket_message* message);
+    virtual bool isAliasedProduct(int productId) { return false; }
 protected:
     virtual bool uinput_send(int fd, uint16_t type, uint16_t code, int32_t value);
     virtual int create_pen(const uinput_pen_args& penArgs);
