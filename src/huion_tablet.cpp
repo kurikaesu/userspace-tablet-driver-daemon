@@ -145,6 +145,7 @@ bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId) {
         }
         int dataLength = buffer[0];
         wchar_t *firmwareName = new wchar_t[dataLength];
+        wmemset(firmwareName, 0, dataLength);
         for (int i = 0, j = 2; i < descriptorLength; ++i, j += 2) {
             firmwareName[i] = (buffer[j + 1] << 8) + buffer[j];
         }
@@ -154,6 +155,7 @@ bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId) {
         std::wcout << "Got firmware " << firmware << std::endl;
 
         std::string deviceName = getDeviceNameFromFirmware(firmware);
+        std::cout << "Resolved device name to " << deviceName << std::endl;
         // Store the device name relationship to the handle
         handleToDeviceName[handle] = deviceName;
         handleToAliasedDeviceId[handle] = getAliasedDeviceIdFromFirmware(firmware);
