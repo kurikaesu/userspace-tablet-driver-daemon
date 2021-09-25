@@ -179,6 +179,8 @@ device_interface_pair* vendor_handler::claimDevice(libusb_device *device, libusb
         if (err == LIBUSB_ERROR_ACCESS) {
             std::cout << "This was an access denied error. Is the correct udev rule set up?" << std::endl;
         }
+        delete deviceInterface;
+        return nullptr;
     }
 
     deviceInterface->productId = productId;
@@ -247,6 +249,10 @@ void vendor_handler::transferCallback(struct libusb_transfer *transfer) {
             break;
 
         case LIBUSB_TRANSFER_CANCELLED:
+            break;
+
+        case LIBUSB_TRANSFER_NO_DEVICE:
+            std::cout << "Device disconnected" << std::endl;
             break;
 
         default:
