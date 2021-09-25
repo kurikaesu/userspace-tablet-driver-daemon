@@ -252,7 +252,6 @@ void vendor_handler::transferCallback(struct libusb_transfer *transfer) {
             break;
 
         case LIBUSB_TRANSFER_NO_DEVICE:
-            std::cout << "Device disconnected" << std::endl;
             break;
 
         default:
