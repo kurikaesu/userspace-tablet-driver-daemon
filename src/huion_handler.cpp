@@ -25,7 +25,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 huion_handler::huion_handler() {
     std::cout << "huion_handler initialized" << std::endl;
 
-    addHandler(new huion_tablet());
+    // Physical product ids
+    addHandler(new huion_tablet(0x006e));
+    addHandler(new huion_tablet(0x006d));
+
+    // Aliased product ids
+    addHandler(new huion_tablet(0x0188));
+    addHandler(new huion_tablet(0x0191));
 }
 
 huion_handler::~huion_handler() noexcept {

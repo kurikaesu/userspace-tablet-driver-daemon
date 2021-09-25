@@ -90,6 +90,9 @@ device_interface_pair* vendor_handler::claimDevice(libusb_device *device, libusb
         std::cout << "Could not get config descriptor" << std::endl;
     }
 
+    auto productId = descriptor.idProduct;
+    bool checkedForAliasing = false;
+
     if ((err = libusb_open(device, &handle)) == LIBUSB_SUCCESS) {
         deviceInterface->deviceHandle = handle;
         unsigned char interfaceCount = configDescriptor->bNumInterfaces;
@@ -113,11 +116,18 @@ device_interface_pair* vendor_handler::claimDevice(libusb_device *device, libusb
             if (LIBUSB_SUCCESS == err) {
                 deviceInterface->claimedInterfaces.push_back(interface_number);
 
+                // Here we replace our product ID with an aliased one if necessary
+                if (!checkedForAliasing) {
+                    productId = productHandlers[descriptor.idProduct]->getAliasedProductId(handle,
+                                                                                           descriptor.idProduct);
+                    checkedForAliasing = true;
+                }
+
                 // Even though we claim the interface, we only actually care about specific ones. We still do
                 // the claim so that no other driver mangles events while we are handling it
-                if (productHandlers[descriptor.idProduct]->attachToInterfaceId(interface_number)) {
+                if (productHandlers[productId]->attachToInterfaceId(interface_number)) {
                     // Attach to our handler
-                    if (!productHandlers[descriptor.idProduct]->attachDevice(handle, interface_number)) {
+                    if (!productHandlers[productId]->attachDevice(handle, interface_number)) {
                         delete deviceInterface;
                         return nullptr;
                     }
@@ -138,7 +148,7 @@ device_interface_pair* vendor_handler::claimDevice(libusb_device *device, libusb
                             continue;
 
                         // We only send the init key on the interface the handler says it should be on
-                        if (productHandlers[descriptor.idProduct]->sendInitKeyOnInterface() == interface_number) {
+                        if (productHandlers[productId]->sendInitKeyOnInterface() == interface_number) {
                             if ((ep->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_OUT) {
                                 sendInitKey(handle, ep->bEndpointAddress);
                             }
@@ -149,10 +159,10 @@ device_interface_pair* vendor_handler::claimDevice(libusb_device *device, libusb
                                     handle,
                                     ep->bEndpointAddress,
                                     ep->wMaxPacketSize,
-                                    descriptor.idProduct
+                                    productId
                             };
                             transfersSetUp.push_back(setupData);
-                            setupTransfers(handle, ep->bEndpointAddress, ep->wMaxPacketSize, descriptor.idProduct);
+                            setupTransfers(handle, ep->bEndpointAddress, ep->wMaxPacketSize, productId);
                         }
                     }
 
@@ -171,7 +181,10 @@ device_interface_pair* vendor_handler::claimDevice(libusb_device *device, libusb
         }
     }
 
-    deviceInterface->productId = descriptor.idProduct;
+    deviceInterface->productId = productId;
+    auto productString = std::to_string(productId);
+    std::cout << "Set up config for device " << productString << std::endl;
+    productHandlers[productId]->setConfig(getConfig()[productString]);
     return deviceInterface;
 }
 

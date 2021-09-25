@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class huion_tablet : public transfer_handler {
 public:
-    huion_tablet();
+    huion_tablet(int productId);
     ~huion_tablet();
 
     std::string getProductName(int productId);
@@ -35,6 +35,9 @@ public:
     bool attachDevice(libusb_device_handle* handle, int interfaceId);
     bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
     std::set<int> getConnectedAliasedDevices();
+    std::wstring getDeviceFirmwareName(libusb_device_handle* device);
+    int getAliasedDeviceIdFromFirmware(std::wstring firmwareName);
+    int getAliasedProductId(libusb_device_handle* handle, int originalId);
 private:
     void handleDigitizerEventV1(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
     void handleDigitizerEventV2(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
@@ -42,7 +45,6 @@ private:
     void handlePadEventV1(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
 
     std::string getDeviceNameFromFirmware(std::wstring firmwareName);
-    int getAliasedDeviceIdFromFirmware(std::wstring firmwareName);
 
     std::map<libusb_device_handle*, std::string> handleToDeviceName;
     std::map<libusb_device_handle*, int> handleToAliasedDeviceId;

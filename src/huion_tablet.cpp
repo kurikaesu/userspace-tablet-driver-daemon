@@ -20,13 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <iomanip>
 #include "huion_tablet.h"
 
-huion_tablet::huion_tablet() {
-    productIds.push_back(0x006e);
-    productIds.push_back(0x006d);
-
-    // Aliased product ids
-    productIds.push_back(0x0188);
-    productIds.push_back(0x0191);
+huion_tablet::huion_tablet(int productId) {
+    productIds.push_back(productId);
 
     for (int currentAssignedButton = BTN_0; currentAssignedButton <= BTN_9; ++currentAssignedButton) {
         padButtonAliases.push_back(currentAssignedButton);
@@ -115,6 +110,16 @@ int huion_tablet::getAliasedDeviceIdFromFirmware(std::wstring firmwareName) {
     return 0x0000;
 }
 
+int huion_tablet::getAliasedProductId(libusb_device_handle *handle, int originalId) {
+    auto firmware = getDeviceFirmwareName(handle);
+    auto productId = getAliasedDeviceIdFromFirmware(firmware);
+    if (productId == 0x0000) {
+        productId = originalId;
+    }
+
+    return productId;
+}
+
 std::set<int> huion_tablet::getConnectedAliasedDevices() {
     std::set<int> connectedAliases;
     for (auto pair : handleToAliasedDeviceId) {
@@ -125,33 +130,42 @@ std::set<int> huion_tablet::getConnectedAliasedDevices() {
     return connectedAliases;
 }
 
+std::wstring huion_tablet::getDeviceFirmwareName(libusb_device_handle *handle) {
+    unsigned char *buffer = new unsigned char[200];
+    memset(buffer, 0, 200);
+
+    // Extract the firmware name
+    int descriptorLength = libusb_get_string_descriptor(handle, 0xc9, 0x0409, buffer, 130);
+    if (descriptorLength < 36) {
+        std::cout << "Could not get firmware descriptor. Returned descriptor length was " << descriptorLength
+                  << std::endl;
+        delete[] buffer;
+        return L"";
+    }
+
+    if (buffer[1] != 0x03) {
+        std::cout << "Descriptor response wasn't a string" << std::endl;
+    }
+    int dataLength = buffer[0];
+    wchar_t *firmwareName = new wchar_t[dataLength];
+    wmemset(firmwareName, 0, dataLength);
+    for (int i = 0, j = 2; i < descriptorLength; ++i, j += 2) {
+        firmwareName[i] = (buffer[j + 1] << 8) + buffer[j];
+    }
+
+    std::wstring firmware((wchar_t *) firmwareName);
+    delete[] firmwareName;
+    delete [] buffer;
+
+    return firmware;
+}
+
 bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId) {
     // We only attach once so that we don't create multiple virtual devices
     if (interfaceId == 0) {
         unsigned char *buffer = new unsigned char[200];
         memset(buffer, 0, 200);
-
-        // Extract the firmware name
-        int descriptorLength = libusb_get_string_descriptor(handle, 0xc9, 0x0409, buffer, 130);
-        if (descriptorLength < 36) {
-            std::cout << "Could not get firmware descriptor. Returned descriptor length was " << descriptorLength
-                      << std::endl;
-            delete[] buffer;
-            return false;
-        }
-
-        if (buffer[1] != 0x03) {
-            std::cout << "Descriptor response wasn't a string" << std::endl;
-        }
-        int dataLength = buffer[0];
-        wchar_t *firmwareName = new wchar_t[dataLength];
-        wmemset(firmwareName, 0, dataLength);
-        for (int i = 0, j = 2; i < descriptorLength; ++i, j += 2) {
-            firmwareName[i] = (buffer[j + 1] << 8) + buffer[j];
-        }
-
-        std::wstring firmware((wchar_t *) firmwareName);
-        delete[] firmwareName;
+        auto firmware = getDeviceFirmwareName(handle);
         std::wcout << "Got firmware " << firmware << std::endl;
 
         std::string deviceName = getDeviceNameFromFirmware(firmware);
