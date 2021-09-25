@@ -15,10 +15,9 @@ This repo currently houses a command-line only utility that creates a userspace 
 It initializes the supported tablets with their default bindings but the bindings can be changed by modifying the configuration file:
 `$HOME/.local/share/userspace_tablet_driver_daemon/driver.cfg`
 
-This driver also listens to a unix socket at `$HOME/.local/var/run/userspace_tablet_driver_daemon.sock` that takes in messages of format `struct unix_socket_message`: https://github.com/kurikaesu/xp-pen-userland/blob/main/src/unix_socket_message.h. It is possible to receive a response from messages sent to devices as long as the response expected flag is set.
+This driver also listens to a unix socket at `$HOME/.local/var/run/userspace_tablet_driver_daemon.sock` that takes in messages of format `struct unix_socket_message`: https://github.com/kurikaesu/userspace-tablet-driver-daemon/blob/main/src/unix_socket_message.h. It is possible to receive a response from messages sent to devices as long as the response expected flag is set.
 
 Things on the TODO list:
-- Make a nice GUI to perform binding changes. Current GUI is not "nice" but it is here: https://github.com/kurikaesu/xp-pen-userland-config-util
 - Support more devices
 
 Things on the long-term TODO list:
@@ -28,7 +27,7 @@ Things on the long-term TODO list:
 - This includes a 70-uinput-plugdev.rules file that gives users on your computer that are in the `plugdev` permission group access to uinput without SUDO. This is how I can make this driver run without having the user constantly enter their password each time.
 
 ## How to change bindings
-Preferred way is to use the GUI: https://github.com/kurikaesu/xp-pen-userland-config-util
+Preferred way is to use the GUI: https://github.com/kurikaesu/userspace-tablet-driver-gui
 You can change bindings manually by changing the JSON config but the format is currently changing too quickly to make effective documentation.
 
 ## Building

@@ -32,6 +32,7 @@ huion_handler::huion_handler() {
     // Aliased product ids
     addHandler(new huion_tablet(0x0188));
     addHandler(new huion_tablet(0x0191));
+    addHandler(new huion_tablet(0x0153));
 }
 
 huion_handler::~huion_handler() noexcept {
