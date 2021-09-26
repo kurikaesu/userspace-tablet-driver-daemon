@@ -132,42 +132,44 @@ device_interface_pair* vendor_handler::claimDevice(libusb_device *device, libusb
                         return nullptr;
                     }
 
-                    const libusb_interface_descriptor *interfaceDescriptor =
-                            configDescriptor->interface[interface_number].altsetting;
-
-                    if (!setupReportProtocol(handle, interface_number) ||
-                        !setupInfiniteIdle(handle, interface_number)) {
-                        continue;
-                    }
-
-                    const libusb_endpoint_descriptor *endpoint = interfaceDescriptor->endpoint;
-                    const libusb_endpoint_descriptor *ep;
-                    for (ep = endpoint; (ep - endpoint) < interfaceDescriptor->bNumEndpoints; ++ep) {
-                        // Ignore any interface that isn't of an interrupt type
-                        if ((ep->bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) != LIBUSB_TRANSFER_TYPE_INTERRUPT)
-                            continue;
-
-                        // We only send the init key on the interface the handler says it should be on
-                        if (productHandlers[productId]->sendInitKeyOnInterface() == interface_number) {
-                            if ((ep->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_OUT) {
-                                sendInitKey(handle, ep->bEndpointAddress);
-                            }
-                        }
-
-                        if ((ep->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_IN) {
-                            struct transfer_setup_data setupData {
-                                    handle,
-                                    ep->bEndpointAddress,
-                                    ep->wMaxPacketSize,
-                                    productId
-                            };
-                            transfersSetUp.push_back(setupData);
-                            setupTransfers(handle, ep->bEndpointAddress, ep->wMaxPacketSize, productId);
-                        }
-                    }
-
-                    std::cout << std::dec << "Setup completed on interface " << (int)interface_number << std::endl;
+                    std::cout << "Attached to interface " << (int)interface_number << std::endl;
                 }
+
+                const libusb_interface_descriptor *interfaceDescriptor =
+                        configDescriptor->interface[interface_number].altsetting;
+
+                if (!setupReportProtocol(handle, interface_number) ||
+                    !setupInfiniteIdle(handle, interface_number)) {
+                    continue;
+                }
+
+                const libusb_endpoint_descriptor *endpoint = interfaceDescriptor->endpoint;
+                const libusb_endpoint_descriptor *ep;
+                for (ep = endpoint; (ep - endpoint) < interfaceDescriptor->bNumEndpoints; ++ep) {
+                    // Ignore any interface that isn't of an interrupt type
+                    if ((ep->bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) != LIBUSB_TRANSFER_TYPE_INTERRUPT)
+                        continue;
+
+                    // We only send the init key on the interface the handler says it should be on
+                    if (productHandlers[productId]->sendInitKeyOnInterface() == interface_number) {
+                        if ((ep->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_OUT) {
+                            sendInitKey(handle, ep->bEndpointAddress);
+                        }
+                    }
+
+                    if ((ep->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_IN) {
+                        struct transfer_setup_data setupData {
+                                handle,
+                                ep->bEndpointAddress,
+                                ep->wMaxPacketSize,
+                                productId
+                        };
+                        transfersSetUp.push_back(setupData);
+                        setupTransfers(handle, ep->bEndpointAddress, ep->wMaxPacketSize, productId);
+                    }
+                }
+
+                std::cout << std::dec << "Setup completed on interface " << (int)interface_number << std::endl;
             } else {
                 std::cout << "Could not claim interface " << (int)interface_number << " retcode: " << err << " errno: " << errno << std::endl;
                 delete deviceInterface;

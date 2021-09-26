@@ -99,12 +99,7 @@ int artist_22r_pro::sendInitKeyOnInterface() {
 }
 
 bool artist_22r_pro::attachToInterfaceId(int interfaceId) {
-    switch (interfaceId) {
-        case 2:
-            return true;
-        default:
-            return false;
-    }
+    return interfaceId == 2;
 }
 
 bool artist_22r_pro::attachDevice(libusb_device_handle *handle, int interfaceId) {

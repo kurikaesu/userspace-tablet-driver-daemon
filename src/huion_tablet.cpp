@@ -83,7 +83,7 @@ int huion_tablet::sendInitKeyOnInterface() {
 }
 
 bool huion_tablet::attachToInterfaceId(int interfaceId) {
-    return true;
+    return interfaceId == 0;
 }
 
 std::string huion_tablet::getDeviceNameFromFirmware(std::wstring firmwareName) {
@@ -161,86 +161,83 @@ std::wstring huion_tablet::getDeviceFirmwareName(libusb_device_handle *handle) {
 }
 
 bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId) {
-    // We only attach once so that we don't create multiple virtual devices
-    if (interfaceId == 0) {
-        unsigned char *buffer = new unsigned char[200];
-        memset(buffer, 0, 200);
-        auto firmware = getDeviceFirmwareName(handle);
-        std::wcout << "Got firmware " << firmware << std::endl;
+    unsigned char *buffer = new unsigned char[200];
+    memset(buffer, 0, 200);
+    auto firmware = getDeviceFirmwareName(handle);
+    std::wcout << "Got firmware " << firmware << std::endl;
 
-        std::string deviceName = getDeviceNameFromFirmware(firmware);
-        std::cout << "Resolved device name to " << deviceName << std::endl;
-        // Store the device name relationship to the handle
-        handleToDeviceName[handle] = deviceName;
-        handleToAliasedDeviceId[handle] = getAliasedDeviceIdFromFirmware(firmware);
+    std::string deviceName = getDeviceNameFromFirmware(firmware);
+    std::cout << "Resolved device name to " << deviceName << std::endl;
+    // Store the device name relationship to the handle
+    handleToDeviceName[handle] = deviceName;
+    handleToAliasedDeviceId[handle] = getAliasedDeviceIdFromFirmware(firmware);
 
-        // We need to get a few more bits of information
-        if (libusb_get_string_descriptor(handle, 200, 0x0409, buffer, 32) < 18) {
-            std::cout << "Could not get descriptor" << std::endl;
-            // Let's see which descriptors are actually available
-            for (int i = 1; i < 0xff; ++i) {
-                memset(buffer, 0, 12);
-                int stringLength = libusb_get_string_descriptor(handle, i, 0x0409, buffer, 12);
-                if (stringLength < 0) {
-                    std::cout << "Could not get descriptor on index " << i << std::endl;
-                } else {
-                    std::cout << "Descriptor " << i << " has length " << stringLength << std::endl;
-                }
+    // We need to get a few more bits of information
+    if (libusb_get_string_descriptor(handle, 200, 0x0409, buffer, 32) < 18) {
+        std::cout << "Could not get descriptor" << std::endl;
+        // Let's see which descriptors are actually available
+        for (int i = 1; i < 0xff; ++i) {
+            memset(buffer, 0, 12);
+            int stringLength = libusb_get_string_descriptor(handle, i, 0x0409, buffer, 12);
+            if (stringLength < 0) {
+                std::cout << "Could not get descriptor on index " << i << std::endl;
+            } else {
+                std::cout << "Descriptor " << i << " has length " << stringLength << std::endl;
             }
-
-            delete[] buffer;
-            return false;
         }
 
-        int maxWidth = (buffer[4] << 16) + (buffer[3] << 8) + buffer[2];
-        int maxHeight = (buffer[7] << 16) + (buffer[6] << 8) + buffer[5];
-        int maxPressure = (buffer[9] << 8) + buffer[8];
-
-        std::cout << deviceName << " configured with max-width: " << maxWidth << " max-height: " << maxHeight
-                  << " max-pressure: " << maxPressure << std::endl;
-
-        unsigned short vendorId = 0x256c;
-        unsigned short productId = 0xf06e;
-        unsigned short versionId = 0x0001;
-
-        struct uinput_pen_args penArgs{
-                .maxWidth = maxWidth,
-                .maxHeight = maxHeight,
-                .maxPressure = maxPressure,
-                .maxTiltX = 60,
-                .maxTiltY = 60,
-                .vendorId = vendorId,
-                .productId = productId,
-                .versionId = versionId,
-        };
-
-        memset(penArgs.productName, 0, UINPUT_MAX_NAME_SIZE);
-        memcpy(penArgs.productName, deviceName.c_str(), deviceName.length());
-
-        struct uinput_pad_args padArgs{
-                .padButtonAliases = padButtonAliases,
-                .hasWheel = true,
-                .hasHWheel = true,
-                .wheelMax = 1,
-                .hWheelMax = 1,
-                .vendorId = vendorId,
-                .productId = productId,
-                .versionId = versionId,
-        };
-
-        std::stringstream padName;
-        padName << deviceName;
-        padName << " Pad";
-        std::string padNameString = padName.str();
-
-        memset(padArgs.productName, 0, UINPUT_MAX_NAME_SIZE);
-        memcpy(padArgs.productName, padNameString.c_str(), padNameString.length());
-
-        uinputPens[handle] = create_pen(penArgs);
-        uinputPads[handle] = create_pad(padArgs);
-
         delete[] buffer;
+        return false;
     }
+
+    int maxWidth = (buffer[4] << 16) + (buffer[3] << 8) + buffer[2];
+    int maxHeight = (buffer[7] << 16) + (buffer[6] << 8) + buffer[5];
+    int maxPressure = (buffer[9] << 8) + buffer[8];
+
+    std::cout << deviceName << " configured with max-width: " << maxWidth << " max-height: " << maxHeight
+              << " max-pressure: " << maxPressure << std::endl;
+
+    unsigned short vendorId = 0x256c;
+    unsigned short productId = 0xf06e;
+    unsigned short versionId = 0x0001;
+
+    struct uinput_pen_args penArgs{
+            .maxWidth = maxWidth,
+            .maxHeight = maxHeight,
+            .maxPressure = maxPressure,
+            .maxTiltX = 60,
+            .maxTiltY = 60,
+            .vendorId = vendorId,
+            .productId = productId,
+            .versionId = versionId,
+    };
+
+    memset(penArgs.productName, 0, UINPUT_MAX_NAME_SIZE);
+    memcpy(penArgs.productName, deviceName.c_str(), deviceName.length());
+
+    struct uinput_pad_args padArgs{
+            .padButtonAliases = padButtonAliases,
+            .hasWheel = true,
+            .hasHWheel = true,
+            .wheelMax = 1,
+            .hWheelMax = 1,
+            .vendorId = vendorId,
+            .productId = productId,
+            .versionId = versionId,
+    };
+
+    std::stringstream padName;
+    padName << deviceName;
+    padName << " Pad";
+    std::string padNameString = padName.str();
+
+    memset(padArgs.productName, 0, UINPUT_MAX_NAME_SIZE);
+    memcpy(padArgs.productName, padNameString.c_str(), padNameString.length());
+
+    uinputPens[handle] = create_pen(penArgs);
+    uinputPads[handle] = create_pad(padArgs);
+
+    delete[] buffer;
 
     return true;
 }

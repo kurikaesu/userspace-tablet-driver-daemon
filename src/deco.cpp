@@ -62,13 +62,7 @@ int deco::sendInitKeyOnInterface() {
 }
 
 bool deco::attachToInterfaceId(int interfaceId) {
-    switch (interfaceId){
-        case 2:
-            return true;
-
-        default:
-            return false;
-    }
+    return interfaceId == 2;
 }
 
 bool deco::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {

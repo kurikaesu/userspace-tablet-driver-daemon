@@ -76,54 +76,52 @@ int artist_12_pro::sendInitKeyOnInterface() {
 }
 
 bool artist_12_pro::attachToInterfaceId(int interfaceId) {
-    return true;
+    return interfaceId == 2;
 }
 
 bool artist_12_pro::attachDevice(libusb_device_handle *handle, int interfaceId) {
-    if (interfaceId == 2) {
-        unsigned char *buf = new unsigned char[12];
+    auto *buf = new unsigned char[12];
 
-        // We need to get a few more bits of information
-        if (libusb_get_string_descriptor(handle, 0x64, 0x0409, buf, 12) != 12) {
-            std::cout << "Could not get descriptor" << std::endl;
-            return false;
-        }
-
-        int maxWidth = (buf[3] << 8) + buf[2];
-        int maxHeight = (buf[5] << 8) + buf[4];
-        int maxPressure = (buf[9] << 8) + buf[8];
-
-        unsigned short vendorId = 0x28bd;
-        unsigned short productId = 0xf80a;
-        unsigned short versionId = 0x0001;
-
-        struct uinput_pen_args penArgs{
-                .maxWidth = maxWidth,
-                .maxHeight = maxHeight,
-                .maxPressure = maxPressure,
-                .maxTiltX = 60,
-                .maxTiltY = 60,
-                .vendorId = vendorId,
-                .productId = productId,
-                .versionId = versionId,
-                {"XP-Pen Artist 12 Pro"},
-        };
-
-        struct uinput_pad_args padArgs{
-                .padButtonAliases = padButtonAliases,
-                .hasWheel = true,
-                .hasHWheel = true,
-                .wheelMax = 1,
-                .hWheelMax = 1,
-                .vendorId = vendorId,
-                .productId = productId,
-                .versionId = versionId,
-                {"XP-Pen Artist 12 Pro Pad"},
-        };
-
-        uinputPens[handle] = create_pen(penArgs);
-        uinputPads[handle] = create_pad(padArgs);
+    // We need to get a few more bits of information
+    if (libusb_get_string_descriptor(handle, 0x64, 0x0409, buf, 12) != 12) {
+        std::cout << "Could not get descriptor" << std::endl;
+        return false;
     }
+
+    int maxWidth = (buf[3] << 8) + buf[2];
+    int maxHeight = (buf[5] << 8) + buf[4];
+    int maxPressure = (buf[9] << 8) + buf[8];
+
+    unsigned short vendorId = 0x28bd;
+    unsigned short productId = 0xf80a;
+    unsigned short versionId = 0x0001;
+
+    struct uinput_pen_args penArgs{
+            .maxWidth = maxWidth,
+            .maxHeight = maxHeight,
+            .maxPressure = maxPressure,
+            .maxTiltX = 60,
+            .maxTiltY = 60,
+            .vendorId = vendorId,
+            .productId = productId,
+            .versionId = versionId,
+            {"XP-Pen Artist 12 Pro"},
+    };
+
+    struct uinput_pad_args padArgs{
+            .padButtonAliases = padButtonAliases,
+            .hasWheel = true,
+            .hasHWheel = true,
+            .wheelMax = 1,
+            .hWheelMax = 1,
+            .vendorId = vendorId,
+            .productId = productId,
+            .versionId = versionId,
+            {"XP-Pen Artist 12 Pro Pad"},
+    };
+
+    uinputPens[handle] = create_pen(penArgs);
+    uinputPads[handle] = create_pad(padArgs);
 
     return true;
 }
