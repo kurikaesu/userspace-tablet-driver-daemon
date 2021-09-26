@@ -26,6 +26,7 @@ public:
     int maxWidth;
     int maxHeight;
     int maxPressure;
+    int resolution;
 
     int maxTiltX;
     int maxTiltY;

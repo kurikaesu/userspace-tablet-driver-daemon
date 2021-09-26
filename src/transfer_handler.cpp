@@ -175,15 +175,9 @@ int transfer_handler::create_pen(const uinput_pen_args& penArgs) {
 
     set_absbit(ABS_X);
     set_absbit(ABS_Y);
-    set_absbit(ABS_Z);
-    set_absbit(ABS_RZ);
-    set_absbit(ABS_THROTTLE);
-    set_absbit(ABS_WHEEL);
     set_absbit(ABS_PRESSURE);
-    set_absbit(ABS_DISTANCE);
     set_absbit(ABS_TILT_X);
     set_absbit(ABS_TILT_Y);
-    set_absbit(ABS_MISC);
 
     set_relbit(REL_WHEEL);
 
@@ -196,6 +190,7 @@ int transfer_handler::create_pen(const uinput_pen_args& penArgs) {
                     .value = 0,
                     .minimum = 0,
                     .maximum = penArgs.maxWidth,
+                    .resolution = penArgs.resolution
             },
     };
 
@@ -208,6 +203,7 @@ int transfer_handler::create_pen(const uinput_pen_args& penArgs) {
                     .value = 0,
                     .minimum = 0,
                     .maximum = penArgs.maxHeight,
+                    .resolution = penArgs.resolution
             },
     };
 
