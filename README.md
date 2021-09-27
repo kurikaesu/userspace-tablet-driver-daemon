@@ -5,9 +5,9 @@ This repo currently houses a command-line only utility that creates a userspace 
 - Artist 13.3 Pro
 - Artist 12 Pro (Unconfirmed, needs testing)
 - Artist 24 Pro (Unconfirmed, needs testing)
-- Deco Pro S (You will need to use the proprietary driver to change the touch type to "Customized" in order to get bindings)
-- Deco Pro M (Same deal as small version)
-- Deco 01v2 (Unconfirmed, needs testing)
+- Deco Pro S (Use GUI to switch touch-pad modes)
+- Deco Pro M (Use GUI to switch touch-pad modes)
+- Deco 01v2
 - Huion WH1409 v2
 - Huion WH1409 (2048 pressure level version)
 - Huion H1161
