@@ -190,6 +190,8 @@ int transfer_handler::create_pen(const uinput_pen_args& penArgs) {
                     .value = 0,
                     .minimum = 0,
                     .maximum = penArgs.maxWidth,
+                    .fuzz = 0,
+                    .flat = 0,
                     .resolution = penArgs.resolution
             },
     };
@@ -203,6 +205,8 @@ int transfer_handler::create_pen(const uinput_pen_args& penArgs) {
                     .value = 0,
                     .minimum = 0,
                     .maximum = penArgs.maxHeight,
+                    .fuzz = 0,
+                    .flat = 0,
                     .resolution = penArgs.resolution
             },
     };
