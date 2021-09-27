@@ -307,10 +307,9 @@ int transfer_handler::create_pad(const uinput_pad_args& padArgs) {
 
     set_relbit(REL_X);
     set_relbit(REL_Y);
-    set_relbit(REL_WHEEL);
-    set_relbit(REL_HWHEEL);
 
     if (padArgs.hasWheel) {
+        set_relbit(REL_WHEEL);
 
         // Setup relative wheel
         struct uinput_abs_setup uinput_abs_setup = (struct uinput_abs_setup) {
@@ -326,6 +325,8 @@ int transfer_handler::create_pad(const uinput_pad_args& padArgs) {
     }
 
     if (padArgs.hasHWheel) {
+        set_relbit(REL_HWHEEL);
+
         // Setup relative hwheel
         struct uinput_abs_setup uinput_abs_setup = (struct uinput_abs_setup) {
                 .code = REL_HWHEEL,

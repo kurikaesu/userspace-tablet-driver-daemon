@@ -72,6 +72,10 @@ void huion_tablet::setConfig(nlohmann::json config) {
         addToButtonMap(BTN_9, EV_KEY, {KEY_F6});
         addToButtonMap(BTN_SOUTH, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTALT, KEY_Z});
         addToButtonMap(BTN_EAST, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTSHIFT, KEY_N});
+
+        // Mapping the touch-strips
+        addToDialMap(REL_WHEEL, -1, EV_KEY, {KEY_LEFTCTRL, KEY_MINUS});
+        addToDialMap(REL_WHEEL, 1, EV_KEY, {KEY_LEFTCTRL, KEY_EQUAL});
     }
     jsonConfig = config;
 
@@ -131,7 +135,7 @@ std::set<int> huion_tablet::getConnectedAliasedDevices() {
 }
 
 std::wstring huion_tablet::getDeviceFirmwareName(libusb_device_handle *handle) {
-    unsigned char *buffer = new unsigned char[200];
+    auto *buffer = new unsigned char[200];
     memset(buffer, 0, 200);
 
     // Extract the firmware name
@@ -147,7 +151,7 @@ std::wstring huion_tablet::getDeviceFirmwareName(libusb_device_handle *handle) {
         std::cout << "Descriptor response wasn't a string" << std::endl;
     }
     int dataLength = buffer[0];
-    wchar_t *firmwareName = new wchar_t[dataLength];
+    auto *firmwareName = new wchar_t[dataLength];
     wmemset(firmwareName, 0, dataLength);
     for (int i = 0, j = 2; i < descriptorLength; ++i, j += 2) {
         firmwareName[i] = (buffer[j + 1] << 8) + buffer[j];
@@ -161,7 +165,7 @@ std::wstring huion_tablet::getDeviceFirmwareName(libusb_device_handle *handle) {
 }
 
 bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId) {
-    unsigned char *buffer = new unsigned char[200];
+    auto *buffer = new unsigned char[200];
     memset(buffer, 0, 200);
     auto firmware = getDeviceFirmwareName(handle);
     std::wcout << "Got firmware " << firmware << std::endl;
@@ -285,6 +289,12 @@ bool huion_tablet::handleTransferData(libusb_device_handle *handle, unsigned cha
             handlePadEventV1(handle, data, dataLen);
 
             break;
+
+        case 0xf0:
+            handleTouchStripEvent(handle, data, dataLen);
+
+            break;
+
         default:
             return false;
     }
@@ -434,6 +444,35 @@ void huion_tablet::handlePadEventV1(libusb_device_handle* handle, unsigned char*
 
         if (shouldSyn) {
             uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+        }
+    }
+}
+
+void huion_tablet::handleTouchStripEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+    if (data[1] == 0xf0) {
+        short touchValue = data[5];
+        // Check if we let go
+        if (touchValue == 0) {
+            touchStripLastValue = -1;
+            return;
+        }
+
+        if (touchValue != touchStripLastValue) {
+            int sendValue = 0;
+            if (touchStripLastValue == -1) {
+                touchStripLastValue = touchValue;
+                return;
+            }
+
+            if (touchValue < touchStripLastValue) {
+                sendValue = 1;
+            } else if (touchValue > touchStripLastValue) {
+                sendValue = -1;
+            }
+
+            uinput_send(uinputPads[handle], EV_REL, REL_WHEEL, sendValue);
+            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+            touchStripLastValue = touchValue;
         }
     }
 }

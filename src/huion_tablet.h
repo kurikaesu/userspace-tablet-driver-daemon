@@ -43,11 +43,13 @@ private:
     void handleDigitizerEventV2(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
     void handleDigitizerEventV3(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
     void handlePadEventV1(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
+    void handleTouchStripEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
 
     std::string getDeviceNameFromFirmware(std::wstring firmwareName);
 
     std::map<libusb_device_handle*, std::string> handleToDeviceName;
     std::map<libusb_device_handle*, int> handleToAliasedDeviceId;
+    short touchStripLastValue;
 };
 
 
