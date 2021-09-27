@@ -465,13 +465,34 @@ void huion_tablet::handleTouchStripEvent(libusb_device_handle *handle, unsigned 
             }
 
             if (touchValue < touchStripLastValue) {
-                sendValue = 1;
-            } else if (touchValue > touchStripLastValue) {
                 sendValue = -1;
+            } else if (touchValue > touchStripLastValue) {
+                sendValue = 1;
             }
 
-            uinput_send(uinputPads[handle], EV_REL, REL_WHEEL, sendValue);
-            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+            if (sendValue != 0) {
+                bool send_reset = false;
+                auto dialMap = dialMapping.getDialMap(EV_REL, REL_WHEEL, sendValue);
+                for (auto dmap : dialMap) {
+                    uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, dmap.event_data);
+                    if (dmap.event_type == EV_KEY) {
+                        send_reset = true;
+                    }
+                }
+
+                uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+
+                if (send_reset) {
+                    for (auto dmap : dialMap) {
+                        // We have to handle key presses manually here because this device does not send reset events
+                        if (dmap.event_type == EV_KEY) {
+                            uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, 0);
+                        }
+                    }
+                }
+                uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+            }
+
             touchStripLastValue = touchValue;
         }
     }
