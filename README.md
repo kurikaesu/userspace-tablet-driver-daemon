@@ -1,6 +1,7 @@
 # Kuri's Userspace tablet driver daemon
 
 This repo currently houses a command-line only utility that creates a userspace driver for the following models:
+- Artist 22e Pro
 - Artist 22R Pro
 - Artist 13.3 Pro
 - Artist 12 Pro (Unconfirmed, needs testing)
