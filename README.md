@@ -50,3 +50,12 @@ I would suggest running the command userspace_tablet_driver_daemon from the term
 
 ## Note
 This driver leverages the `wacom` x11 drivers to handle the stylus/digitizer. You will need to use `xsetwacom` to configure the digitizer side of things.
+
+## Contributing
+Should you want to contribute there are a few ways to do so.
+- Testing the driver on your Linux distribution. If it doesn't work, cut me an issue.
+- Fix an open issue and send me a pull-request (If needed)
+- Implement support for your tablet if you are able to. Otherwise,
+- Lend me your tablet so that I can do the implementation or
+- Buy the tablet for me from my wishlist: https://www.amazon.com/hz/wishlist/ls/10J2MJJPCC2JF?ref_=wl_share
+- If you think a tablet should be on my wishlist, but it isn't, let me know!
