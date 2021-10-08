@@ -1,6 +1,6 @@
-# Kuri's Userspace tablet driver daemon
+# Kuri's Linux user-space graphics tablet driver daemon
 
-This repo currently houses a command-line only utility that creates a userspace driver for the following models:
+This repo currently houses a command-line only utility that creates a user-space driver for the following models:
 - Artist 22E Pro
 - Artist 22R Pro
 - Artist 13.3 Pro
@@ -25,7 +25,7 @@ Things on the TODO list:
 - Support more devices
 
 Things on the long-term TODO list:
-- Create an X11 driver so that we don't have to piggy-back on wacom
+- Create an X11 driver so that we don't have to piggy-back on wacom. Work for this is tracked in the repository: https://github.com/kurikaesu/userspace-tablet-xf86-driver
 
 ## Warning
 - This includes a 70-uinput-plugdev.rules file that gives users on your computer that are in the `plugdev` permission group access to uinput without SUDO. This is how I can make this driver run without having the user constantly enter their password each time.
