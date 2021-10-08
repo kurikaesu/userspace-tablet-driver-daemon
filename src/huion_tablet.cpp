@@ -91,6 +91,7 @@ bool huion_tablet::attachToInterfaceId(int interfaceId) {
 }
 
 std::string huion_tablet::getDeviceNameFromFirmware(std::wstring firmwareName) {
+    // HUION tablets
     if (firmwareName == L"HUION_T188_180718") {
         return "Huion WH1409 v2";
     } else if (firmwareName == L"HUION_T191_190619") {
@@ -99,16 +100,27 @@ std::string huion_tablet::getDeviceNameFromFirmware(std::wstring firmwareName) {
         return "Huion WH1409 (2048)";
     }
 
+    // GAOMON tablets
+    else if (firmwareName == L"OEM02_T19n_200311") {
+        return "Gaomon M10K Pro";
+    }
+
     return "Unknown device";
 }
 
 int huion_tablet::getAliasedDeviceIdFromFirmware(std::wstring firmwareName) {
+    // HUION tablets
     if (firmwareName == L"HUION_T188_180718") {
         return 0x0188;
     } else if (firmwareName == L"HUION_T191_190619") {
         return 0x0191;
     } else if (firmwareName == L"HUION_T153_160524") {
         return 0x0153;
+    }
+
+    // GAOMON tablets
+    else if (firmwareName == L"OEM02_T19n_200311") {
+        return 0x0311;
     }
 
     return 0x0000;
