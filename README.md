@@ -4,7 +4,7 @@ This repo currently houses a command-line only utility that creates a user-space
 - Artist 22E Pro
 - Artist 22R Pro
 - Artist 13.3 Pro
-- Artist 12 Pro (Unconfirmed, needs testing)
+- Artist 12 Pro
 - Artist 24 Pro (Unconfirmed, needs testing)
 - Deco Pro S (Use GUI to switch touch-pad modes)
 - Deco Pro M (Use GUI to switch touch-pad modes)
