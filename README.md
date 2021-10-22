@@ -9,6 +9,7 @@ This repo currently houses a command-line only utility that creates a user-space
 - Deco Pro S (Use GUI to switch touch-pad modes)
 - Deco Pro M (Use GUI to switch touch-pad modes)
 - Deco 01v2
+- Star G430S
 - Huion WH1409 v2
 - Huion WH1409 (2048 pressure level version)
 - Huion H1161

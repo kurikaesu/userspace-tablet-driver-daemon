@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "deco_pro_medium.h"
 #include "transfer_setup_data.h"
 #include "deco_01v2.h"
+#include "star_g430s.h"
 
 xp_pen_handler::xp_pen_handler() {
     std::cout << "xp_pen_handler initialized" << std::endl;
@@ -43,6 +44,7 @@ xp_pen_handler::xp_pen_handler() {
     addHandler(new deco_pro_small());
     addHandler(new deco_pro_medium());
     addHandler(new deco_01v2());
+    addHandler(new star_g430s());
 }
 
 int xp_pen_handler::getVendorId() {
