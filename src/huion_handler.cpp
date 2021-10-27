@@ -35,6 +35,7 @@ huion_handler::huion_handler() {
     addHandler(new huion_tablet(0x0188));
     addHandler(new huion_tablet(0x0191));
     addHandler(new huion_tablet(0x0153));
+    addHandler(new huion_tablet(0x0200));
 
     // GAOMON Tablets
     addHandler(new huion_tablet(0x0311));

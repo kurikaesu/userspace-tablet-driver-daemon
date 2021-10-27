@@ -98,6 +98,8 @@ std::string huion_tablet::getDeviceNameFromFirmware(std::wstring firmwareName) {
         return "Huion H1161";
     } else if (firmwareName == L"HUION_T153_160524") {
         return "Huion WH1409 (2048)";
+    } else if (firmwareName == L"HUION_T200_210309") {
+        return "Huion KD100 mini Keydial";
     }
 
     // GAOMON tablets
@@ -116,6 +118,8 @@ int huion_tablet::getAliasedDeviceIdFromFirmware(std::wstring firmwareName) {
         return 0x0191;
     } else if (firmwareName == L"HUION_T153_160524") {
         return 0x0153;
+    } else if (firmwareName == L"HUION_T200_210309") {
+        return 0x0200;
     }
 
     // GAOMON tablets
@@ -211,27 +215,31 @@ bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId) {
     int maxPressure = (buffer[9] << 8) + buffer[8];
     int resolution = (buffer[11] << 8) + buffer[10];
 
-    std::cout << deviceName << " configured with max-width: " << maxWidth << " max-height: " << maxHeight
-              << " max-pressure: " << maxPressure << std::endl;
-
     unsigned short vendorId = 0x256c;
     unsigned short productId = 0xf06e;
     unsigned short versionId = 0x0001;
 
-    struct uinput_pen_args penArgs{
-            .maxWidth = maxWidth,
-            .maxHeight = maxHeight,
-            .maxPressure = maxPressure,
-            .resolution = resolution,
-            .maxTiltX = 60,
-            .maxTiltY = 60,
-            .vendorId = vendorId,
-            .productId = productId,
-            .versionId = versionId,
-    };
+    if (maxWidth != 1 && maxHeight != 1 && maxPressure != 0) {
+        std::cout << deviceName << " configured with max-width: " << maxWidth << " max-height: " << maxHeight
+                  << " max-pressure: " << maxPressure << std::endl;
 
-    memset(penArgs.productName, 0, UINPUT_MAX_NAME_SIZE);
-    memcpy(penArgs.productName, deviceName.c_str(), deviceName.length());
+        struct uinput_pen_args penArgs{
+                .maxWidth = maxWidth,
+                .maxHeight = maxHeight,
+                .maxPressure = maxPressure,
+                .resolution = resolution,
+                .maxTiltX = 60,
+                .maxTiltY = 60,
+                .vendorId = vendorId,
+                .productId = productId,
+                .versionId = versionId,
+        };
+
+        memset(penArgs.productName, 0, UINPUT_MAX_NAME_SIZE);
+        memcpy(penArgs.productName, deviceName.c_str(), deviceName.length());
+
+        uinputPens[handle] = create_pen(penArgs);
+    }
 
     struct uinput_pad_args padArgs{
             .padButtonAliases = padButtonAliases,
@@ -252,7 +260,6 @@ bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId) {
     memset(padArgs.productName, 0, UINPUT_MAX_NAME_SIZE);
     memcpy(padArgs.productName, padNameString.c_str(), padNameString.length());
 
-    uinputPens[handle] = create_pen(penArgs);
     uinputPads[handle] = create_pad(padArgs);
 
     delete[] buffer;
@@ -306,6 +313,9 @@ bool huion_tablet::handleTransferData(libusb_device_handle *handle, unsigned cha
             handleTouchStripEvent(handle, data, dataLen);
 
             break;
+
+        case 0xf1:
+            handleDialEvent(handle, data, dataLen);
 
         default:
             return false;
@@ -429,7 +439,7 @@ void huion_tablet::handleDigitizerEventV3(libusb_device_handle *handle, unsigned
 void huion_tablet::handlePadEventV1(libusb_device_handle* handle, unsigned char* data, size_t dataLen) {
     if (data[1] == 0xe0) {
         // Extract the button being pressed (If there is one)
-        long button = (data[5] << 8) + data[4];
+        long button = (data[6] << 16) +  (data[5] << 8) + data[4];
         // Grab the first bit set in the button long which tells us the button number
         long position = ffsl(button);
 
@@ -506,6 +516,40 @@ void huion_tablet::handleTouchStripEvent(libusb_device_handle *handle, unsigned 
             }
 
             touchStripLastValue = touchValue;
+        }
+    }
+}
+
+void huion_tablet::handleDialEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+    if (data[1] == 0xf1) {
+        short dialValue = 0;
+        if (data[5] == 0x01) {
+            dialValue = -1;
+        } else if (data[5] == 0x02) {
+            dialValue = 1;
+        }
+
+        if (dialValue != 0) {
+            bool send_reset = false;
+            auto dialMap = dialMapping.getDialMap(EV_REL, REL_WHEEL, dialValue);
+            for (auto dmap: dialMap) {
+                uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, dmap.event_data);
+                if (dmap.event_type == EV_KEY) {
+                    send_reset = true;
+                }
+            }
+
+            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+
+            if (send_reset) {
+                for (auto dmap: dialMap) {
+                    // We have to handle key presses manually here because this device does not send reset events
+                    if (dmap.event_type == EV_KEY) {
+                        uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, 0);
+                    }
+                }
+            }
+            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
         }
     }
 }

@@ -44,6 +44,7 @@ private:
     void handleDigitizerEventV3(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
     void handlePadEventV1(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
     void handleTouchStripEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
+    void handleDialEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
 
     std::string getDeviceNameFromFirmware(std::wstring firmwareName);
 
