@@ -22,6 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "artist_12_pro.h"
 
 artist_12_pro::artist_12_pro() {
+    productIds.push_back(0x080a);
+
     for (int currentAssignedButton = BTN_0; currentAssignedButton < BTN_8; ++currentAssignedButton) {
         padButtonAliases.push_back(currentAssignedButton);
     }
