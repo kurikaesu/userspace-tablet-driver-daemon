@@ -100,6 +100,8 @@ std::string huion_tablet::getDeviceNameFromFirmware(std::wstring firmwareName) {
         return "Huion WH1409 (2048)";
     } else if (firmwareName == L"HUION_T200_210309") {
         return "Huion KD100 mini Keydial";
+    } else if (firmwareName == L"HUION_M182_200605") {
+        return "Huion Kamvas Pro 13";
     }
 
     // GAOMON tablets
@@ -120,6 +122,8 @@ int huion_tablet::getAliasedDeviceIdFromFirmware(std::wstring firmwareName) {
         return 0x0153;
     } else if (firmwareName == L"HUION_T200_210309") {
         return 0x0200;
+    } else if (firmwareName == L"HUION_M182_200605") {
+        return 0x0182;
     }
 
     // GAOMON tablets

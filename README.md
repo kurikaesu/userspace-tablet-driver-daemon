@@ -11,6 +11,7 @@ This repo currently houses a command-line only utility that creates a user-space
 - XP-Pen Deco 01v2
 - XP-Pen Star G430S
 - XP-Pen AC19 Shortcut Remote
+- Huion Kamvas Pro 13
 - Huion WH1409 v2
 - Huion WH1409 (2048 pressure level version)
 - Huion H1161
