@@ -27,7 +27,7 @@ This driver also listens to a unix socket at `$HOME/.local/var/run/userspace_tab
 
 Things on the TODO list:
 - Support more devices
-- Provide a way to calibrate pressure curves as we no longer use the wacom driver
+- Provide a way to set up calibrate pressure curves through the GUI in a user friendly way.
 
 ## Warning
 - This includes a 70-uinput-plugdev.rules file that gives users on your computer that are in the `plugdev` permission group access to uinput without SUDO. This is how I can make this driver run without having the user constantly enter their password each time.
