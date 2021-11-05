@@ -167,49 +167,6 @@ bool artist_22r_pro::handleTransferData(libusb_device_handle* handle, unsigned c
     return true;
 }
 
-void artist_22r_pro::handleDigitizerEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
-    if (data[1] < 0xb0) {
-        // Extract the X and Y position
-        int penX = (data[3] << 8) + data[2];
-        int penY = (data[5] << 8) + data[4];
-
-        // Check to see if the pen is touching
-        int pressure;
-        if (0x01 & data[1]) {
-            // Grab the pressure amount
-            pressure = (data[7] << 8) + data[6];
-
-            uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 1);
-            uinput_send(uinputPens[handle], EV_ABS, ABS_PRESSURE, pressure);
-        } else {
-            uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 0);
-        }
-
-        // Grab the tilt values
-        short tiltx = (char)data[8];
-        short tilty = (char)data[9];
-
-        // Check to see if the stylus buttons are being pressed
-        if (0x02 & data[1]) {
-            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 1);
-            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 0);
-        } else if (0x04 & data[1]) {
-            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 0);
-            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 1);
-        } else {
-            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 0);
-            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 0);
-        }
-
-        uinput_send(uinputPens[handle], EV_ABS, ABS_X, penX);
-        uinput_send(uinputPens[handle], EV_ABS, ABS_Y, penY);
-        uinput_send(uinputPens[handle], EV_ABS, ABS_TILT_X, tiltx);
-        uinput_send(uinputPens[handle], EV_ABS, ABS_TILT_Y, tilty);
-
-        uinput_send(uinputPens[handle], EV_SYN, SYN_REPORT, 1);
-    }
-}
-
 void artist_22r_pro::handleFrameEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     if (data[1] >= 0xf0) {
         // Extract the button being pressed (If there is one)
@@ -217,11 +174,13 @@ void artist_22r_pro::handleFrameEvent(libusb_device_handle *handle, unsigned cha
         // Grab the first bit set in the button long which tells us the button number
         long position = ffsl(button);
 
+        std::bitset<sizeof(data)> dialBits(data[7]);
+
         // Take the left dial
         short leftDialValue = 0;
-        if (0x01 & data[7]) {
+        if (dialBits.test(0)) {
             leftDialValue = 1;
-        } else if (0x02 & data[7]) {
+        } else if (dialBits.test(1)) {
             leftDialValue = -1;
         }
 
@@ -237,72 +196,21 @@ void artist_22r_pro::handleFrameEvent(libusb_device_handle *handle, unsigned cha
         bool dialEvent = false;
 
         if (leftDialValue != 0) {
-            bool send_reset = false;
-            auto dialMap = dialMapping.getDialMap(EV_REL, REL_WHEEL, leftDialValue);
-            for (auto dmap : dialMap) {
-                uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, dmap.event_data);
-                if (dmap.event_type == EV_KEY) {
-                    send_reset = true;
-                }
-            }
-
-            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
-
-            if (send_reset) {
-                for (auto dmap : dialMap) {
-                    // We have to handle key presses manually here because this device does not send reset events
-                    if (dmap.event_type == EV_KEY) {
-                        uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, 0);
-                    }
-                }
-            }
-            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
-
+            handleDialEvent(handle, REL_WHEEL, leftDialValue);
             shouldSyn = false;
             dialEvent = true;
-        } else if (rightDialValue != 0) {
-            bool send_reset = false;
-            auto dialMap = dialMapping.getDialMap(EV_REL, REL_HWHEEL, rightDialValue);
-            for (auto dmap : dialMap) {
-                uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, dmap.event_data);
-                if (dmap.event_type == EV_KEY) {
-                    send_reset = true;
-                }
-            }
+        }
 
-            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
-
-            if (send_reset) {
-                for (auto dmap : dialMap) {
-                    // We have to handle key presses manually here because this device does not send reset events
-                    if (dmap.event_type == EV_KEY) {
-                        uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, 0);
-                    }
-                }
-            }
-
-            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
-
+        if (rightDialValue != 0) {
+            handleDialEvent(handle, REL_HWHEEL, rightDialValue);
             shouldSyn = false;
             dialEvent = true;
         }
 
         if (button != 0) {
-            auto padMap = padMapping.getPadMap(padButtonAliases[position - 1]);
-            for (auto pmap : padMap) {
-                uinput_send(uinputPads[handle], pmap.event_type, pmap.event_value, 1);
-            }
-            lastPressedButton[handle] = position;
+            handlePadButtonPressed(handle, position);
         } else if (!dialEvent) {
-            if (lastPressedButton.find(handle) != lastPressedButton.end() && lastPressedButton[handle] > 0) {
-                auto padMap = padMapping.getPadMap(padButtonAliases[lastPressedButton[handle] - 1]);
-                for (auto pmap : padMap) {
-                    uinput_send(uinputPads[handle], pmap.event_type, pmap.event_value, 0);
-                }
-                lastPressedButton[handle] = -1;
-            } else {
-                std::cout << "Got a phantom button up event" << std::endl;
-            }
+            handlePadButtonUnpressed(handle);
         }
 
         if (shouldSyn) {

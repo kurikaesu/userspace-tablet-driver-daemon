@@ -20,9 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define USERSPACE_TABLET_DRIVER_DAEMON_DECO_H
 
 
-#include "transfer_handler.h"
+#include "xp_pen_unified_device.h"
 
-class deco : public transfer_handler {
+class deco : public xp_pen_unified_device {
 public:
     deco();
 
@@ -34,7 +34,6 @@ public:
     bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
 
 protected:
-    void handleDigitizerEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
     void handleUnifiedFrameEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
 };
 

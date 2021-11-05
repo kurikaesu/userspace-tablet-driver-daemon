@@ -27,9 +27,7 @@ This driver also listens to a unix socket at `$HOME/.local/var/run/userspace_tab
 
 Things on the TODO list:
 - Support more devices
-
-Things on the long-term TODO list:
-- Create an X11 driver so that we don't have to piggy-back on wacom. Work for this is tracked in the repository: https://github.com/kurikaesu/userspace-tablet-xf86-driver
+- Provide a way to calibrate pressure curves as we no longer use the wacom driver
 
 ## Warning
 - This includes a 70-uinput-plugdev.rules file that gives users on your computer that are in the `plugdev` permission group access to uinput without SUDO. This is how I can make this driver run without having the user constantly enter their password each time.
@@ -49,18 +47,31 @@ git clone https://github.com/kurikaesu/userspace-tablet-driver-daemon.git
 cd userspace-tablet-driver-daemon
 cmake .
 make
+sudo make install
 ```
 
-You can optionally `sudo make install` which will place the executable in /usr/bin/userspace_tablet_driver_daemon.
-If you opted not to do the `make install` then the configuration files under `config` will need to be placed in their respective locations. When this is done, just reboot your computer and all the rules required to make things work should be in place.
+The first time you `sudo make install` you will need to trigger the udev rule changes in order for the driver to work.
+This can be done with:
+```
+sudo udevadm trigger
+```
 
 I would suggest running the command userspace_tablet_driver_daemon from the terminal first and watching the output to see whether or not things are broken first before having your desktop environment auto-start the application on login.
 
-## Note
-This driver leverages the `wacom` x11 drivers to handle the stylus/digitizer. You will need to use `xsetwacom` to configure the digitizer side of things.
+## Changing which display the device is mapped to
+Use xinput in order to configure this:
+```
+xinput map-to-output <xinput device name> <xrandr-monitor-name>
+```
 
-### Note 2
-If you are using an XP-Pen Deco Pro (Small or Medium) the driver no longer needs the wacom X11 drivers for basic functionality. The stylus buttons are able to be bound as well and the GUI has been updated to reflect that. It is still missing screen assignment and pressure calibration though!
+You can get the monitor name by:
+```
+xrandr --listmonitors
+```
+It will show something like `eDP-1` or `HDMI-A-0`
+
+#### Gnome under wayland without X11
+Unfortunately at the moment I do not know how to change the display mapping when using Gnome under wayland as I can't find any documentation on how to instruct the compositor `mutter` to do so.
 
 ## Contributing
 Should you want to contribute there are a few ways to do so.

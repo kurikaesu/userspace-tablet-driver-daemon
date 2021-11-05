@@ -2,10 +2,15 @@ cmake_minimum_required(VERSION 3.10)
 project(userspace_tablet_driver_daemon)
 
 set(CMAKE_CXX_STANDARD 17)
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX "/" CACHE PATH "cache" FORCE)
+endif()
 
-add_executable(userspace_tablet_driver_daemon src/main.cpp src/usb_devices.cpp src/usb_devices.h src/vendor_handler.h src/xp_pen_handler.cpp src/xp_pen_handler.h src/device_interface_pair.h src/event_handler.cpp src/event_handler.h src/vendor_handler.cpp src/artist_22r_pro.cpp src/artist_22r_pro.h src/artist_22e_pro.cpp src/artist_22e_pro.h src/transfer_handler_pair.h src/transfer_handler.h src/transfer_handler.cpp src/uinput_pen_args.h src/uinput_pad_args.h src/pad_mapping.cpp src/pad_mapping.h src/dial_mapping.cpp src/dial_mapping.h src/aliased_input_event.h src/artist_13_3_pro.cpp src/artist_13_3_pro.h src/artist_24_pro.cpp src/artist_24_pro.h src/artist_12_pro.cpp src/artist_12_pro.h src/deco_pro.cpp src/deco_pro.h src/deco_pro_small.cpp src/deco_pro_small.h src/uinput_pointer_args.h src/deco_pro_medium.cpp src/deco_pro_medium.h src/hotplug_event.h src/socket_server.cpp src/socket_server.h src/unix_socket_message_queue.cpp src/unix_socket_message_queue.h src/unix_socket_message.h src/transfer_setup_data.h src/deco.cpp src/deco.h src/deco_01v2.cpp src/deco_01v2.h src/huion_handler.cpp src/huion_handler.h src/huion_tablet.cpp src/huion_tablet.h src/star.cpp src/star.h src/star_g430s.cpp src/star_g430s.h src/ac19.cpp src/ac19.h src/stylus_button_mapping.cpp src/stylus_button_mapping.h)
+add_executable(userspace_tablet_driver_daemon src/main.cpp src/usb_devices.cpp src/usb_devices.h src/vendor_handler.h src/xp_pen_handler.cpp src/xp_pen_handler.h src/device_interface_pair.h src/event_handler.cpp src/event_handler.h src/vendor_handler.cpp src/artist_22r_pro.cpp src/artist_22r_pro.h src/artist_22e_pro.cpp src/artist_22e_pro.h src/transfer_handler_pair.h src/transfer_handler.h src/transfer_handler.cpp src/uinput_pen_args.h src/uinput_pad_args.h src/pad_mapping.cpp src/pad_mapping.h src/dial_mapping.cpp src/dial_mapping.h src/aliased_input_event.h src/artist_13_3_pro.cpp src/artist_13_3_pro.h src/artist_24_pro.cpp src/artist_24_pro.h src/artist_12_pro.cpp src/artist_12_pro.h src/deco_pro.cpp src/deco_pro.h src/deco_pro_small.cpp src/deco_pro_small.h src/uinput_pointer_args.h src/deco_pro_medium.cpp src/deco_pro_medium.h src/hotplug_event.h src/socket_server.cpp src/socket_server.h src/unix_socket_message_queue.cpp src/unix_socket_message_queue.h src/unix_socket_message.h src/transfer_setup_data.h src/deco.cpp src/deco.h src/deco_01v2.cpp src/deco_01v2.h src/huion_handler.cpp src/huion_handler.h src/huion_tablet.cpp src/huion_tablet.h src/star.cpp src/star.h src/star_g430s.cpp src/star_g430s.h src/ac19.cpp src/ac19.h src/stylus_button_mapping.cpp src/stylus_button_mapping.h src/xp_pen_unified_device.cpp src/xp_pen_unified_device.h)
 target_link_libraries(userspace_tablet_driver_daemon usb-1.0 stdc++fs)
-install(TARGETS userspace_tablet_driver_daemon DESTINATION bin)
+install(TARGETS userspace_tablet_driver_daemon DESTINATION usr/bin)
+install(DIRECTORY config/etc/ DESTINATION etc)
+install(DIRECTORY config/usr/ DESTINATION usr)
 
 set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
 set(CPACK_INSTALLED_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/config;.")

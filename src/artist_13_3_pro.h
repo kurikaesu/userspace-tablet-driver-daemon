@@ -20,9 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define USERSPACE_TABLET_DRIVER_DAEMON_ARTIST_13_3_PRO_H
 
 
-#include "transfer_handler.h"
+#include "xp_pen_unified_device.h"
 
-class artist_13_3_pro : public transfer_handler {
+class artist_13_3_pro : public xp_pen_unified_device {
 public:
     artist_13_3_pro();
     ~artist_13_3_pro();
@@ -34,7 +34,6 @@ public:
     bool attachDevice(libusb_device_handle* handle, int interfaceId);
     bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
 private:
-    void handleDigitizerEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
     void handleFrameEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
 };
 

@@ -190,45 +190,15 @@ void ac19::handleFrameEvent(libusb_device_handle *handle, unsigned char *data, s
     bool dialEvent = false;
 
     if (dialValue != 0) {
-        bool send_reset = false;
-        auto dialMap = dialMapping.getDialMap(EV_REL, REL_WHEEL, dialValue);
-        for (auto dmap: dialMap) {
-            uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, dmap.event_data);
-            if (dmap.event_type == EV_KEY) {
-                send_reset = true;
-            }
-        }
-
-        uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
-
-        if (send_reset) {
-            for (auto dmap: dialMap) {
-                // We have to handle key presses manually here because this device does not send reset events
-                if (dmap.event_type == EV_KEY) {
-                    uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, 0);
-                }
-            }
-        }
-        uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
-
+        handleDialEvent(handle, REL_WHEEL, dialValue);
         shouldSyn = false;
         dialEvent = true;
     }
 
     if (button != 0) {
-        auto padMap = padMapping.getPadMap(padButtonAliases[button - 1]);
-        for (auto pmap : padMap) {
-            uinput_send(uinputPads[handle], pmap.event_type, pmap.event_value, 1);
-        }
-        lastPressedButton[handle] = button;
+        handlePadButtonPressed(handle, button);
     } else if (!dialEvent) {
-        if (lastPressedButton.find(handle) != lastPressedButton.end() && lastPressedButton[handle] > 0) {
-            auto padMap = padMapping.getPadMap(padButtonAliases[lastPressedButton[handle] - 1]);
-            for (auto pmap : padMap) {
-                uinput_send(uinputPads[handle], pmap.event_type, pmap.event_value, 0);
-            }
-            lastPressedButton[handle] = -1;
-        }
+        handlePadButtonUnpressed(handle);
     }
 
     if (shouldSyn) {

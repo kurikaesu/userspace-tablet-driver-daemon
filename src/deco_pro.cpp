@@ -35,11 +35,6 @@ void deco_pro::setConfig(nlohmann::json config) {
     if (!config.contains("mapping") || config["mapping"] == nullptr) {
         config["mapping"] = nlohmann::json({});
 
-        auto addToStylusMap = [&config](int key, int eventType, std::vector<int> codes) {
-            std::string evstring = std::to_string(eventType);
-            config["mapping"]["stylus_buttons"][std::to_string(key)][evstring] = codes;
-        };
-
         auto addToButtonMap = [&config](int key, int eventType, std::vector<int> codes) {
             std::string evstring = std::to_string(eventType);
             config["mapping"]["buttons"][std::to_string(key)][evstring] = codes;
@@ -50,9 +45,6 @@ void deco_pro::setConfig(nlohmann::json config) {
             std::string evstring = std::to_string(eventType);
             config["mapping"]["dials"][std::to_string(dial)][strvalue][evstring] = codes;
         };
-
-        addToStylusMap(BTN_STYLUS, EV_KEY, {KEY_SPACE});
-        addToStylusMap(BTN_STYLUS2, EV_KEY, {KEY_SPACE});
 
         addToButtonMap(BTN_0, EV_KEY, {KEY_B});
         addToButtonMap(BTN_1, EV_KEY, {KEY_E});
@@ -103,49 +95,6 @@ bool deco_pro::handleTransferData(libusb_device_handle *handle, unsigned char *d
     }
 
     return true;
-}
-
-void deco_pro::handleDigitizerEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
-    if (data[1] <= 0xc0) {
-        // Extract the X and Y position
-        int penX = (data[3] << 8) + data[2];
-        int penY = (data[5] << 8) + data[4];
-
-        // Check to see if the pen is touching
-        std::bitset<sizeof(data)> stylusTipAndButton(data[1]);
-        int pressure = (data[7] << 8) + data[6];
-
-        // Handle pen coming into/out of proximity
-        if (stylusTipAndButton.test(5)) {
-            handlePenEnteredProximity(handle);
-        } else if (stylusTipAndButton.test(6)) {
-            handlePenLeftProximity(handle);
-        }
-
-        // Handle actual stylus to digitizer contact
-        if (stylusTipAndButton.test(0)) {
-            handlePenTouchingDigitizer(handle, pressure);
-        } else if (stylusTipAndButton.test(5)) {
-            handlePenTouchingDigitizer(handle, pressure);
-        }
-
-        // Grab the tilt values
-        short tiltx = (char)data[8];
-        short tilty = (char)data[9];
-
-        // Check to see if the stylus buttons are being pressed
-        if (stylusTipAndButton.test(1)) {
-            handleStylusButtonsPressed(handle, BTN_STYLUS);
-        } else if (stylusTipAndButton.test(2)) {
-            handleStylusButtonsPressed(handle, BTN_STYLUS2);
-        } else if (stylusButtonPressed > 0){
-            handleStylusButtonUnpressed(handle);
-        }
-
-        handleCoordsAndTilt(handle, penX, penY, tiltx, tilty);
-
-        uinput_send(uinputPens[handle], EV_SYN, SYN_REPORT, 1);
-    }
 }
 
 void deco_pro::handleUnifiedFrameEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
