@@ -114,27 +114,20 @@ void deco_pro::handleDigitizerEvent(libusb_device_handle *handle, unsigned char 
         int penY = (data[5] << 8) + data[4];
 
         // Check to see if the pen is touching
-        int pressure;
+        int pressure = (data[7] << 8) + data[6];
 
         // Handle pen coming into/out of proximity
-        if (0xa0 & data[1] && !penInProximity) {
-            uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 1);
-            penInProximity = true;
+        if (0xa0 & data[1]) {
+            handlePenEnteredProximity(handle);
         } else if (data[1] == 0xc0) {
-            uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 0);
-            penInProximity = false;
+            handlePenLeftProximity(handle);
         }
 
         // Handle actual stylus to digitizer contact
         if (0x01 & data[1]) {
-            // Grab the pressure amount
-            pressure = (data[7] << 8) + data[6];
-
-            uinput_send(uinputPens[handle], EV_ABS, ABS_PRESSURE, pressure);
-            penWasDown = true;
-        } else if (0xa0 & data[1] && penWasDown) {
-            uinput_send(uinputPens[handle], EV_ABS, ABS_PRESSURE, 0);
-            penWasDown = false;
+            handlePenTouchingDigitizer(handle, pressure);
+        } else if (0xa0 & data[1]) {
+            handlePenTouchingDigitizer(handle, pressure);
         }
 
         // Grab the tilt values
@@ -143,47 +136,14 @@ void deco_pro::handleDigitizerEvent(libusb_device_handle *handle, unsigned char 
 
         // Check to see if the stylus buttons are being pressed
         if (0x02 & data[1]) {
-            auto stylusButtonMap = stylusButtonMapping.getStylusButtonMap(BTN_STYLUS);
-            if (!stylusButtonMap.empty()) {
-                for (auto sbMap: stylusButtonMap) {
-                    uinput_send(uinputPads[handle], sbMap.event_type, sbMap.event_value, 1);
-                }
-                uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
-            } else {
-                uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 1);
-            }
-
-            stylusButtonPressed = 1;
+            handleStylusButtonsPressed(handle, BTN_STYLUS);
         } else if (0x04 & data[1]) {
-            auto stylusButtonMap = stylusButtonMapping.getStylusButtonMap(BTN_STYLUS2);
-            if (!stylusButtonMap.empty()) {
-                for (auto sbMap: stylusButtonMap) {
-                    uinput_send(uinputPads[handle], sbMap.event_type, sbMap.event_value, 1);
-                }
-                uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
-            } else {
-                uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 1);
-            }
-
-            stylusButtonPressed = 2;
+            handleStylusButtonsPressed(handle, BTN_STYLUS2);
         } else if (stylusButtonPressed > 0){
-            auto stylusButtonMap = stylusButtonMapping.getStylusButtonMap(BTN_STYLUS + (stylusButtonPressed - 1));
-            if (!stylusButtonMap.empty()) {
-                for (auto sbMap: stylusButtonMap) {
-                    uinput_send(uinputPads[handle], sbMap.event_type, sbMap.event_value, 0);
-                }
-                uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
-            } else {
-                uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS + (stylusButtonPressed - 1), 0);
-            }
-
-            stylusButtonPressed = 0;
+            handleStylusButtonUnpressed(handle);
         }
 
-        uinput_send(uinputPens[handle], EV_ABS, ABS_X, penX);
-        uinput_send(uinputPens[handle], EV_ABS, ABS_Y, penY);
-        uinput_send(uinputPens[handle], EV_ABS, ABS_TILT_X, tiltx);
-        uinput_send(uinputPens[handle], EV_ABS, ABS_TILT_Y, tilty);
+        handleCoordsAndTilt(handle, penX, penY, tiltx, tilty);
 
         uinput_send(uinputPens[handle], EV_SYN, SYN_REPORT, 1);
     }

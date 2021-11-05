@@ -468,3 +468,54 @@ void transfer_handler::submitMapping(const nlohmann::json& config) {
         }
     }
 }
+
+void transfer_handler::handlePenEnteredProximity(libusb_device_handle* handle) {
+    if (!penInProximity) {
+        uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 1);
+        penInProximity = true;
+    }
+}
+
+void transfer_handler::handlePenLeftProximity(libusb_device_handle* handle) {
+    uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 0);
+    penInProximity = false;
+}
+
+void transfer_handler::handlePenTouchingDigitizer(libusb_device_handle *handle, int pressure) {
+    uinput_send(uinputPens[handle], EV_ABS, ABS_PRESSURE, pressure);
+}
+
+void transfer_handler::handleStylusButtonsPressed(libusb_device_handle *handle, int stylusButton) {
+    auto stylusButtonMap = stylusButtonMapping.getStylusButtonMap(stylusButton);
+    if (!stylusButtonMap.empty()) {
+        for (auto sbMap: stylusButtonMap) {
+            uinput_send(uinputPads[handle], sbMap.event_type, sbMap.event_value, 1);
+        }
+        uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+    } else {
+        uinput_send(uinputPens[handle], EV_KEY, stylusButton, 1);
+    }
+
+    stylusButtonPressed = stylusButton;
+}
+
+void transfer_handler::handleStylusButtonUnpressed(libusb_device_handle *handle) {
+    auto stylusButtonMap = stylusButtonMapping.getStylusButtonMap(stylusButtonPressed);
+    if (!stylusButtonMap.empty()) {
+        for (auto sbMap: stylusButtonMap) {
+            uinput_send(uinputPads[handle], sbMap.event_type, sbMap.event_value, 0);
+        }
+        uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+    } else {
+        uinput_send(uinputPens[handle], EV_KEY, stylusButtonPressed, 0);
+    }
+
+    stylusButtonPressed = 0;
+}
+
+void transfer_handler::handleCoordsAndTilt(libusb_device_handle *handle, int penX, int penY, short tiltX, short tiltY) {
+    uinput_send(uinputPens[handle], EV_ABS, ABS_X, penX);
+    uinput_send(uinputPens[handle], EV_ABS, ABS_Y, penY);
+    uinput_send(uinputPens[handle], EV_ABS, ABS_TILT_X, tiltX);
+    uinput_send(uinputPens[handle], EV_ABS, ABS_TILT_Y, tiltY);
+}

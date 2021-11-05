@@ -58,6 +58,16 @@ protected:
 
     virtual void submitMapping(const nlohmann::json& config);
 
+    virtual void handlePenEnteredProximity(libusb_device_handle* handle);
+    virtual void handlePenLeftProximity(libusb_device_handle* handle);
+
+    virtual void handlePenTouchingDigitizer(libusb_device_handle* handle, int pressure);
+
+    virtual void handleStylusButtonsPressed(libusb_device_handle* handle, int stylusButton);
+    virtual void handleStylusButtonUnpressed(libusb_device_handle* handle);
+
+    virtual void handleCoordsAndTilt(libusb_device_handle* handle, int penX, int penY, short tiltX, short tiltY);
+
     std::vector<int> productIds;
 
     std::map<libusb_device_handle*, int> uinputPens;
