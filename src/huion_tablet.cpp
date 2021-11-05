@@ -297,14 +297,18 @@ bool huion_tablet::handleTransferData(libusb_device_handle *handle, unsigned cha
         case 0x80:
         case 0x81:
         case 0x82:
+        case 0x83:
         case 0x84:
+        case 0x85:
             handleDigitizerEventV2(handle, data, dataLen);
             break;
 
         case 0xc0:
         case 0xc1:
         case 0xc2:
+        case 0xc3:
         case 0xc4:
+        case 0xc5:
             handleDigitizerEventV1(handle, data, dataLen);
             break;
 
@@ -332,32 +336,28 @@ void huion_tablet::handleDigitizerEventV1(libusb_device_handle *handle, unsigned
     int penX = (data[3] << 8) + data[2];
     int penY = (data[5] << 8) + data[4];
 
-    // Check to see if the pen is touching
-    int pressure;
-    if (0x01 & data[1]) {
-        // Grab the pressure amount
-        pressure = (data[7] << 8) + data[6];
+    std::bitset<sizeof(data)> stylusTipAndButton(data[1]);
 
-        uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 1);
-        uinput_send(uinputPens[handle], EV_ABS, ABS_PRESSURE, pressure);
+    // Check to see if the pen is touching
+    int pressure = (data[7] << 8) + data[6];
+    if (stylusTipAndButton.test(0)) {
+        // Grab the pressure amount
+        handlePenEnteredProximity(handle);
+        handlePenTouchingDigitizer(handle, pressure);
     } else {
-        uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 0);
+        handlePenTouchingDigitizer(handle, pressure);
     }
 
     // Check to see if the stylus buttons are being pressed
-    if (0x02 & data[1]) {
-        uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 1);
-        uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 0);
-    } else if (0x04 & data[1]) {
-        uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 0);
-        uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 1);
+    if (stylusTipAndButton.test(1)) {
+        handleStylusButtonsPressed(handle, BTN_STYLUS);
+    } else if (stylusTipAndButton.test(2)) {
+        handleStylusButtonsPressed(handle, BTN_STYLUS2);
     } else {
-        uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 0);
-        uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 0);
+        handleStylusButtonUnpressed(handle);
     }
 
-    uinput_send(uinputPens[handle], EV_ABS, ABS_X, penX);
-    uinput_send(uinputPens[handle], EV_ABS, ABS_Y, penY);
+    handleCoords(handle, penX, penY);
 
     uinput_send(uinputPens[handle], EV_SYN, SYN_REPORT, 1);
 }
@@ -368,15 +368,14 @@ void huion_tablet::handleDigitizerEventV2(libusb_device_handle *handle, unsigned
     int penY = (data[5] << 8) + data[4];
 
     // Check to see if the pen is touching
-    int pressure;
-    if (0x01 & data[1]) {
-        // Grab the pressure amount
-        pressure = (data[7] << 8) + data[6];
+    std::bitset<sizeof(data)> stylusTipAndButton(data[1]);
+    int pressure = (data[7] << 8) + data[6];
 
-        uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 1);
-        uinput_send(uinputPens[handle], EV_ABS, ABS_PRESSURE, pressure);
+    if (stylusTipAndButton.test(0)) {
+        handlePenEnteredProximity(handle);
+        handlePenTouchingDigitizer(handle, pressure);
     } else {
-        uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 0);
+        handlePenTouchingDigitizer(handle, pressure);
     }
 
     // Grab the tilt values
@@ -384,21 +383,15 @@ void huion_tablet::handleDigitizerEventV2(libusb_device_handle *handle, unsigned
     short tilty = (char)data[11];
 
     // Check to see if the stylus buttons are being pressed
-    if (0x02 & data[1]) {
-        uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 1);
-        uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 0);
-    } else if (0x04 & data[1]) {
-        uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 0);
-        uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 1);
+    if (stylusTipAndButton.test(1)) {
+        handleStylusButtonsPressed(handle, BTN_STYLUS);
+    } else if (stylusTipAndButton.test(2)) {
+        handleStylusButtonsPressed(handle, BTN_STYLUS2);
     } else {
-        uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 0);
-        uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 0);
+        handleStylusButtonUnpressed(handle);
     }
 
-    uinput_send(uinputPens[handle], EV_ABS, ABS_X, penX);
-    uinput_send(uinputPens[handle], EV_ABS, ABS_Y, penY);
-    uinput_send(uinputPens[handle], EV_ABS, ABS_TILT_X, tiltx);
-    uinput_send(uinputPens[handle], EV_ABS, ABS_TILT_Y, tilty);
+    handleCoordsAndTilt(handle, penX, penY, tiltx, tilty);
 
     uinput_send(uinputPens[handle], EV_SYN, SYN_REPORT, 1);
 }
@@ -410,31 +403,26 @@ void huion_tablet::handleDigitizerEventV3(libusb_device_handle *handle, unsigned
         int penY = (data[5] << 8) + data[4];
 
         // Check to see if the pen is touching
-        int pressure;
-        if (0x01 & data[1]) {
-            // Grab the pressure amount
-            pressure = (data[7] << 8) + data[6];
+        std::bitset<sizeof(data)> stylusTipAndButton(data[1]);
+        int pressure = (data[7] << 8) + data[6];
 
-            uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 1);
-            uinput_send(uinputPens[handle], EV_ABS, ABS_PRESSURE, pressure);
+        if (stylusTipAndButton.test(0)) {
+            handlePenEnteredProximity(handle);
+            handlePenTouchingDigitizer(handle, pressure);
         } else {
-            uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 0);
+            handlePenTouchingDigitizer(handle, pressure);
         }
 
         // Check to see if the stylus buttons are being pressed
-        if (0x02 & data[1]) {
-            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 1);
-            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 0);
+        if (stylusTipAndButton.test(1)) {
+            handleStylusButtonsPressed(handle, BTN_STYLUS);
         } else if (0x04 & data[1]) {
-            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 0);
-            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 1);
+            handleStylusButtonsPressed(handle, BTN_STYLUS2);
         } else {
-            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 0);
-            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 0);
+            handleStylusButtonUnpressed(handle);
         }
 
-        uinput_send(uinputPens[handle], EV_ABS, ABS_X, penX);
-        uinput_send(uinputPens[handle], EV_ABS, ABS_Y, penY);
+        handleCoords(handle, penX, penY);
 
         uinput_send(uinputPens[handle], EV_SYN, SYN_REPORT, 1);
     }

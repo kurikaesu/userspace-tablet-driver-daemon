@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <libusb-1.0/libusb.h>
 #include <vector>
 #include <string>
+#include <bitset>
 #include "uinput_pen_args.h"
 #include "uinput_pad_args.h"
 #include "uinput_pointer_args.h"
@@ -67,6 +68,7 @@ protected:
     virtual void handleStylusButtonUnpressed(libusb_device_handle* handle);
 
     virtual void handleCoordsAndTilt(libusb_device_handle* handle, int penX, int penY, short tiltX, short tiltY);
+    virtual void handleCoords(libusb_device_handle* handle, int penX, int penY);
 
     std::vector<int> productIds;
 

@@ -514,8 +514,12 @@ void transfer_handler::handleStylusButtonUnpressed(libusb_device_handle *handle)
 }
 
 void transfer_handler::handleCoordsAndTilt(libusb_device_handle *handle, int penX, int penY, short tiltX, short tiltY) {
-    uinput_send(uinputPens[handle], EV_ABS, ABS_X, penX);
-    uinput_send(uinputPens[handle], EV_ABS, ABS_Y, penY);
+    handleCoords(handle, penX, penY);
     uinput_send(uinputPens[handle], EV_ABS, ABS_TILT_X, tiltX);
     uinput_send(uinputPens[handle], EV_ABS, ABS_TILT_Y, tiltY);
+}
+
+void transfer_handler::handleCoords(libusb_device_handle *handle, int penX, int penY) {
+    uinput_send(uinputPens[handle], EV_ABS, ABS_X, penX);
+    uinput_send(uinputPens[handle], EV_ABS, ABS_Y, penY);
 }

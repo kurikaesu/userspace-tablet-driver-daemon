@@ -79,10 +79,8 @@ int deco_pro::sendInitKeyOnInterface() {
 
 bool deco_pro::attachToInterfaceId(int interfaceId) {
     switch (interfaceId){
-        case 2:
-            return true;
-
         case 0:
+        case 2:
             return true;
         default:
             return false;
@@ -114,19 +112,20 @@ void deco_pro::handleDigitizerEvent(libusb_device_handle *handle, unsigned char 
         int penY = (data[5] << 8) + data[4];
 
         // Check to see if the pen is touching
+        std::bitset<sizeof(data)> stylusTipAndButton(data[1]);
         int pressure = (data[7] << 8) + data[6];
 
         // Handle pen coming into/out of proximity
-        if (0xa0 & data[1]) {
+        if (stylusTipAndButton.test(5)) {
             handlePenEnteredProximity(handle);
-        } else if (data[1] == 0xc0) {
+        } else if (stylusTipAndButton.test(6)) {
             handlePenLeftProximity(handle);
         }
 
         // Handle actual stylus to digitizer contact
-        if (0x01 & data[1]) {
+        if (stylusTipAndButton.test(0)) {
             handlePenTouchingDigitizer(handle, pressure);
-        } else if (0xa0 & data[1]) {
+        } else if (stylusTipAndButton.test(5)) {
             handlePenTouchingDigitizer(handle, pressure);
         }
 
@@ -135,9 +134,9 @@ void deco_pro::handleDigitizerEvent(libusb_device_handle *handle, unsigned char 
         short tilty = (char)data[9];
 
         // Check to see if the stylus buttons are being pressed
-        if (0x02 & data[1]) {
+        if (stylusTipAndButton.test(1)) {
             handleStylusButtonsPressed(handle, BTN_STYLUS);
-        } else if (0x04 & data[1]) {
+        } else if (stylusTipAndButton.test(2)) {
             handleStylusButtonsPressed(handle, BTN_STYLUS2);
         } else if (stylusButtonPressed > 0){
             handleStylusButtonUnpressed(handle);
