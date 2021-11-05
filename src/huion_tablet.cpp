@@ -216,7 +216,7 @@ bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId) {
 
     int maxWidth = (buffer[4] << 16) + (buffer[3] << 8) + buffer[2];
     int maxHeight = (buffer[7] << 16) + (buffer[6] << 8) + buffer[5];
-    int maxPressure = (buffer[9] << 8) + buffer[8];
+    maxPressure = (buffer[9] << 8) + buffer[8];
     int resolution = (buffer[11] << 8) + buffer[10];
 
     unsigned short vendorId = 0x256c;

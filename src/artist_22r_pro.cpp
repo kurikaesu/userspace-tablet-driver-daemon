@@ -113,7 +113,7 @@ bool artist_22r_pro::attachDevice(libusb_device_handle *handle, int interfaceId)
 
     int maxWidth = (buf[3] << 8) + buf[2];
     int maxHeight = (buf[5] << 8) + buf[4];
-    int maxPressure = (buf[9] << 8) + buf[8];
+    maxPressure = (buf[9] << 8) + buf[8];
     int resolution = (buf[11] << 8) + buf[10];
 
     unsigned short vendorId = 0x28bd;

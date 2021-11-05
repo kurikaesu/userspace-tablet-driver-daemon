@@ -18,7 +18,7 @@ This repo currently houses a command-line only utility that creates a user-space
 - Huion KD100 mini Keydial
 - Gaomon M10K Pro
 
-**Unless otherwise indicated, all supported tablets have dials/touch-strips working and bindable**
+**Unless otherwise indicated, all supported tablets have dials/touch-strips working and bindable. Stylus pressure curve is also configurable.**
 
 It initializes the supported tablets with their default bindings but the bindings can be changed by modifying the configuration file:
 `$HOME/.local/share/userspace_tablet_driver_daemon/driver.cfg`

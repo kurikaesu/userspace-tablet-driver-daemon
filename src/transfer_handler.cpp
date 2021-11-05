@@ -467,6 +467,23 @@ void transfer_handler::submitMapping(const nlohmann::json& config) {
             }
         }
     }
+
+    // Handle pressure configuration
+    pressureCurve.clear();
+    if (config.contains("pressure_curve")) {
+        for (auto curvePoints: config["pressure_curve"].items()) {
+            pressureCurve.emplace_back(
+                    std::pair(
+                            curvePoints.value().at(0),
+                            curvePoints.value().at(1)
+                    ));
+        }
+    }
+
+    if (pressureCurve.empty()) {
+        pressureCurve.emplace_back(std::pair(0, 0));
+        pressureCurve.emplace_back(std::pair(100, 100));
+    }
 }
 
 void transfer_handler::handlePenEnteredProximity(libusb_device_handle* handle) {
@@ -563,4 +580,53 @@ void transfer_handler::handleDialEvent(libusb_device_handle* handle, int dial, s
         }
     }
     uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+}
+
+float transfer_handler::getPoint(float n1, float n2, float dt) {
+    float diff = n2 - n1;
+
+    return n1 + (diff * dt);
+}
+
+int transfer_handler::applyPressureCurve(int pressure) {
+    if (pressureCurve.empty() || pressure == 0) {
+        return pressure;
+    }
+
+    // Normalize the pressure first
+    float normalizedPressure = (float)pressure / maxPressure;
+
+    float adjustedPressure;
+    auto controlPointCount = pressureCurve.size();
+
+    // Single control point is invalid
+    switch (controlPointCount) {
+    case 2:
+        adjustedPressure = (pressureCurve[1].second - pressureCurve[0].second) * normalizedPressure;
+        break;
+    case 3: {
+        auto y1 = getPoint(pressureCurve[0].second, pressureCurve[1].second, normalizedPressure);
+        auto y2 = getPoint(pressureCurve[1].second, pressureCurve[2].second, normalizedPressure);
+        adjustedPressure = getPoint(y1, y2, normalizedPressure);
+        break;
+    }
+
+    case 4: {
+        auto y1 = getPoint(pressureCurve[0].second, pressureCurve[1].second, normalizedPressure);
+        auto y2 = getPoint(pressureCurve[1].second, pressureCurve[2].second, normalizedPressure);
+        auto y3 = getPoint(pressureCurve[2].second, pressureCurve[3].second, normalizedPressure);
+
+        auto m1 = getPoint(y1, y2, normalizedPressure);
+        auto m2 = getPoint(y2, y3, normalizedPressure);
+
+        adjustedPressure = getPoint(m1, m2, normalizedPressure);
+        break;
+    }
+
+    default:
+        return pressure;
+    }
+
+    auto returnedPressure = (adjustedPressure / 100.0f) * maxPressure;
+    return (int)returnedPressure;
 }

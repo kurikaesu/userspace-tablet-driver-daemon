@@ -75,6 +75,8 @@ protected:
 
     virtual void handleDialEvent(libusb_device_handle* handle, int dial, short value);
 
+    virtual int applyPressureCurve(int pressure);
+
     std::vector<int> productIds;
 
     std::map<libusb_device_handle*, int> uinputPens;
@@ -93,6 +95,12 @@ protected:
     bool penInProximity;
     bool penWasDown;
     int stylusButtonPressed;
+
+    std::vector<std::pair<float, float> > pressureCurve;
+    int maxPressure;
+
+private:
+    static float getPoint(float n1, float n2, float dt);
 };
 
 #endif //USERSPACE_TABLET_DRIVER_DAEMON_TRANSFER_HANDLER_H

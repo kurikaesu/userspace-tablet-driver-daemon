@@ -37,7 +37,7 @@ void xp_pen_unified_device::handleDigitizerEvent(libusb_device_handle *handle, u
 
         // Handle actual stylus to digitizer contact
         if (stylusTipAndButton.test(0) | stylusTipAndButton.test(5)) {
-            handlePenTouchingDigitizer(handle, pressure);
+            handlePenTouchingDigitizer(handle, applyPressureCurve(pressure));
         }
 
         // Grab the tilt values
