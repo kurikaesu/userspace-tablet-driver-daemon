@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 transfer_handler::transfer_handler() {
     penInProximity = false;
     penWasDown = false;
+    stylusButtonPressed = 0;
 }
 
 transfer_handler::~transfer_handler() {
@@ -417,7 +418,21 @@ void transfer_handler::destroy_uinput_device(int fd) {
 void transfer_handler::submitMapping(const nlohmann::json& config) {
     std::vector<aliased_input_event> scanCodes;
     for (auto mapping : config["mapping"].items()) {
-        if (mapping.key() == "buttons") {
+        if (mapping.key() == "stylus_buttons") {
+            for (auto mappingStylusButtons : mapping.value().items()) {
+                for (auto events : mappingStylusButtons.value().items()) {
+                    for (auto codes: events.value().items()) {
+                        aliased_input_event newEvent{
+                                std::atoi(events.key().c_str()),
+                                codes.value()
+                        };
+                        scanCodes.push_back(newEvent);
+                    }
+                }
+                stylusButtonMapping.setStylusButtonMap(std::atoi(mappingStylusButtons.key().c_str()), scanCodes);
+                scanCodes.clear();
+            }
+        } else if (mapping.key() == "buttons") {
             for (auto mappingButtons : mapping.value().items()) {
                 for (auto events : mappingButtons.value().items()) {
                     for (auto codes: events.value().items()) {

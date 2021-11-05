@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "uinput_pad_args.h"
 #include "uinput_pointer_args.h"
 #include "includes/json.hpp"
+#include "stylus_button_mapping.h"
 #include "pad_mapping.h"
 #include "dial_mapping.h"
 #include "unix_socket_message.h"
@@ -67,12 +68,14 @@ protected:
 
     std::vector<int> padButtonAliases;
 
+    stylus_button_mapping stylusButtonMapping;
     pad_mapping padMapping;
     dial_mapping dialMapping;
     nlohmann::json jsonConfig;
 
-    bool penInProximity = false;
-    bool penWasDown = false;
+    bool penInProximity;
+    bool penWasDown;
+    int stylusButtonPressed;
 };
 
 #endif //USERSPACE_TABLET_DRIVER_DAEMON_TRANSFER_HANDLER_H

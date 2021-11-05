@@ -35,6 +35,11 @@ void deco_pro::setConfig(nlohmann::json config) {
     if (!config.contains("mapping") || config["mapping"] == nullptr) {
         config["mapping"] = nlohmann::json({});
 
+        auto addToStylusMap = [&config](int key, int eventType, std::vector<int> codes) {
+            std::string evstring = std::to_string(eventType);
+            config["mapping"]["stylus_buttons"][std::to_string(key)][evstring] = codes;
+        };
+
         auto addToButtonMap = [&config](int key, int eventType, std::vector<int> codes) {
             std::string evstring = std::to_string(eventType);
             config["mapping"]["buttons"][std::to_string(key)][evstring] = codes;
@@ -45,6 +50,9 @@ void deco_pro::setConfig(nlohmann::json config) {
             std::string evstring = std::to_string(eventType);
             config["mapping"]["dials"][std::to_string(dial)][strvalue][evstring] = codes;
         };
+
+        addToStylusMap(BTN_STYLUS, EV_KEY, {KEY_SPACE});
+        addToStylusMap(BTN_STYLUS2, EV_KEY, {KEY_SPACE});
 
         addToButtonMap(BTN_0, EV_KEY, {KEY_B});
         addToButtonMap(BTN_1, EV_KEY, {KEY_E});
@@ -135,14 +143,41 @@ void deco_pro::handleDigitizerEvent(libusb_device_handle *handle, unsigned char 
 
         // Check to see if the stylus buttons are being pressed
         if (0x02 & data[1]) {
-            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 1);
-            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 0);
+            auto stylusButtonMap = stylusButtonMapping.getStylusButtonMap(BTN_STYLUS);
+            if (!stylusButtonMap.empty()) {
+                for (auto sbMap: stylusButtonMap) {
+                    uinput_send(uinputPads[handle], sbMap.event_type, sbMap.event_value, 1);
+                }
+                uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+            } else {
+                uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 1);
+            }
+
+            stylusButtonPressed = 1;
         } else if (0x04 & data[1]) {
-            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 0);
-            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 1);
-        } else {
-            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS, 0);
-            uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 0);
+            auto stylusButtonMap = stylusButtonMapping.getStylusButtonMap(BTN_STYLUS2);
+            if (!stylusButtonMap.empty()) {
+                for (auto sbMap: stylusButtonMap) {
+                    uinput_send(uinputPads[handle], sbMap.event_type, sbMap.event_value, 1);
+                }
+                uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+            } else {
+                uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS2, 1);
+            }
+
+            stylusButtonPressed = 2;
+        } else if (stylusButtonPressed > 0){
+            auto stylusButtonMap = stylusButtonMapping.getStylusButtonMap(BTN_STYLUS + (stylusButtonPressed - 1));
+            if (!stylusButtonMap.empty()) {
+                for (auto sbMap: stylusButtonMap) {
+                    uinput_send(uinputPads[handle], sbMap.event_type, sbMap.event_value, 0);
+                }
+                uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+            } else {
+                uinput_send(uinputPens[handle], EV_KEY, BTN_STYLUS + (stylusButtonPressed - 1), 0);
+            }
+
+            stylusButtonPressed = 0;
         }
 
         uinput_send(uinputPens[handle], EV_ABS, ABS_X, penX);
