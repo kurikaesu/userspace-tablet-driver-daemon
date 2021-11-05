@@ -323,7 +323,7 @@ bool huion_tablet::handleTransferData(libusb_device_handle *handle, unsigned cha
             break;
 
         case 0xf1:
-            handleDialEvent(handle, data, dataLen);
+            handleTabletDialEvent(handle, data, dataLen);
 
         default:
             return false;
@@ -439,21 +439,9 @@ void huion_tablet::handlePadEventV1(libusb_device_handle* handle, unsigned char*
         bool dialEvent = false;
 
         if (button != 0) {
-            auto padMap = padMapping.getPadMap(padButtonAliases[position - 1]);
-            for (auto pmap: padMap) {
-                uinput_send(uinputPads[handle], pmap.event_type, pmap.event_value, 1);
-            }
-            lastPressedButton[handle] = position;
+            handlePadButtonPressed(handle, position);
         } else if (!dialEvent) {
-            if (lastPressedButton.find(handle) != lastPressedButton.end() && lastPressedButton[handle] > 0) {
-                auto padMap = padMapping.getPadMap(padButtonAliases[lastPressedButton[handle] - 1]);
-                for (auto pmap: padMap) {
-                    uinput_send(uinputPads[handle], pmap.event_type, pmap.event_value, 0);
-                }
-                lastPressedButton[handle] = -1;
-            } else {
-                std::cout << "Got a phantom button up event" << std::endl;
-            }
+            handlePadButtonUnpressed(handle);
         }
 
         if (shouldSyn) {
@@ -512,7 +500,7 @@ void huion_tablet::handleTouchStripEvent(libusb_device_handle *handle, unsigned 
     }
 }
 
-void huion_tablet::handleDialEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+void huion_tablet::handleTabletDialEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     if (data[1] == 0xf1) {
         short dialValue = 0;
         if (data[5] == 0x01) {
@@ -522,26 +510,7 @@ void huion_tablet::handleDialEvent(libusb_device_handle *handle, unsigned char *
         }
 
         if (dialValue != 0) {
-            bool send_reset = false;
-            auto dialMap = dialMapping.getDialMap(EV_REL, REL_WHEEL, dialValue);
-            for (auto dmap: dialMap) {
-                uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, dmap.event_data);
-                if (dmap.event_type == EV_KEY) {
-                    send_reset = true;
-                }
-            }
-
-            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
-
-            if (send_reset) {
-                for (auto dmap: dialMap) {
-                    // We have to handle key presses manually here because this device does not send reset events
-                    if (dmap.event_type == EV_KEY) {
-                        uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, 0);
-                    }
-                }
-            }
-            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+            handleDialEvent(handle, REL_WHEEL, dialValue);
         }
     }
 }

@@ -70,6 +70,11 @@ protected:
     virtual void handleCoordsAndTilt(libusb_device_handle* handle, int penX, int penY, short tiltX, short tiltY);
     virtual void handleCoords(libusb_device_handle* handle, int penX, int penY);
 
+    virtual void handlePadButtonPressed(libusb_device_handle* handle, int button);
+    virtual void handlePadButtonUnpressed(libusb_device_handle* handle);
+
+    virtual void handleDialEvent(libusb_device_handle* handle, int dial, short value);
+
     std::vector<int> productIds;
 
     std::map<libusb_device_handle*, int> uinputPens;
