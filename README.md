@@ -59,6 +59,9 @@ I would suggest running the command userspace_tablet_driver_daemon from the term
 ## Note
 This driver leverages the `wacom` x11 drivers to handle the stylus/digitizer. You will need to use `xsetwacom` to configure the digitizer side of things.
 
+### Note 2
+If you are using an XP-Pen Deco Pro (Small or Medium) the driver no longer needs the wacom X11 drivers for basic functionality. The stylus buttons are able to be bound as well and the GUI has been updated to reflect that. It is still missing screen assignment and pressure calibration though!
+
 ## Contributing
 Should you want to contribute there are a few ways to do so.
 - Testing the driver on your Linux distribution. If it doesn't work, cut me an issue.
