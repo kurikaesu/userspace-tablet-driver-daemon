@@ -95,11 +95,12 @@ void deco::handleDigitizerEvent(libusb_device_handle *handle, unsigned char *dat
             uinput_send(uinputPens[handle], EV_ABS, ABS_PRESSURE, pressure);
         } else {
             uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 0);
+            uinput_send(uinputPens[handle], EV_ABS, ABS_PRESSURE, 0);
         }
-
         // Grab the tilt values
         short tiltx = (char)data[8];
         short tilty = (char)data[9];
+
 
         // Check to see if the stylus buttons are being pressed
         if (0x02 & data[1]) {

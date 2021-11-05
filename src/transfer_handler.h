@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class transfer_handler {
 public:
+    transfer_handler();
     virtual ~transfer_handler();
 
     virtual std::vector<int> handledProductIds();
@@ -69,6 +70,9 @@ protected:
     pad_mapping padMapping;
     dial_mapping dialMapping;
     nlohmann::json jsonConfig;
+
+    bool penInProximity = false;
+    bool penWasDown = false;
 };
 
 #endif //USERSPACE_TABLET_DRIVER_DAEMON_TRANSFER_HANDLER_H

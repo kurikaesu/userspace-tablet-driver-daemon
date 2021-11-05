@@ -24,6 +24,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "transfer_handler.h"
 #include "socket_server.h"
 
+transfer_handler::transfer_handler() {
+    penInProximity = false;
+    penWasDown = false;
+}
+
 transfer_handler::~transfer_handler() {
     for (auto pen : uinputPens) {
         destroy_uinput_device(pen.second);

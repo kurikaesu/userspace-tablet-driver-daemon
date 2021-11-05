@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <iostream>
 #include <unistd.h>
+#include <iomanip>
 #include "deco_pro.h"
 
 deco_pro::deco_pro() {
@@ -99,21 +100,33 @@ bool deco_pro::handleTransferData(libusb_device_handle *handle, unsigned char *d
 }
 
 void deco_pro::handleDigitizerEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
-    if (data[1] < 0xb0) {
+    if (data[1] <= 0xc0) {
         // Extract the X and Y position
         int penX = (data[3] << 8) + data[2];
         int penY = (data[5] << 8) + data[4];
 
         // Check to see if the pen is touching
         int pressure;
+
+        // Handle pen coming into/out of proximity
+        if (0xa0 & data[1] && !penInProximity) {
+            uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 1);
+            penInProximity = true;
+        } else if (data[1] == 0xc0) {
+            uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 0);
+            penInProximity = false;
+        }
+
+        // Handle actual stylus to digitizer contact
         if (0x01 & data[1]) {
             // Grab the pressure amount
             pressure = (data[7] << 8) + data[6];
 
-            uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 1);
             uinput_send(uinputPens[handle], EV_ABS, ABS_PRESSURE, pressure);
-        } else {
-            uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 0);
+            penWasDown = true;
+        } else if (0xa0 & data[1] && penWasDown) {
+            uinput_send(uinputPens[handle], EV_ABS, ABS_PRESSURE, 0);
+            penWasDown = false;
         }
 
         // Grab the tilt values
