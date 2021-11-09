@@ -472,11 +472,10 @@ void transfer_handler::submitMapping(const nlohmann::json& config) {
     pressureCurve.clear();
     if (config.contains("pressure_curve")) {
         for (auto curvePoints: config["pressure_curve"].items()) {
+            int x = curvePoints.value().at(0);
+            int y = curvePoints.value().at(1);
             pressureCurve.emplace_back(
-                    std::pair(
-                            curvePoints.value().at(0),
-                            curvePoints.value().at(1)
-                    ));
+                    std::pair(x, y));
         }
     }
 
