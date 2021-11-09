@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "deco_01v2.h"
 #include "star_g430s.h"
 #include "ac19.h"
+#include "artist_12.h"
 
 xp_pen_handler::xp_pen_handler() {
     std::cout << "xp_pen_handler initialized" << std::endl;
@@ -42,6 +43,7 @@ xp_pen_handler::xp_pen_handler() {
     addHandler(new artist_13_3_pro());
     addHandler(new artist_24_pro());
     addHandler(new artist_12_pro());
+    addHandler(new artist_12());
     addHandler(new deco_pro_small());
     addHandler(new deco_pro_medium());
     addHandler(new deco_01v2());

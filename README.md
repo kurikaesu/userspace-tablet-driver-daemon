@@ -1,11 +1,12 @@
 # Kuri's Linux user-space graphics tablet driver daemon
 
 This repo currently houses a command-line only utility that creates a user-space driver for the following models:
+- XP-Pen Artist 24 Pro
 - XP-Pen Artist 22E Pro
 - XP-Pen Artist 22R Pro
 - XP-Pen Artist 13.3 Pro
 - XP-Pen Artist 12 Pro
-- XP-Pen Artist 24 Pro
+- XP-Pen Artist 12 (2nd Gen) (Needs testing to confirm it works)
 - XP-Pen Deco Pro S (Use GUI to switch touch-pad modes)
 - XP-Pen Deco Pro M (Use GUI to switch touch-pad modes)
 - XP-Pen Deco 01v2
