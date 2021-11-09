@@ -560,7 +560,7 @@ void transfer_handler::handlePadButtonUnpressed(libusb_device_handle *handle) {
 
 void transfer_handler::handleDialEvent(libusb_device_handle* handle, int dial, short value) {
     bool send_reset = false;
-    auto dialMap = dialMapping.getDialMap(EV_REL, REL_WHEEL, value);
+    auto dialMap = dialMapping.getDialMap(EV_REL, dial, value);
     for (auto dmap: dialMap) {
         uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, dmap.event_data);
         if (dmap.event_type == EV_KEY) {
