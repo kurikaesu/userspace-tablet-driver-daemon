@@ -24,6 +24,11 @@ void xp_pen_unified_device::handleDigitizerEvent(libusb_device_handle *handle, u
         int penX = (data[3] << 8) + data[2];
         int penY = (data[5] << 8) + data[4];
 
+        if (dataLen == 12) {
+            // This is currently only used by the Artist 24 Pro tablet
+            penX += data[10] << 16;
+        }
+
         // Check to see if the pen is touching
         std::bitset<sizeof(data)> stylusTipAndButton(data[1]);
         int pressure = (data[7] << 8) + data[6];

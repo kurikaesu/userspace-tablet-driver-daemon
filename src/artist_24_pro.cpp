@@ -107,14 +107,15 @@ bool artist_24_pro::attachToInterfaceId(int interfaceId) {
 
 bool artist_24_pro::attachDevice(libusb_device_handle *handle, int interfaceId) {
     unsigned char* buf = new unsigned char[12];
+    const int descriptorLength = 13;
 
     // We need to get a few more bits of information
-    if (libusb_get_string_descriptor(handle, 0x64, 0x0409, buf, 12) != 12) {
+    if (libusb_get_string_descriptor(handle, 0x64, 0x0409, buf, descriptorLength) != descriptorLength) {
         std::cout << "Could not get descriptor" << std::endl;
         return false;
     }
 
-    int maxWidth = (buf[3] << 8) + buf[2];
+    int maxWidth = (buf[12] << 16) + (buf[3] << 8) + buf[2];
     int maxHeight = (buf[5] << 8) + buf[4];
     maxPressure = (buf[9] << 8) + buf[8];
     int resolution = (buf[11] << 8) + buf[10];
