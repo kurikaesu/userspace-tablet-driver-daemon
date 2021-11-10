@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class huion_handler : public vendor_handler {
 public:
     huion_handler();
-    ~huion_handler();
 
     int getVendorId();
     std::vector<int> getProductIds();

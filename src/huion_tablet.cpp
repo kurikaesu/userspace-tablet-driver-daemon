@@ -32,10 +32,6 @@ huion_tablet::huion_tablet(int productId) {
     }
 }
 
-huion_tablet::~huion_tablet() noexcept {
-
-}
-
 std::string huion_tablet::getProductName(int productId) {
     if (productId == 0x006e || productId == 0x006d) {
         return "Huion tablet";

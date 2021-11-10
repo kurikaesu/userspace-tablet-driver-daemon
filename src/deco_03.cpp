@@ -17,25 +17,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <iostream>
-#include "artist_12.h"
+#include "deco_03.h"
 
-artist_12::artist_12() {
-    productIds.push_back(0x094a);
+deco_03::deco_03() {
+    productIds.push_back(0x0096);
 
-    for (int currentAssignedButton = BTN_0; currentAssignedButton < BTN_8; ++currentAssignedButton) {
+    for (int currentAssignedButton = BTN_0; currentAssignedButton < BTN_5; ++currentAssignedButton) {
         padButtonAliases.push_back(currentAssignedButton);
     }
 }
 
-std::string artist_12::getProductName(int productId) {
-    if (productId == 0x094a) {
-        return "XP-Pen Artist 12 (2nd Gen)";
+std::string deco_03::getProductName(int productId) {
+    if (productId == 0x0096) {
+        return "XP-Pen Deco 03";
     }
 
     return "Unknown XP-Pen Device";
 }
 
-void artist_12::setConfig(nlohmann::json config) {
+void deco_03::setConfig(nlohmann::json config) {
     if (!config.contains("mapping") || config["mapping"] == nullptr) {
         config["mapping"] = nlohmann::json({});
 
@@ -56,23 +56,24 @@ void artist_12::setConfig(nlohmann::json config) {
         addToButtonMap(BTN_3, EV_KEY, {KEY_LEFTALT});
         addToButtonMap(BTN_4, EV_KEY, {KEY_V});
         addToButtonMap(BTN_5, EV_KEY, {KEY_LEFTCTRL, KEY_S});
-        addToButtonMap(BTN_6, EV_KEY, {KEY_LEFTCTRL, KEY_Z});
-        addToButtonMap(BTN_7, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTALT, KEY_N});
+
+        addToDialMap(REL_WHEEL, -1, EV_KEY, {KEY_LEFTCTRL, KEY_MINUS});
+        addToDialMap(REL_WHEEL, 1, EV_KEY, {KEY_LEFTCTRL, KEY_EQUAL});
     }
     jsonConfig = config;
 
     submitMapping(jsonConfig);
 }
 
-int artist_12::sendInitKeyOnInterface() {
+int deco_03::sendInitKeyOnInterface() {
     return 0x02;
 }
 
-bool artist_12::attachToInterfaceId(int interfaceId) {
+bool deco_03::attachToInterfaceId(int interfaceId) {
     return interfaceId == 2;
 }
 
-bool artist_12::attachDevice(libusb_device_handle *handle, int interfaceId) {
+bool deco_03::attachDevice(libusb_device_handle *handle, int interfaceId) {
     auto *buf = new unsigned char[12];
 
     // We need to get a few more bits of information
@@ -87,7 +88,7 @@ bool artist_12::attachDevice(libusb_device_handle *handle, int interfaceId) {
     int resolution = (buf[11] << 8) + buf[10];
 
     unsigned short vendorId = 0x28bd;
-    unsigned short productId = 0xf94a;
+    unsigned short productId = 0xf80a;
     unsigned short versionId = 0x0001;
 
     struct uinput_pen_args penArgs{
@@ -100,7 +101,7 @@ bool artist_12::attachDevice(libusb_device_handle *handle, int interfaceId) {
             .vendorId = vendorId,
             .productId = productId,
             .versionId = versionId,
-            {"XP-Pen Artist 12 Pro"},
+            {"XP-Pen Deco 03"},
     };
 
     struct uinput_pad_args padArgs{
@@ -112,7 +113,7 @@ bool artist_12::attachDevice(libusb_device_handle *handle, int interfaceId) {
             .vendorId = vendorId,
             .productId = productId,
             .versionId = versionId,
-            {"XP-Pen Artist 12 Pro Pad"},
+            {"XP-Pen Deco 03"},
     };
 
     uinputPens[handle] = create_pen(penArgs);
@@ -121,7 +122,7 @@ bool artist_12::attachDevice(libusb_device_handle *handle, int interfaceId) {
     return true;
 }
 
-bool artist_12::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+bool deco_03::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     switch (data[0]) {
         case 0x02:
             handleDigitizerEvent(handle, data, dataLen);
@@ -135,18 +136,39 @@ bool artist_12::handleTransferData(libusb_device_handle *handle, unsigned char *
     return true;
 }
 
-void artist_12::handleFrameEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+void deco_03::handleFrameEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     if (data[1] >= 0xf0) {
         long button = data[2];
         // Only 8 buttons on this device
         long position = ffsl(data[2]);
 
+        std::bitset<sizeof(data)> dialBits(data[7]);
+
+        // Take the dial
+        short dialValue = 0;
+        if (dialBits.test(0)) {
+            dialValue = 1;
+        } else if (dialBits.test(1)) {
+            dialValue = -1;
+        }
+
+        bool shouldSyn = true;
+        bool dialEvent = false;
+
+        if (dialValue != 0) {
+            handleDialEvent(handle, REL_WHEEL, dialValue);
+            shouldSyn = false;
+            dialEvent = true;
+        }
+
         if (button != 0) {
             handlePadButtonPressed(handle, position);
-        } else {
+        } else if (!dialEvent) {
             handlePadButtonUnpressed(handle);
         }
 
-        uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+        if (shouldSyn) {
+            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+        }
     }
 }

@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class huion_tablet : public transfer_handler {
 public:
     huion_tablet(int productId);
-    ~huion_tablet();
 
     std::string getProductName(int productId);
     void setConfig(nlohmann::json config);

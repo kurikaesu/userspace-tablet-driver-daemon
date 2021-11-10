@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class ac19 : public transfer_handler {
 public:
     ac19();
-    ~ac19();
 
     std::string getProductName(int productId);
     void setConfig(nlohmann::json config);

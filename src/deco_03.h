@@ -16,15 +16,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef USERSPACE_TABLET_DRIVER_DAEMON_ARTIST_12_PRO_H
-#define USERSPACE_TABLET_DRIVER_DAEMON_ARTIST_12_PRO_H
+#ifndef USERSPACE_TABLET_DRIVER_DAEMON_DECO_03_H
+#define USERSPACE_TABLET_DRIVER_DAEMON_DECO_03_H
 
 
 #include "xp_pen_unified_device.h"
 
-class artist_12_pro : public xp_pen_unified_device {
+class deco_03 : public xp_pen_unified_device {
 public:
-    artist_12_pro();
+    deco_03();
 
     std::string getProductName(int productId);
     void setConfig(nlohmann::json config);
@@ -37,4 +37,4 @@ private:
 };
 
 
-#endif //USERSPACE_TABLET_DRIVER_DAEMON_ARTIST_12_PRO_H
+#endif //USERSPACE_TABLET_DRIVER_DAEMON_DECO_03_H

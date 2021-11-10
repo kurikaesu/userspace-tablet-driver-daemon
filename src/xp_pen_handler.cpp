@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <thread>
 #include <set>
 #include "xp_pen_handler.h"
-#include "transfer_handler_pair.h"
 #include "artist_22r_pro.h"
 #include "artist_22e_pro.h"
 #include "artist_13_3_pro.h"
@@ -29,11 +28,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "artist_12_pro.h"
 #include "deco_pro_small.h"
 #include "deco_pro_medium.h"
-#include "transfer_setup_data.h"
 #include "deco_01v2.h"
 #include "star_g430s.h"
 #include "ac19.h"
 #include "artist_12.h"
+#include "deco_03.h"
 
 xp_pen_handler::xp_pen_handler() {
     std::cout << "xp_pen_handler initialized" << std::endl;
@@ -47,6 +46,7 @@ xp_pen_handler::xp_pen_handler() {
     addHandler(new deco_pro_small());
     addHandler(new deco_pro_medium());
     addHandler(new deco_01v2());
+    addHandler(new deco_03());
     addHandler(new star_g430s());
     addHandler(new ac19());
 }

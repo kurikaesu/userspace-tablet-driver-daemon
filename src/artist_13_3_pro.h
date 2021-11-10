@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class artist_13_3_pro : public xp_pen_unified_device {
 public:
     artist_13_3_pro();
-    ~artist_13_3_pro();
 
     std::string getProductName(int productId);
     void setConfig(nlohmann::json config);

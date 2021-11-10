@@ -32,10 +32,6 @@ artist_24_pro::artist_24_pro() {
     }
 }
 
-artist_24_pro::~artist_24_pro() {
-
-}
-
 std::string artist_24_pro::getProductName(int productId) {
     if (productId == 0x092d) {
         return "XP-Pen Artist 24 Pro";

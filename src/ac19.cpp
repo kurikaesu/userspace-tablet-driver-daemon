@@ -28,10 +28,6 @@ ac19::ac19() {
     }
 }
 
-ac19::~ac19() {
-
-}
-
 std::string ac19::getProductName(int productId) {
     if (productId == 0x0201) {
         return "XP-Pen AC19 Shortcut Remote";

@@ -34,10 +34,6 @@ artist_22e_pro::artist_22e_pro() {
     }
 }
 
-artist_22e_pro::~artist_22e_pro() {
-
-}
-
 std::string artist_22e_pro::getProductName(int productId) {
     if (productId == 0x090b) {
         return "XP-Pen Artist 22E Pro";

@@ -42,10 +42,6 @@ huion_handler::huion_handler() {
     addHandler(new huion_tablet(0x0311));
 }
 
-huion_handler::~huion_handler() noexcept {
-
-}
-
 int huion_handler::getVendorId() {
     return 0x256c;
 }

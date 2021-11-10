@@ -29,10 +29,6 @@ artist_13_3_pro::artist_13_3_pro() {
     }
 }
 
-artist_13_3_pro::~artist_13_3_pro() {
-
-}
-
 std::string artist_13_3_pro::getProductName(int productId) {
     if (productId == 0x092b) {
         return "XP-Pen Artist 13.3 Pro";
