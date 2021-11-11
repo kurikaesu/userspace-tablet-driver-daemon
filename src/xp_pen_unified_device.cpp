@@ -54,9 +54,7 @@ void xp_pen_unified_device::handleDigitizerEvent(libusb_device_handle *handle, u
             handleStylusButtonsPressed(handle, BTN_STYLUS);
         } else if (stylusTipAndButton.test(2)) {
             handleStylusButtonsPressed(handle, BTN_STYLUS2);
-        } else if (stylusTipAndButton.test(3)) {
-            handleStylusButtonsPressed(handle, BTN_STYLUS3);
-        } else if (stylusButtonPressed > 0){
+        } else if (stylusButtonPressed > 0) {
             handleStylusButtonUnpressed(handle);
         }
 
