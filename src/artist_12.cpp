@@ -44,12 +44,6 @@ void artist_12::setConfig(nlohmann::json config) {
             config["mapping"]["buttons"][std::to_string(key)][evstring] = codes;
         };
 
-        auto addToDialMap = [&config](int dial, int value, int eventType, std::vector<int> codes) {
-            std::string strvalue = std::to_string(value);
-            std::string evstring = std::to_string(eventType);
-            config["mapping"]["dials"][std::to_string(dial)][strvalue][evstring] = codes;
-        };
-
         addToButtonMap(BTN_0, EV_KEY, {KEY_B});
         addToButtonMap(BTN_1, EV_KEY, {KEY_E});
         addToButtonMap(BTN_2, EV_KEY, {KEY_SPACE});
