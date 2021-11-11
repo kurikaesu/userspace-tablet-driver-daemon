@@ -577,8 +577,8 @@ void transfer_handler::handleDialEvent(libusb_device_handle* handle, int dial, s
                 uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, 0);
             }
         }
+        uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
     }
-    uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
 }
 
 float transfer_handler::getPoint(float n1, float n2, float dt) {

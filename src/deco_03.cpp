@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 deco_03::deco_03() {
     productIds.push_back(0x0096);
 
-    for (int currentAssignedButton = BTN_0; currentAssignedButton < BTN_5; ++currentAssignedButton) {
+    for (int currentAssignedButton = BTN_0; currentAssignedButton < BTN_6; ++currentAssignedButton) {
         padButtonAliases.push_back(currentAssignedButton);
     }
 }
@@ -129,6 +129,10 @@ bool deco_03::handleTransferData(libusb_device_handle *handle, unsigned char *da
             handleFrameEvent(handle, data, dataLen);
             break;
 
+        case 0x03:
+            handleNonUnifiedDialEvent(handle, data, dataLen);
+            break;
+
         default:
             break;
     }
@@ -142,7 +146,19 @@ void deco_03::handleFrameEvent(libusb_device_handle *handle, unsigned char *data
         // Only 8 buttons on this device
         long position = ffsl(data[2]);
 
-        std::bitset<sizeof(data)> dialBits(data[7]);
+        if (button != 0) {
+            handlePadButtonPressed(handle, position);
+        } else {
+            handlePadButtonUnpressed(handle);
+        }
+
+        uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+    }
+}
+
+void deco_03::handleNonUnifiedDialEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+    if (data[1] == 0x01) {
+        std::bitset<sizeof(data)> dialBits(data[2]);
 
         // Take the dial
         short dialValue = 0;
@@ -152,23 +168,8 @@ void deco_03::handleFrameEvent(libusb_device_handle *handle, unsigned char *data
             dialValue = -1;
         }
 
-        bool shouldSyn = true;
-        bool dialEvent = false;
-
         if (dialValue != 0) {
             handleDialEvent(handle, REL_WHEEL, dialValue);
-            shouldSyn = false;
-            dialEvent = true;
-        }
-
-        if (button != 0) {
-            handlePadButtonPressed(handle, position);
-        } else if (!dialEvent) {
-            handlePadButtonUnpressed(handle);
-        }
-
-        if (shouldSyn) {
-            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
         }
     }
 }
