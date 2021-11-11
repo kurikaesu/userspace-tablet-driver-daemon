@@ -38,6 +38,23 @@ Things on the TODO list:
 Preferred way is to use the GUI: https://github.com/kurikaesu/userspace-tablet-driver-gui
 You can change bindings manually by changing the JSON config but the format is currently changing too quickly to make effective documentation.
 
+## Installing
+
+If you use an Arch-based distro, you can install the package from the AUR. There are two versions, one unstable and one stable.
+
+
+The unstable version can be installed with:
+
+```bash
+yay -S userspace-tablet-driver-daemon-git
+```
+
+The stable (release) version can be installed with:
+
+```bash
+yay -S userspace-tablet-driver-daemon
+```
+
 ## Building
 This uses cmake to generate the required makefiles so make sure to have that installed.
 On debian/ubuntu systems it can be done by:
