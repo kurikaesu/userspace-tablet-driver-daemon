@@ -11,6 +11,7 @@ This repo currently houses a command-line only utility that creates a user-space
 - XP-Pen Deco Pro M (Use GUI to switch touch-pad modes)
 - XP-Pen Deco 01v2
 - XP-Pen Deco 03
+- XP-Pen Deco mini7/mini7w
 - XP-Pen Star G430S
 - XP-Pen AC19 Shortcut Remote
 - Huion Kamvas Pro 13
@@ -39,6 +40,7 @@ Preferred way is to use the GUI: https://github.com/kurikaesu/userspace-tablet-d
 You can change bindings manually by changing the JSON config but the format is currently changing too quickly to make effective documentation.
 
 ## Installing
+For debian based distributions, download the deb package from the list of releases. The deb package can be installed with `sudo dpkg -i <package_name.deb>`
 
 If you use an Arch-based distro, you can install the package from the AUR. There are two versions, one unstable and one stable.
 
@@ -75,7 +77,7 @@ This can be done with:
 sudo udevadm trigger
 ```
 
-I would suggest running the command userspace_tablet_driver_daemon from the terminal first and watching the output to see whether or not things are broken first before having your desktop environment auto-start the application on login.
+I would suggest running the command userspace_tablet_driver_daemon from the terminal first and watching the output to see if things are broken before having your desktop environment auto-start the application on login.
 
 ## Changing which display the device is mapped to
 Use xinput in order to configure this:
@@ -92,6 +94,9 @@ It will show something like `eDP-1` or `HDMI-A-0`
 #### Gnome under wayland without X11
 Unfortunately at the moment I do not know how to change the display mapping when using Gnome under wayland as I can't find any documentation on how to instruct the compositor `mutter` to do so.
 
+#### KDE under wayland without X11
+This is the same situation as the Gnome desktop environment. There is work to add a new KCM to support libinput graphics tablets but it is not complete. See: https://phabricator.kde.org/T14971
+
 ## Contributing
 Should you want to contribute there are a few ways to do so.
 - Testing the driver on your Linux distribution. If it doesn't work, cut me an issue.
@@ -100,3 +105,4 @@ Should you want to contribute there are a few ways to do so.
 - Lend me your tablet so that I can do the implementation or
 - Buy the tablet for me from my wishlist: https://www.amazon.com/hz/wishlist/ls/10J2MJJPCC2JF?ref_=wl_share
 - If you think a tablet should be on my wishlist, but it isn't, let me know!
+- Add suggestions to the issues. We can discuss their feasibility and at what milestones we should aim for.
