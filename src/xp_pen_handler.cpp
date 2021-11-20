@@ -35,6 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "artist_12.h"
 #include "deco_03.h"
 #include "deco_mini7.h"
+#include "innovator_16.h"
 
 xp_pen_handler::xp_pen_handler() {
     std::cout << "xp_pen_handler initialized" << std::endl;
@@ -46,6 +47,7 @@ xp_pen_handler::xp_pen_handler() {
     addHandler(new artist_24_pro());
     addHandler(new artist_12_pro());
     addHandler(new artist_12());
+    addHandler(new innovator_16());
     addHandler(new deco_pro_small());
     addHandler(new deco_pro_medium());
     addHandler(new deco_01v2());

@@ -8,6 +8,7 @@ This repo currently houses a command-line only utility that creates a user-space
 - XP-Pen Artist 13.3 Pro
 - XP-Pen Artist 12 Pro
 - XP-Pen Artist 12 (2nd Gen) (Needs testing to confirm it works)
+- XP-Pen Innovator 16
 - XP-Pen Deco Pro S (Use GUI to switch touch-pad modes)
 - XP-Pen Deco Pro M (Use GUI to switch touch-pad modes)
 - XP-Pen Deco 01v2
