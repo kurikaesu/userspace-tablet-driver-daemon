@@ -180,7 +180,7 @@ std::wstring huion_tablet::getDeviceFirmwareName(libusb_device_handle *handle) {
     return firmware;
 }
 
-bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId) {
+bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId, int productId) {
     auto *buffer = new unsigned char[200];
     memset(buffer, 0, 200);
     auto firmware = getDeviceFirmwareName(handle);
@@ -216,7 +216,7 @@ bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId) {
     int resolution = (buffer[11] << 8) + buffer[10];
 
     unsigned short vendorId = 0x256c;
-    unsigned short productId = 0xf06e;
+    unsigned short aliasedProductId = 0xf06e;
     unsigned short versionId = 0x0001;
 
     if (maxWidth != 1 && maxHeight != 1 && maxPressure != 0) {
@@ -231,7 +231,7 @@ bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId) {
                 .maxTiltX = 60,
                 .maxTiltY = 60,
                 .vendorId = vendorId,
-                .productId = productId,
+                .productId = aliasedProductId,
                 .versionId = versionId,
         };
 
@@ -248,7 +248,7 @@ bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId) {
             .wheelMax = 1,
             .hWheelMax = 1,
             .vendorId = vendorId,
-            .productId = productId,
+            .productId = aliasedProductId,
             .versionId = versionId,
     };
 

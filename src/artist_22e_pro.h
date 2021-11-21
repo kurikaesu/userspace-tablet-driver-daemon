@@ -30,7 +30,6 @@ public:
     void setConfig(nlohmann::json config);
     int sendInitKeyOnInterface();
     bool attachToInterfaceId(int interfaceId);
-    bool attachDevice(libusb_device_handle* handle, int interfaceId);
     bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
 private:
     void handleFrameEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);

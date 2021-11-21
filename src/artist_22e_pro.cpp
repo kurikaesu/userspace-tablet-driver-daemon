@@ -93,55 +93,6 @@ bool artist_22e_pro::attachToInterfaceId(int interfaceId) {
     }
 }
 
-bool artist_22e_pro::attachDevice(libusb_device_handle *handle, int interfaceId) {
-    unsigned char* buf = new unsigned char[12];
-
-    // We need to get a few more bits of information
-    if (libusb_get_string_descriptor(handle, 0x64, 0x0409, buf, 12) != 12) {
-        std::cout << "Could not get descriptor" << std::endl;
-        return false;
-    }
-
-    int maxWidth = (buf[3] << 8) + buf[2];
-    int maxHeight = (buf[5] << 8) + buf[4];
-    maxPressure = (buf[9] << 8) + buf[8];
-    int resolution = (buf[11] << 8) + buf[10];
-
-    unsigned short vendorId = 0x28bd;
-    unsigned short productId = 0xf90b;
-    unsigned short versionId = 0x0001;
-
-    struct uinput_pen_args penArgs {
-        .maxWidth = maxWidth,
-        .maxHeight = maxHeight,
-        .maxPressure = maxPressure,
-        .resolution = resolution,
-        .maxTiltX = 60,
-        .maxTiltY = 60,
-        .vendorId = vendorId,
-        .productId = productId,
-        .versionId = versionId,
-        {"XP-Pen Artist 22E Pro"},
-    };
-
-    struct uinput_pad_args padArgs {
-        .padButtonAliases = padButtonAliases,
-        .hasWheel = false,
-        .hasHWheel = false,
-        .wheelMax = 0,
-        .hWheelMax = 0,
-        .vendorId = vendorId,
-        .productId = productId,
-        .versionId = versionId,
-        {"XP-Pen Artist 22E Pro Pad"},
-    };
-
-    uinputPens[handle] = create_pen(penArgs);
-    uinputPads[handle] = create_pad(padArgs);
-
-    return true;
-}
-
 bool artist_22e_pro::handleTransferData(libusb_device_handle* handle, unsigned char *data, size_t dataLen) {
     switch (data[0]) {
         // Unified interface

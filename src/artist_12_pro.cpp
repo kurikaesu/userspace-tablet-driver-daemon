@@ -19,10 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <unistd.h>
 #include <iostream>
 #include <string>
+#include <sstream>
 #include "artist_12_pro.h"
 
 artist_12_pro::artist_12_pro() {
     productIds.push_back(0x080a);
+    productIds.push_back(0x091f);
 
     for (int currentAssignedButton = BTN_0; currentAssignedButton < BTN_8; ++currentAssignedButton) {
         padButtonAliases.push_back(currentAssignedButton);
@@ -32,6 +34,8 @@ artist_12_pro::artist_12_pro() {
 std::string artist_12_pro::getProductName(int productId) {
     if (productId == 0x080a) {
         return "XP-Pen Artist 12 Pro";
+    } else if (productId == 0x091f) {
+        return "XP-Pen Artist 12 Pro (2nd Gen)";
     }
 
     return "Unknown XP-Pen Device";
@@ -75,55 +79,6 @@ int artist_12_pro::sendInitKeyOnInterface() {
 
 bool artist_12_pro::attachToInterfaceId(int interfaceId) {
     return interfaceId == 2;
-}
-
-bool artist_12_pro::attachDevice(libusb_device_handle *handle, int interfaceId) {
-    auto *buf = new unsigned char[12];
-
-    // We need to get a few more bits of information
-    if (libusb_get_string_descriptor(handle, 0x64, 0x0409, buf, 12) != 12) {
-        std::cout << "Could not get descriptor" << std::endl;
-        return false;
-    }
-
-    int maxWidth = (buf[3] << 8) + buf[2];
-    int maxHeight = (buf[5] << 8) + buf[4];
-    maxPressure = (buf[9] << 8) + buf[8];
-    int resolution = (buf[11] << 8) + buf[10];
-
-    unsigned short vendorId = 0x28bd;
-    unsigned short productId = 0xf80a;
-    unsigned short versionId = 0x0001;
-
-    struct uinput_pen_args penArgs{
-            .maxWidth = maxWidth,
-            .maxHeight = maxHeight,
-            .maxPressure = maxPressure,
-            .resolution = resolution,
-            .maxTiltX = 60,
-            .maxTiltY = 60,
-            .vendorId = vendorId,
-            .productId = productId,
-            .versionId = versionId,
-            {"XP-Pen Artist 12 Pro"},
-    };
-
-    struct uinput_pad_args padArgs{
-            .padButtonAliases = padButtonAliases,
-            .hasWheel = true,
-            .hasHWheel = true,
-            .wheelMax = 1,
-            .hWheelMax = 1,
-            .vendorId = vendorId,
-            .productId = productId,
-            .versionId = versionId,
-            {"XP-Pen Artist 12 Pro Pad"},
-    };
-
-    uinputPens[handle] = create_pen(penArgs);
-    uinputPads[handle] = create_pad(padArgs);
-
-    return true;
 }
 
 bool artist_12_pro::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {

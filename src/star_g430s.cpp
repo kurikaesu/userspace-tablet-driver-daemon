@@ -31,7 +31,7 @@ std::string star_g430s::getProductName(int productId) {
     return star::getProductName(productId);
 }
 
-bool star_g430s::attachDevice(libusb_device_handle *handle, int interfaceId) {
+bool star_g430s::attachDevice(libusb_device_handle *handle, int interfaceId, int productId) {
     unsigned char* buf = new unsigned char[12];
 
     // We need to get a few more bits of information
@@ -47,7 +47,7 @@ bool star_g430s::attachDevice(libusb_device_handle *handle, int interfaceId) {
     int resolution = 5080; // (buf[11] << 8) + buf[10];
 
     unsigned short vendorId = 0x28bd;
-    unsigned short productId = 0xf913;
+    unsigned short aliasedProductId = 0xf913;
     unsigned short versionId = 0x0001;
 
     if (interfaceId == 2) {
@@ -59,7 +59,7 @@ bool star_g430s::attachDevice(libusb_device_handle *handle, int interfaceId) {
                 .maxTiltX = 60,
                 .maxTiltY = 60,
                 .vendorId = vendorId,
-                .productId = productId,
+                .productId = aliasedProductId,
                 .versionId = versionId,
                 {"XP-Pen Star G430S"},
         };

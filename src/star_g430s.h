@@ -27,7 +27,7 @@ public:
     star_g430s();
 
     std::string getProductName(int productId);
-    bool attachDevice(libusb_device_handle *handle, int interfaceId);
+    bool attachDevice(libusb_device_handle *handle, int interfaceId, int productId);
 };
 
 

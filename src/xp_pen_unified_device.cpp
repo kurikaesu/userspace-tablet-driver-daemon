@@ -16,7 +16,69 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <iostream>
+#include <sstream>
 #include "xp_pen_unified_device.h"
+
+bool xp_pen_unified_device::attachDevice(libusb_device_handle *handle, int interfaceId, int productId) {
+    unsigned char* buf = new unsigned char[13];
+    const int descriptorLength = 13;
+
+    // We need to get a few more bits of information
+    if (libusb_get_string_descriptor(handle, 0x64, 0x0409, buf, descriptorLength) != descriptorLength) {
+        std::cout << "Could not get descriptor" << std::endl;
+        return false;
+    }
+
+    int maxWidth = (buf[12] << 16) + (buf[3] << 8) + buf[2];
+    int maxHeight = (buf[5] << 8) + buf[4];
+    maxPressure = (buf[9] << 8) + buf[8];
+    int resolution = (buf[11] << 8) + buf[10];
+
+    std::string deviceName = getProductName(productId);
+    std::stringstream padNameBuilder;
+    padNameBuilder << deviceName;
+    padNameBuilder << " Pad";
+    std::string padName = padNameBuilder.str();
+
+    std::cout << "Device: " << deviceName << " - Probed maxWidth: (" << maxWidth << ") maxHeight: (" << maxHeight << ") resolution: (" << resolution << ")" << std::endl;
+
+    unsigned short vendorId = 0x28bd;
+    unsigned short aliasedProductId = productId + 0xf000;
+    unsigned short versionId = 0x0001;
+
+    struct uinput_pen_args penArgs {
+            .maxWidth = maxWidth,
+            .maxHeight = maxHeight,
+            .maxPressure = maxPressure,
+            .resolution = resolution,
+            .maxTiltX = 60,
+            .maxTiltY = 60,
+            .vendorId = vendorId,
+            .productId = aliasedProductId,
+            .versionId = versionId,
+    };
+
+    memcpy(penArgs.productName, deviceName.c_str(), deviceName.length());
+
+    struct uinput_pad_args padArgs {
+            .padButtonAliases = padButtonAliases,
+            .hasWheel = true,
+            .hasHWheel = true,
+            .wheelMax = 1,
+            .hWheelMax = 1,
+            .vendorId = vendorId,
+            .productId = aliasedProductId,
+            .versionId = versionId,
+    };
+
+    memcpy(padArgs.productName, deviceName.c_str(), deviceName.length());
+
+    uinputPens[handle] = create_pen(penArgs);
+    uinputPads[handle] = create_pad(padArgs);
+
+    return true;
+}
 
 void xp_pen_unified_device::handleDigitizerEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     if (data[1] <= 0xc0) {

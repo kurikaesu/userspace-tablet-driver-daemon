@@ -78,7 +78,7 @@ bool ac19::attachToInterfaceId(int interfaceId) {
     return true;
 }
 
-bool ac19::attachDevice(libusb_device_handle *handle, int interfaceId) {
+bool ac19::attachDevice(libusb_device_handle *handle, int interfaceId, int productId) {
     if (interfaceId == 2) {
         unsigned short vendorId = 0x28bd;
         unsigned short productId = 0xf201;

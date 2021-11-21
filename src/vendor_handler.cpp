@@ -127,7 +127,7 @@ device_interface_pair* vendor_handler::claimDevice(libusb_device *device, libusb
                 // the claim so that no other driver mangles events while we are handling it
                 if (productHandlers[productId]->attachToInterfaceId(interface_number)) {
                     // Attach to our handler
-                    if (!productHandlers[productId]->attachDevice(handle, interface_number)) {
+                    if (!productHandlers[productId]->attachDevice(handle, interface_number, productId)) {
                         delete deviceInterface;
                         return nullptr;
                     }
@@ -187,7 +187,7 @@ device_interface_pair* vendor_handler::claimDevice(libusb_device *device, libusb
 
     deviceInterface->productId = productId;
     auto productString = std::to_string(productId);
-    std::cout << "Set up config for device " << productString << std::endl;
+    std::cout << "Set up config for device " << productString << ": (" << productHandlers[productId]->getProductName(productId) << ")" <<  std::endl;
     productHandlers[productId]->setConfig(getConfig()[productString]);
     return deviceInterface;
 }

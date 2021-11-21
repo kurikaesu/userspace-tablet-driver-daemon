@@ -32,7 +32,7 @@ std::string deco_pro_small::getProductName(int productId) {
     return deco_pro::getProductName(productId);
 }
 
-bool deco_pro_small::attachDevice(libusb_device_handle *handle, int interfaceId) {
+bool deco_pro_small::attachDevice(libusb_device_handle *handle, int interfaceId, int productId) {
     unsigned char* buf = new unsigned char[12];
 
     // We need to get a few more bits of information
@@ -47,7 +47,7 @@ bool deco_pro_small::attachDevice(libusb_device_handle *handle, int interfaceId)
     int resolution = (buf[11] << 8) + buf[10];
 
     unsigned short vendorId = 0x28bd;
-    unsigned short productId = 0xf909;
+    unsigned short aliasedProductId = 0xf909;
     unsigned short versionId = 0x0001;
 
     if (interfaceId == 2) {
@@ -59,7 +59,7 @@ bool deco_pro_small::attachDevice(libusb_device_handle *handle, int interfaceId)
                 .maxTiltX = 60,
                 .maxTiltY = 60,
                 .vendorId = vendorId,
-                .productId = productId,
+                .productId = aliasedProductId,
                 .versionId = versionId,
                 {"XP-Pen Deco Pro S"},
         };
@@ -71,7 +71,7 @@ bool deco_pro_small::attachDevice(libusb_device_handle *handle, int interfaceId)
                 .wheelMax = 1,
                 .hWheelMax = 1,
                 .vendorId = vendorId,
-                .productId = productId,
+                .productId = aliasedProductId,
                 .versionId = versionId,
                 {"XP-Pen Deco Pro S Pad"},
         };
@@ -84,7 +84,7 @@ bool deco_pro_small::attachDevice(libusb_device_handle *handle, int interfaceId)
         struct uinput_pointer_args pointerArgs{
                 .wheelMax = 1,
                 .vendorId = vendorId,
-                .productId = productId,
+                .productId = aliasedProductId,
                 .versionId = versionId,
                 {"XP-Pen Deco Pro S Pointer"},
         };

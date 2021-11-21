@@ -75,7 +75,7 @@ bool innovator_16::attachToInterfaceId(int interfaceId) {
     return interfaceId == 2;
 }
 
-bool innovator_16::attachDevice(libusb_device_handle *handle, int interfaceId) {
+bool innovator_16::attachDevice(libusb_device_handle *handle, int interfaceId, int productId) {
     auto *buf = new unsigned char[13];
 
     // We need to get a few more bits of information
@@ -92,7 +92,7 @@ bool innovator_16::attachDevice(libusb_device_handle *handle, int interfaceId) {
     std::cout << "Probed maxWidth: (" << maxWidth << ") maxHeight: (" << maxHeight << ") resolution: (" << resolution << ")" << std::endl;
 
     unsigned short vendorId = 0x28bd;
-    unsigned short productId = 0xf92c;
+    unsigned short aliasedProductId = 0xf92c;
     unsigned short versionId = 0x0001;
 
     struct uinput_pen_args penArgs{
@@ -103,7 +103,7 @@ bool innovator_16::attachDevice(libusb_device_handle *handle, int interfaceId) {
             .maxTiltX = 60,
             .maxTiltY = 60,
             .vendorId = vendorId,
-            .productId = productId,
+            .productId = aliasedProductId,
             .versionId = versionId,
             {"XP-Pen Innovator 16"},
     };
@@ -115,7 +115,7 @@ bool innovator_16::attachDevice(libusb_device_handle *handle, int interfaceId) {
             .wheelMax = 1,
             .hWheelMax = 1,
             .vendorId = vendorId,
-            .productId = productId,
+            .productId = aliasedProductId,
             .versionId = versionId,
             {"XP-Pen Innovator 16 Pad"},
     };

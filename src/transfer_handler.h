@@ -44,7 +44,7 @@ public:
     virtual nlohmann::json getConfig();
     virtual int sendInitKeyOnInterface() = 0;
     virtual bool attachToInterfaceId(int interfaceId) = 0;
-    virtual bool attachDevice(libusb_device_handle* handle, int interfaceId) = 0;
+    virtual bool attachDevice(libusb_device_handle* handle, int interfaceId, int productId) = 0;
     virtual void detachDevice(libusb_device_handle* handle);
     virtual bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen) = 0;
     virtual std::vector<unix_socket_message*> handleMessage(unix_socket_message* message);

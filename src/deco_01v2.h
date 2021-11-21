@@ -27,7 +27,6 @@ public:
     deco_01v2();
 
     std::string getProductName(int productId);
-    bool attachDevice(libusb_device_handle* handle, int interfaceId);
 };
 
 
