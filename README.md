@@ -25,29 +25,26 @@ This repo currently houses a command-line only utility that creates a user-space
 
 ### There is an untested generic XP-Pen tablet driver that should work for the majority of devices that aren't officially supported.
 
-**Unless otherwise indicated, all supported tablets have dials/touch-strips working and bindable. Stylus pressure curve is also configurable.**
+If you test your device against this generic driver and find that it works, please create an issue and provide the device ID for your device, its name and preferrably a link to the product page.
+If your device only partially works, we will be interested in knowing that too.
 
-It initializes the supported tablets with their default bindings but the bindings can be changed by modifying the configuration file:
-`$HOME/.local/share/userspace_tablet_driver_daemon/driver.cfg`
-
-This driver also listens to a unix socket at `$HOME/.local/var/run/userspace_tablet_driver_daemon.sock` that takes in messages of format `struct unix_socket_message`: https://github.com/kurikaesu/userspace-tablet-driver-daemon/blob/main/src/unix_socket_message.h. It is possible to receive a response from messages sent to devices as long as the response expected flag is set.
-
-Things on the TODO list:
-- Support more devices
-- Provide a way to set up calibrate pressure curves through the GUI in a user friendly way.
-
-## Warning
-- This includes a 70-uinput-plugdev.rules file that gives users on your computer that are in the `plugdev` permission group access to uinput without SUDO. This is how I can make this driver run without having the user constantly enter their password each time.
+---
 
 ## How to change bindings
 Preferred way is to use the GUI: https://github.com/kurikaesu/userspace-tablet-driver-gui
 You can change bindings manually by changing the JSON config but the format is currently changing too quickly to make effective documentation.
 
+## To-do:
+- Officially support more devices
+- Provide a way to set up calibrate pressure curves through the GUI in a user friendly way.
+
+## Warning
+- This includes a 70-uinput-plugdev.rules file that gives users on your computer that are in the `plugdev` permission group access to uinput without SUDO. This is how I can make this driver run without having the user constantly enter their password each time.
+
 ## Installing
 For debian based distributions, download the deb package from the list of releases. The deb package can be installed with `sudo dpkg -i <package_name.deb>`
 
 If you use an Arch-based distro, you can install the package from the AUR. There are two versions, one unstable and one stable.
-
 
 The unstable version can be installed with:
 
@@ -102,7 +99,7 @@ Unfortunately at the moment I do not know how to change the display mapping when
 This is the same situation as the Gnome desktop environment. There is work to add a new KCM to support libinput graphics tablets but it is not complete. See: https://phabricator.kde.org/T14971
 
 ## Contributing
-Should you want to contribute there are a few ways to do so.
+Should you want to contribute there are a few ways to do so:
 - Testing the driver on your Linux distribution. If it doesn't work, cut me an issue.
 - Fix an open issue and send me a pull-request (If needed)
 - Implement support for your tablet if you are able to. Otherwise,
