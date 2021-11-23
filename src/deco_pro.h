@@ -28,8 +28,6 @@ public:
 
     virtual std::string getProductName(int productId);
     void setConfig(nlohmann::json config);
-    int sendInitKeyOnInterface();
-    bool attachToInterfaceId(int interfaceId);
     bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
 
 protected:

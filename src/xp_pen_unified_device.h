@@ -23,6 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class xp_pen_unified_device : public transfer_handler {
 protected:
+    int sendInitKeyOnInterface();
+    bool attachToInterfaceId(int interfaceId);
     bool attachDevice(libusb_device_handle* handle, int interfaceId, int productId);
     void handleDigitizerEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
 };

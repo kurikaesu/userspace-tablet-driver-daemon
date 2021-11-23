@@ -67,65 +67,6 @@ void innovator_16::setConfig(nlohmann::json config) {
     submitMapping(jsonConfig);
 }
 
-int innovator_16::sendInitKeyOnInterface() {
-    return 0x02;
-}
-
-bool innovator_16::attachToInterfaceId(int interfaceId) {
-    return interfaceId == 2;
-}
-
-bool innovator_16::attachDevice(libusb_device_handle *handle, int interfaceId, int productId) {
-    auto *buf = new unsigned char[13];
-
-    // We need to get a few more bits of information
-    if (libusb_get_string_descriptor(handle, 0x64, 0x0409, buf, 13) != 13) {
-        std::cout << "Could not get descriptor" << std::endl;
-        return false;
-    }
-
-    int maxWidth = (buf[12] << 16) + (buf[3] << 8) + buf[2];
-    int maxHeight = (buf[5] << 8) + buf[4];
-    maxPressure = (buf[9] << 8) + buf[8];
-    int resolution = (buf[11] << 8) + buf[10];
-
-    std::cout << "Probed maxWidth: (" << maxWidth << ") maxHeight: (" << maxHeight << ") resolution: (" << resolution << ")" << std::endl;
-
-    unsigned short vendorId = 0x28bd;
-    unsigned short aliasedProductId = 0xf92c;
-    unsigned short versionId = 0x0001;
-
-    struct uinput_pen_args penArgs{
-            .maxWidth = maxWidth,
-            .maxHeight = maxHeight,
-            .maxPressure = maxPressure,
-            .resolution = resolution,
-            .maxTiltX = 60,
-            .maxTiltY = 60,
-            .vendorId = vendorId,
-            .productId = aliasedProductId,
-            .versionId = versionId,
-            {"XP-Pen Innovator 16"},
-    };
-
-    struct uinput_pad_args padArgs{
-            .padButtonAliases = padButtonAliases,
-            .hasWheel = true,
-            .hasHWheel = true,
-            .wheelMax = 1,
-            .hWheelMax = 1,
-            .vendorId = vendorId,
-            .productId = aliasedProductId,
-            .versionId = versionId,
-            {"XP-Pen Innovator 16 Pad"},
-    };
-
-    uinputPens[handle] = create_pen(penArgs);
-    uinputPads[handle] = create_pad(padArgs);
-
-    return true;
-}
-
 bool innovator_16::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     switch (data[0]) {
         case 0x02:

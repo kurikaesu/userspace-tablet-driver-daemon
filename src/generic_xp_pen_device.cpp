@@ -16,16 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <iostream>
-#include <cstring>
-#include <unistd.h>
-#include <linux/uinput.h>
-#include "artist_22r_pro.h"
+#include "generic_xp_pen_device.h"
 
-artist_22r_pro::artist_22r_pro() {
-    productIds.push_back(0x091b);
+generic_xp_pen_device::generic_xp_pen_device(int productId) {
+    productIds.push_back(productId);
 
-    for (int currentAssignedButton = BTN_0; currentAssignedButton <= BTN_9; ++currentAssignedButton) {
+    for (int currentAssignedButton = BTN_0; currentAssignedButton < BTN_9; ++currentAssignedButton) {
         padButtonAliases.push_back(currentAssignedButton);
     }
 
@@ -34,15 +30,11 @@ artist_22r_pro::artist_22r_pro() {
     }
 }
 
-std::string artist_22r_pro::getProductName(int productId) {
-    if (productId == 0x091b) {
-        return "XP-Pen Artist 22R Pro";
-    }
-
-    return "Unknown XP-Pen Device";
+std::string generic_xp_pen_device::getProductName(int productId) {
+    return "Generic XP-Pen Device";
 }
 
-void artist_22r_pro::setConfig(nlohmann::json config) {
+void generic_xp_pen_device::setConfig(nlohmann::json config) {
     if (!config.contains("mapping") || config["mapping"] == nullptr) {
         config["mapping"] = nlohmann::json({});
 
@@ -68,6 +60,7 @@ void artist_22r_pro::setConfig(nlohmann::json config) {
         addToButtonMap(BTN_7, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTSHIFT, KEY_Z});
         addToButtonMap(BTN_8, EV_KEY, {KEY_V});
         addToButtonMap(BTN_9, EV_KEY, {KEY_L});
+
         addToButtonMap(BTN_SOUTH, EV_KEY, {KEY_LEFTCTRL, KEY_0});
         addToButtonMap(BTN_EAST, EV_KEY, {KEY_LEFTCTRL, KEY_N});
         addToButtonMap(BTN_C, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTSHIFT, KEY_N});
@@ -90,13 +83,11 @@ void artist_22r_pro::setConfig(nlohmann::json config) {
     submitMapping(jsonConfig);
 }
 
-bool artist_22r_pro::handleTransferData(libusb_device_handle* handle, unsigned char *data, size_t dataLen) {
+bool generic_xp_pen_device::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     switch (data[0]) {
-        // Unified interface
         case 0x02:
             handleDigitizerEvent(handle, data, dataLen);
             handleFrameEvent(handle, data, dataLen);
-
             break;
 
         default:
@@ -106,7 +97,7 @@ bool artist_22r_pro::handleTransferData(libusb_device_handle* handle, unsigned c
     return true;
 }
 
-void artist_22r_pro::handleFrameEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+void generic_xp_pen_device::handleFrameEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     if (data[1] >= 0xf0) {
         // Extract the button being pressed (If there is one)
         long button = (data[4] << 16) + (data[3] << 8) + data[2];

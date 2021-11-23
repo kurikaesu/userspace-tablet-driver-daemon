@@ -20,6 +20,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sstream>
 #include "xp_pen_unified_device.h"
 
+int xp_pen_unified_device::sendInitKeyOnInterface() {
+    return 0x02;
+}
+
+bool xp_pen_unified_device::attachToInterfaceId(int interfaceId) {
+    return interfaceId == 2;
+}
+
 bool xp_pen_unified_device::attachDevice(libusb_device_handle *handle, int interfaceId, int productId) {
     unsigned char* buf = new unsigned char[13];
     const int descriptorLength = 13;

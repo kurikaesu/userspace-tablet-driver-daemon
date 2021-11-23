@@ -58,14 +58,6 @@ void artist_12::setConfig(nlohmann::json config) {
     submitMapping(jsonConfig);
 }
 
-int artist_12::sendInitKeyOnInterface() {
-    return 0x02;
-}
-
-bool artist_12::attachToInterfaceId(int interfaceId) {
-    return interfaceId == 2;
-}
-
 bool artist_12::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     switch (data[0]) {
         case 0x02:

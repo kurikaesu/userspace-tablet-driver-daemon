@@ -1,6 +1,6 @@
 # Kuri's Linux user-space graphics tablet driver daemon
 
-This repo currently houses a command-line only utility that creates a user-space driver for the following models:
+This repo currently houses a command-line only utility that creates a user-space driver for the following supported models:
 - XP-Pen Artist 24 Pro
 - XP-Pen Artist 22E Pro
 - XP-Pen Artist 22R Pro
@@ -22,6 +22,8 @@ This repo currently houses a command-line only utility that creates a user-space
 - Huion H1161
 - Huion KD100 mini Keydial
 - Gaomon M10K Pro
+
+### There is an untested generic XP-Pen tablet driver that should work for the majority of devices that aren't officially supported.
 
 **Unless otherwise indicated, all supported tablets have dials/touch-strips working and bindable. Stylus pressure curve is also configurable.**
 

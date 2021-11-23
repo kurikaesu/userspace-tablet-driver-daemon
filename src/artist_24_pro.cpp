@@ -88,19 +88,6 @@ void artist_24_pro::setConfig(nlohmann::json config) {
     submitMapping(jsonConfig);
 }
 
-int artist_24_pro::sendInitKeyOnInterface() {
-    return 0x02;
-}
-
-bool artist_24_pro::attachToInterfaceId(int interfaceId) {
-    switch (interfaceId) {
-        case 2:
-            return true;
-        default:
-            return false;
-    }
-}
-
 bool artist_24_pro::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     switch (data[0]) {
         // Unified interface

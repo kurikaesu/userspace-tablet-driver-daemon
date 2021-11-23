@@ -65,14 +65,6 @@ void deco_03::setConfig(nlohmann::json config) {
     submitMapping(jsonConfig);
 }
 
-int deco_03::sendInitKeyOnInterface() {
-    return 0x02;
-}
-
-bool deco_03::attachToInterfaceId(int interfaceId) {
-    return interfaceId == 2;
-}
-
 bool deco_03::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     switch (data[0]) {
         case 0x02:

@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "deco_03.h"
 #include "deco_mini7.h"
 #include "innovator_16.h"
+#include "generic_xp_pen_device.h"
 
 xp_pen_handler::xp_pen_handler() {
     std::cout << "xp_pen_handler initialized" << std::endl;
@@ -162,6 +163,19 @@ bool xp_pen_handler::handleProductAttach(libusb_device* device, const libusb_dev
 
         std::cout << "Giving up" << std::endl;
         return false;
+    } else {
+        // We will attempt a generic handler instead
+        auto genericHandler = new generic_xp_pen_device(descriptor.idProduct);
+        addHandler(genericHandler);
+        while (interfacePair == nullptr && currentAttept < maxRetries) {
+            interfacePair = claimDevice(device, handle, descriptor);
+            if (interfacePair == nullptr) {
+                std::cout << "Could not claim device on attempt " << currentAttept << ". Detaching and then waiting" << std::endl;
+                handleProductDetach(device, descriptor);
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+                ++currentAttept;
+            }
+        }
     }
 
     std::cout << "Unknown product " << descriptor.idProduct << std::endl;
