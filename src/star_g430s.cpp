@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <iostream>
+#include <iomanip>
 #include "star_g430s.h"
 
 star_g430s::star_g430s() {
@@ -31,20 +32,28 @@ std::string star_g430s::getProductName(int productId) {
     return star::getProductName(productId);
 }
 
+std::string star_g430s::getInitKey() {
+    return {0x02, static_cast<char>(0xb0), 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+}
+
 bool star_g430s::attachDevice(libusb_device_handle *handle, int interfaceId, int productId) {
-    unsigned char* buf = new unsigned char[12];
+    unsigned int descriptorLength = 12;
+    unsigned char* buf = new unsigned char[descriptorLength];
 
     // We need to get a few more bits of information
-    if (libusb_get_string_descriptor(handle, 0x64, 0x0409, buf, 12) != 12) {
+    if (libusb_get_string_descriptor(handle, 0x64, 0x0409, buf, descriptorLength) != descriptorLength) {
         std::cout << "Could not get descriptor" << std::endl;
         return false;
     }
 
-    // Hard coding these values in because the probe doesn't seem to work.
-    int maxWidth = 32767; //(buf[3] << 8) + buf[2];
-    int maxHeight = 32767; // (buf[5] << 8) + buf[4];
+    // Hard coding these values in because the probe returns physical values.
+    int maxWidth = 0x7fff;
+    int maxHeight = 0x7fff;
     int maxPressure = (buf[9] << 8) + buf[8];
-    int resolution = 5080; // (buf[11] << 8) + buf[10];
+    int resolution = (buf[11] << 8) + buf[10];
+
+    std::string deviceName = "Star G430S";
+    std::cout << "Device: " << std::dec << deviceName << " - Probed maxWidth: (" << maxWidth << ") maxHeight: (" << maxHeight << ") resolution: (" << resolution << ") pressure: " << maxPressure << std::endl;
 
     unsigned short vendorId = 0x28bd;
     unsigned short aliasedProductId = 0xf913;

@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef USERSPACE_TABLET_DRIVER_DAEMON_AC19_H
 #define USERSPACE_TABLET_DRIVER_DAEMON_AC19_H
 
-#include "transfer_handler.h"
+#include "xp_pen_unified_device.h"
 
-class ac19 : public transfer_handler {
+class ac19 : public xp_pen_unified_device {
 public:
     ac19();
 
@@ -31,7 +31,6 @@ public:
     bool attachToInterfaceId(int interfaceId);
     bool attachDevice(libusb_device_handle* handle, int interfaceId, int productId);
     bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
-
 private:
     void handleFrameEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
 };

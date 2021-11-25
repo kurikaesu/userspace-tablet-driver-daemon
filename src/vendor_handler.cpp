@@ -153,7 +153,7 @@ device_interface_pair* vendor_handler::claimDevice(libusb_device *device, libusb
                     // We only send the init key on the interface the handler says it should be on
                     if (productHandlers[productId]->sendInitKeyOnInterface() == interface_number) {
                         if ((ep->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_OUT) {
-                            sendInitKey(handle, ep->bEndpointAddress);
+                            sendInitKey(handle, ep->bEndpointAddress, productHandlers[productId]);
                         }
                     }
 

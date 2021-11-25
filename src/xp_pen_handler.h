@@ -38,7 +38,7 @@ public:
     bool handleProductAttach(libusb_device* device, const libusb_device_descriptor descriptor);
     void handleProductDetach(libusb_device* device, struct libusb_device_descriptor descriptor);
 private:
-    void sendInitKey(libusb_device_handle* handle, int interface_number);
+    void sendInitKey(libusb_device_handle* handle, int interface_number, transfer_handler* productHandler);
 };
 
 

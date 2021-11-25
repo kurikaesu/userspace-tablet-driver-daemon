@@ -20,6 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sstream>
 #include "xp_pen_unified_device.h"
 
+std::string xp_pen_unified_device::getInitKey() {
+    return {0x02, static_cast<char>(0xb0), 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+}
+
 int xp_pen_unified_device::sendInitKeyOnInterface() {
     return 0x02;
 }

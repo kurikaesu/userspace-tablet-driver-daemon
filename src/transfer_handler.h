@@ -50,6 +50,7 @@ public:
     virtual std::vector<unix_socket_message*> handleMessage(unix_socket_message* message);
     virtual bool isAliasedProduct(int productId) { return false; }
     virtual int getAliasedProductId(libusb_device_handle* handle, int originalId) { return originalId; }
+    virtual std::string getInitKey() = 0;
 protected:
     virtual bool uinput_send(int fd, uint16_t type, uint16_t code, int32_t value);
     virtual int create_pen(const uinput_pen_args& penArgs);

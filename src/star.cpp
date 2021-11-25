@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <iostream>
+#include <iomanip>
 #include "star.h"
 
 star::star() {
@@ -32,7 +33,7 @@ void star::setConfig(nlohmann::json config) {
 }
 
 int star::sendInitKeyOnInterface() {
-    return -1;
+    return 0x02;
 }
 
 bool star::attachToInterfaceId(int interfaceId) {
@@ -43,6 +44,10 @@ bool star::handleTransferData(libusb_device_handle *handle, unsigned char *data,
     switch (data[0]) {
         case 0x07:
             handleDigitizerEvent(handle, data, dataLen);
+            break;
+
+        case 0x02:
+            xp_pen_unified_device::handleDigitizerEvent(handle, data, dataLen);
             break;
 
         default:

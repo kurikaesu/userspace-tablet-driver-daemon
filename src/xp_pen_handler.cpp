@@ -210,18 +210,18 @@ void xp_pen_handler::handleProductDetach(libusb_device *device, struct libusb_de
     }
 }
 
-void xp_pen_handler::sendInitKey(libusb_device_handle *handle, int interface_number) {
+void xp_pen_handler::sendInitKey(libusb_device_handle *handle, int interface_number, transfer_handler* productHandler) {
     std::cout << "Sending init key on endpont " << interface_number << std::endl;
 
-    unsigned char key[] = {0x02, 0xb0, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    std::string key = productHandler->getInitKey();
     int sentBytes;
-    int ret = libusb_interrupt_transfer(handle, interface_number | LIBUSB_ENDPOINT_OUT, key, sizeof(key), &sentBytes, 1000);
+    int ret = libusb_interrupt_transfer(handle, interface_number | LIBUSB_ENDPOINT_OUT, (unsigned char *) key.c_str(), key.length(), &sentBytes, 1000);
     if (ret != LIBUSB_SUCCESS) {
         std::cout << "Failed to send key on interface " << interface_number << " ret: " << ret << " errno: " << errno << std::endl;
         return;
     }
 
-    if (sentBytes != sizeof(key)) {
+    if (sentBytes != key.length()) {
         std::cout << "Didn't send all of the key on interface " << interface_number << " only sent " << sentBytes << std::endl;
         return;
     }
