@@ -22,7 +22,7 @@ jobs:
           command: "apt-get install -y cmake build-essential libusb-1.0-0-dev"
       - run:
           name: "Build package"
-          command: "cmake . && make package"
+          command: "BUILD_PKG=1;cmake . && make package"
       - run:
           name: "Generate artifacts directory"
           command: "mkdir -p /root/project/artifacts"

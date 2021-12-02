@@ -15,10 +15,13 @@ target_link_libraries(userspace_tablet_driver_daemon stdc++fs ${LIBUSB_1_LIBRARI
 target_include_directories(userspace_tablet_driver_daemon PRIVATE ${LIBUSB_1_INCLUDE_DIRS})
 target_compile_definitions(userspace_tablet_driver_daemon PRIVATE ${LIBUSB_1_DEFINITIONS})
 
-#install(TARGETS userspace_tablet_driver_daemon DESTINATION bin)
-install(TARGETS userspace_tablet_driver_daemon DESTINATION usr/bin)
-install(DIRECTORY config/etc/ DESTINATION etc)
-install(DIRECTORY config/usr/ DESTINATION usr)
+if(DEFINED ENV{BUILD_PKG})
+    install(TARGETS userspace_tablet_driver_daemon DESTINATION bin)
+else()
+    install(TARGETS userspace_tablet_driver_daemon DESTINATION usr/bin)
+    install(DIRECTORY config/etc/ DESTINATION etc)
+    install(DIRECTORY config/usr/ DESTINATION usr)
+endif()
 
 set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
 set(CPACK_INSTALLED_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/config;.")
