@@ -40,6 +40,10 @@ std::string artist_24_pro::getProductName(int productId) {
     return "Unknown XP-Pen Device";
 }
 
+unsigned short artist_24_pro::getDescriptorLength() {
+    return 13;
+}
+
 void artist_24_pro::setConfig(nlohmann::json config) {
     if (!config.contains("mapping") || config["mapping"] == nullptr) {
         config["mapping"] = nlohmann::json({});

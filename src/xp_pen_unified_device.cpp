@@ -32,9 +32,13 @@ bool xp_pen_unified_device::attachToInterfaceId(int interfaceId) {
     return interfaceId == 2;
 }
 
+unsigned short xp_pen_unified_device::getDescriptorLength() {
+    return 12;
+}
+
 bool xp_pen_unified_device::attachDevice(libusb_device_handle *handle, int interfaceId, int productId) {
-    unsigned char* buf = new unsigned char[13];
-    const int descriptorLength = 13;
+    const int descriptorLength = getDescriptorLength();
+    auto* buf = new unsigned char[descriptorLength];
 
     // We need to get a few more bits of information
     if (libusb_get_string_descriptor(handle, 0x64, 0x0409, buf, descriptorLength) != descriptorLength) {

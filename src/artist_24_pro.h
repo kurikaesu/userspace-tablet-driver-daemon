@@ -28,6 +28,7 @@ public:
 
     std::string getProductName(int productId);
     void setConfig(nlohmann::json config);
+    virtual unsigned short getDescriptorLength();
     bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
 private:
     void handleFrameEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
