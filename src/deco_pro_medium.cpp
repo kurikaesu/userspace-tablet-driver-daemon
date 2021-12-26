@@ -32,6 +32,10 @@ std::string deco_pro_medium::getProductName(int productId) {
     return deco_pro::getProductName(productId);
 }
 
+bool deco_pro_medium::attachToInterfaceId(int interfaceId) {
+    return interfaceId == 2 || interfaceId == 0;
+}
+
 bool deco_pro_medium::attachDevice(libusb_device_handle *handle, int interfaceId, int productId) {
     unsigned char* buf = new unsigned char[12];
 
