@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <fcntl.h>
 #include <iostream>
 #include <cstring>
+#include <iomanip>
 #include "transfer_handler.h"
 #include "socket_server.h"
 
@@ -483,6 +484,14 @@ void transfer_handler::submitMapping(const nlohmann::json& config) {
         pressureCurve.emplace_back(std::pair(0, 0));
         pressureCurve.emplace_back(std::pair(100, 100));
     }
+}
+
+void transfer_handler::handleUnknownUsbMessage(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+    std::cout << std::dec << "Got unknown message transfer of data length: " << (int)dataLen << " data: ";
+    for (int i = 0; i < dataLen; ++i) {
+        std::cout << std::hex << std::setfill('0')  << std::setw(2) << (int)data[i] << ":";
+    }
+    std::cout << std::endl;
 }
 
 void transfer_handler::handlePenEnteredProximity(libusb_device_handle* handle) {

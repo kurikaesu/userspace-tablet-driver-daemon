@@ -60,6 +60,8 @@ protected:
 
     virtual void submitMapping(const nlohmann::json& config);
 
+    virtual void handleUnknownUsbMessage(libusb_device_handle *handle, unsigned char *data, size_t dataLen);
+
     virtual void handlePenEnteredProximity(libusb_device_handle* handle);
     virtual void handlePenLeftProximity(libusb_device_handle* handle);
 

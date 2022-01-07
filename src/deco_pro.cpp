@@ -77,6 +77,7 @@ bool deco_pro::handleTransferData(libusb_device_handle *handle, unsigned char *d
             break;
 
         default:
+            handleUnknownUsbMessage(handle, data, dataLen);
             break;
     }
 
