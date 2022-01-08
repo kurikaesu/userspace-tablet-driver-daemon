@@ -81,7 +81,13 @@ void event_handler::sigHandler(int signo) {
 
 std::string event_handler::getConfigLocation() {
     std::stringstream  configLocation;
-    configLocation << getenv("HOME");
+    std::string homeLocation = getenv("HOME");
+    if (homeLocation.find("root") != std::string::npos) {
+        std::cout << "Driver must not be run as root. Bailing" << std::endl;
+        throw new std::runtime_error("Driver must not be run as root. Bailing");
+    }
+
+    configLocation << homeLocation;
     configLocation << "/.local/share/userspace_tablet_driver_daemon";
 
     return configLocation.str();
