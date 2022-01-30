@@ -101,8 +101,11 @@ std::string huion_tablet::getDeviceNameFromFirmware(std::wstring firmwareName) {
     }
 
     // GAOMON tablets
-    else if (firmwareName == L"OEM02_T19n_200311" || firmwareName == L"OEM02_T17b_190119") {
+    else if (firmwareName == L"OEM02_T19n_200311") {
         return "Gaomon M10K Pro";
+    }
+    else if (firmwareName == L"OEM02_T17b_190119"){
+        return "Gaomon M10K 2018";
     }
 
     return "Unknown device";
@@ -123,8 +126,11 @@ int huion_tablet::getAliasedDeviceIdFromFirmware(std::wstring firmwareName) {
     }
 
     // GAOMON tablets
-    else if (firmwareName == L"OEM02_T19n_200311" || firmwareName == L"OEM02_T17b_190119") {
+    else if (firmwareName == L"OEM02_T19n_200311") {
         return 0x0311;
+    }
+    else if (firmwareName == L"OEM02_T17b_190119"){
+        return 0x0119;
     }
 
     return 0x0000;

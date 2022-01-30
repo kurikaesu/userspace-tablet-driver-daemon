@@ -22,6 +22,7 @@ This repo currently houses a command-line only utility that creates a user-space
 - Huion H1161
 - Huion KD100 mini Keydial
 - Gaomon M10K Pro
+- Gaomon M10K 2018
 
 ### There is an untested generic XP-Pen tablet driver that should work for the majority of devices that aren't officially supported.
 
