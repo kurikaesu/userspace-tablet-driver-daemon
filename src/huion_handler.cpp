@@ -40,6 +40,7 @@ huion_handler::huion_handler() {
 
     // GAOMON Tablets
     addHandler(new huion_tablet(0x0311));
+    addHandler(new huion_tablet(0x0119));
 }
 
 int huion_handler::getVendorId() {
