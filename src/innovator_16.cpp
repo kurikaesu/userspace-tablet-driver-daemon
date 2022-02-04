@@ -67,7 +67,7 @@ void innovator_16::setConfig(nlohmann::json config) {
     submitMapping(jsonConfig);
 }
 
-bool innovator_16::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+bool innovator_16::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {
     switch (data[0]) {
         case 0x02:
             handleDigitizerEvent(handle, data, dataLen);

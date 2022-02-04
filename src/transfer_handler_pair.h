@@ -23,6 +23,7 @@ struct transfer_handler_pair {
 public:
     vendor_handler* vendorHandler;
     transfer_handler* transferHandler;
+    int productId;
 };
 
 #endif //USERSPACE_TABLET_DRIVER_DAEMON_TRANSFER_HANDLER_PAIR_H

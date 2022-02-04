@@ -31,7 +31,7 @@ public:
     int sendInitKeyOnInterface();
     bool attachToInterfaceId(int interfaceId);
     virtual bool attachDevice(libusb_device_handle *handle, int interfaceId, int productId) = 0;
-    bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
+    bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen, int productId);
 
 };
 

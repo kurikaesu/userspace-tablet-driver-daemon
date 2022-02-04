@@ -507,6 +507,7 @@ void transfer_handler::handlePenLeftProximity(libusb_device_handle* handle) {
 }
 
 void transfer_handler::handlePenTouchingDigitizer(libusb_device_handle *handle, int pressure) {
+    uinput_send(uinputPens[handle], EV_KEY, BTN_TOUCH, (pressure != 0) ? 1 : 0);
     uinput_send(uinputPens[handle], EV_ABS, ABS_PRESSURE, pressure);
 }
 

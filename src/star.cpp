@@ -40,7 +40,7 @@ bool star::attachToInterfaceId(int interfaceId) {
     return true;
 }
 
-bool star::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+bool star::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {
     switch (data[0]) {
         case 0x07:
             handleDigitizerEvent(handle, data, dataLen);

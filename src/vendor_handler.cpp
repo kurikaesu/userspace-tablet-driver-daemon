@@ -205,6 +205,7 @@ bool vendor_handler::setupTransfers(libusb_device_handle *handle, unsigned char 
     struct transfer_handler_pair* dataPair = new transfer_handler_pair();
     dataPair->vendorHandler = this;
     dataPair->transferHandler = productHandlers[productId];
+    dataPair->productId = productId;
 
     libusb_fill_interrupt_transfer(transfer,
                                    handle, interface_number | LIBUSB_ENDPOINT_IN,
@@ -231,7 +232,7 @@ void vendor_handler::transferCallback(struct libusb_transfer *transfer) {
     switch (transfer->status) {
         case LIBUSB_TRANSFER_COMPLETED:
             // Send the packet data to the registered handler
-            dataPair->transferHandler->handleTransferData(transfer->dev_handle, transfer->buffer, transfer->actual_length);
+            dataPair->transferHandler->handleTransferData(transfer->dev_handle, transfer->buffer, transfer->actual_length, dataPair->productId);
 
             // Resubmit the transfer
             err = libusb_submit_transfer(transfer);
