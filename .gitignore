@@ -43,5 +43,6 @@ CPackSourceConfig.cmake
 Makefile
 userspace_tablet_driver_daemon
 userspace_tablet_driver_daemon*.deb
+userspace_tablet_driver_daemon*.rpm
 install_manifest.txt
 *.cbp
