@@ -36,6 +36,37 @@ jobs:
           root: /root/project
           paths:
             - artifacts
+  build-centos8-package:
+    docker:
+      - image: centos:8
+    working_directory: /root/project
+    steps:
+      - checkout
+      - run:
+          name: "Fix update"
+          command: "sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-Linux-*"
+      - run:
+          name: "Fix update 2"
+          command: "sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-Linux-*"
+      - run:
+          name: "Update packages"
+          command: "yum update"
+      - run:
+          name: "Install build tools"
+          command: "yum -y groupinstall 'Development Tools' && yum -y install cmake libusbx-devel"
+      - run:
+          name: "Build package"
+          command: "BUILD_PKG=1;BUILD_RPM=1;cmake . && make package"
+      - run:
+          name: "Generate artifacts directory"
+          command: "mkdir -p /root/project/artifacts"
+      - run:
+          name: "Move rpm to artifacts"
+          command: "mv *.rpm artifacts/"
+      - persist_to_workspace:
+          root: /root/project
+          paths:
+            - artifacts
   upload-packages-to-github:
     docker:
       - image: cibuilds/github
@@ -66,6 +97,8 @@ workflows:
                 - main
     jobs:
       - build-ubuntu-bionic-package
+      - build-centos8-package
       - upload-packages-to-github:
           requires:
             - build-ubuntu-bionic-package
+            - build-centos8-package
