@@ -96,7 +96,7 @@ bool xp_pen_unified_device::attachDevice(libusb_device_handle *handle, int inter
     return true;
 }
 
-void xp_pen_unified_device::handleDigitizerEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+void xp_pen_unified_device::handleDigitizerEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int offsetPressure) {
     if (data[1] <= 0xc0) {
         // Extract the X and Y position
         int penX = (data[3] << 8) + data[2];
@@ -110,6 +110,7 @@ void xp_pen_unified_device::handleDigitizerEvent(libusb_device_handle *handle, u
         // Check to see if the pen is touching
         std::bitset<sizeof(data)> stylusTipAndButton(data[1]);
         int pressure = (data[7] << 8) + data[6];
+        pressure += offsetPressure;
 
         // Handle pen coming into/out of proximity
         if (stylusTipAndButton.test(5)) {
@@ -119,8 +120,10 @@ void xp_pen_unified_device::handleDigitizerEvent(libusb_device_handle *handle, u
         }
 
         // Handle actual stylus to digitizer contact
-        if (stylusTipAndButton.test(0) | stylusTipAndButton.test(5)) {
+        if (stylusTipAndButton.test(0) && stylusTipAndButton.test(5)) {
             handlePenTouchingDigitizer(handle, applyPressureCurve(pressure));
+        } else {
+            handlePenTouchingDigitizer(handle, 0);
         }
 
         // Grab the tilt values

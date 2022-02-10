@@ -83,7 +83,7 @@ void generic_xp_pen_device::setConfig(nlohmann::json config) {
     submitMapping(jsonConfig);
 }
 
-bool generic_xp_pen_device::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+bool generic_xp_pen_device::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {
     switch (data[0]) {
         case 0x02:
             handleDigitizerEvent(handle, data, dataLen);

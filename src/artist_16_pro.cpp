@@ -62,7 +62,7 @@ void artist_16_pro::setConfig(nlohmann::json config) {
     submitMapping(jsonConfig);
 }
 
-bool artist_16_pro::handleTransferData(libusb_device_handle* handle, unsigned char *data, size_t dataLen) {
+bool artist_16_pro::handleTransferData(libusb_device_handle* handle, unsigned char *data, size_t dataLen, int productId) {
     switch (data[0]) {
         // Unified interface
         case 0x02:

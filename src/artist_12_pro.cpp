@@ -73,7 +73,7 @@ void artist_12_pro::setConfig(nlohmann::json config) {
     submitMapping(jsonConfig);
 }
 
-bool artist_12_pro::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+bool artist_12_pro::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {
     switch (data[0]) {
         case 0x02:
             handleDigitizerEvent(handle, data, dataLen);

@@ -102,7 +102,7 @@ bool ac19::attachDevice(libusb_device_handle *handle, int interfaceId, int produ
     return true;
 }
 
-bool ac19::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+bool ac19::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {
     switch (data[0]) {
         case 0x02:
             handleFrameEvent(handle, data, dataLen);

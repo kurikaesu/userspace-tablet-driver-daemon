@@ -65,7 +65,7 @@ void deco_pro::setConfig(nlohmann::json config) {
     submitMapping(jsonConfig);
 }
 
-bool deco_pro::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+bool deco_pro::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {
     switch (data[0]) {
         case 0x02:
             handleDigitizerEvent(handle, data, dataLen);

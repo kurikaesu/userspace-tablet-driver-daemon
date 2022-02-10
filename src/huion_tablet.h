@@ -32,7 +32,7 @@ public:
     int sendInitKeyOnInterface();
     bool attachToInterfaceId(int interfaceId);
     bool attachDevice(libusb_device_handle* handle, int interfaceId, int productId);
-    bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
+    bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen, int productId);
     std::set<int> getConnectedAliasedDevices();
     std::wstring getDeviceFirmwareName(libusb_device_handle* device);
     int getAliasedDeviceIdFromFirmware(std::wstring firmwareName);
