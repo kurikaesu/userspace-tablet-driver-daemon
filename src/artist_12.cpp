@@ -61,7 +61,12 @@ void artist_12::setConfig(nlohmann::json config) {
 bool artist_12::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {
     switch (data[0]) {
         case 0x02:
-            handleDigitizerEvent(handle, data, dataLen);
+            if (productId == 0x094a) {
+                // This product has a specific offset pressure.
+                handleDigitizerEvent(handle, data, dataLen, -8192);
+            } else {
+                handleDigitizerEvent(handle, data, dataLen);
+            }
             handleFrameEvent(handle, data, dataLen);
             break;
 

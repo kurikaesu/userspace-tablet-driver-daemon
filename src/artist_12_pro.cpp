@@ -76,11 +76,7 @@ void artist_12_pro::setConfig(nlohmann::json config) {
 bool artist_12_pro::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {
     switch (data[0]) {
         case 0x02:
-            if (productId == 0x091f) {
-                handleDigitizerEvent(handle, data, dataLen, -8192);
-            } else {
-                handleDigitizerEvent(handle, data, dataLen);
-            }
+            handleDigitizerEvent(handle, data, dataLen);
             handleFrameEvent(handle, data, dataLen);
             break;
 
