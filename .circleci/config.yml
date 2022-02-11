@@ -22,7 +22,7 @@ jobs:
           command: "apt-get install -y cmake build-essential libusb-1.0-0-dev"
       - run:
           name: "Build package"
-          command: "BUILD_PKG=1;cmake . && make package"
+          command: "BUILD_PKG=1 BUILD_DEB=1 cmake . && make package"
       - run:
           name: "Generate artifacts directory"
           command: "mkdir -p /root/project/artifacts"
@@ -50,13 +50,13 @@ jobs:
           command: "sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-Linux-*"
       - run:
           name: "Update packages"
-          command: "yum update"
+          command: "yum -y update"
       - run:
           name: "Install build tools"
           command: "yum -y groupinstall 'Development Tools' && yum -y install cmake libusbx-devel"
       - run:
           name: "Build package"
-          command: "BUILD_PKG=1;BUILD_RPM=1;cmake . && make package"
+          command: "BUILD_PKG=1 BUILD_RPM=1 cmake . && make package"
       - run:
           name: "Generate artifacts directory"
           command: "mkdir -p /root/project/artifacts"
@@ -87,6 +87,26 @@ jobs:
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
+  build-packages-ci-test:
+    jobs:
+      - build-ubuntu-bionic-package:
+          filters:
+            branches:
+              only:
+                - /circleci-.*/
+      - build-centos8-package:
+          filters:
+            branches:
+              only:
+                - /circleci-.*/
+      - upload-packages-to-github:
+          requires:
+            - build-ubuntu-bionic-package
+            - build-centos8-package
+          filters:
+            branches:
+              only:
+                - /circleci-.*/
   build-packages-nightly:
     triggers:
       - schedule:
