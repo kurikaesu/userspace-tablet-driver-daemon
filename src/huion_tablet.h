@@ -37,6 +37,7 @@ public:
     std::wstring getDeviceFirmwareName(libusb_device_handle* device);
     int getAliasedDeviceIdFromFirmware(std::wstring firmwareName);
     int getAliasedProductId(libusb_device_handle* handle, int originalId);
+    std::string getDeviceNameFromAliasedId(int aliasedId);
     std::string getInitKey() { return ""; }
 private:
     void handleDigitizerEventV1(libusb_device_handle* handle, unsigned char* data, size_t dataLen);

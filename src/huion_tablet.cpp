@@ -37,7 +37,7 @@ std::string huion_tablet::getProductName(int productId) {
         return "Huion tablet";
     }
 
-    return "Unknown Huion device";
+    return getDeviceNameFromAliasedId(productId);
 }
 
 void huion_tablet::setConfig(nlohmann::json config) {
@@ -94,7 +94,7 @@ std::string huion_tablet::getDeviceNameFromFirmware(std::wstring firmwareName) {
         return "Huion H1161";
     } else if (firmwareName == L"HUION_T153_160524") {
         return "Huion WH1409 (2048)";
-    } else if (firmwareName == L"HUION_T200_210309") {
+    } else if (firmwareName == L"HUION_T200_210309" || firmwareName == L"HUION_T200_210315") {
         return "Huion KD100 mini Keydial";
     } else if (firmwareName == L"HUION_M182_200605") {
         return "Huion Kamvas Pro 13";
@@ -119,7 +119,7 @@ int huion_tablet::getAliasedDeviceIdFromFirmware(std::wstring firmwareName) {
         return 0x0191;
     } else if (firmwareName == L"HUION_T153_160524") {
         return 0x0153;
-    } else if (firmwareName == L"HUION_T200_210309") {
+    } else if (firmwareName == L"HUION_T200_210309" || firmwareName == L"HUION_T200_210315") {
         return 0x0200;
     } else if (firmwareName == L"HUION_M182_200605") {
         return 0x0182;
@@ -134,6 +134,27 @@ int huion_tablet::getAliasedDeviceIdFromFirmware(std::wstring firmwareName) {
     }
 
     return 0x0000;
+}
+
+std::string huion_tablet::getDeviceNameFromAliasedId(int aliasedId) {
+    switch (aliasedId) {
+        case 0x0188:
+            return "Huion WH1409 v2";
+        case 0x0191:
+            return "Huion H1161";
+        case 0x0153:
+            return "Huion WH1409 (2048)";
+        case 0x0200:
+            return "Huion KD100 mini Keydial";
+        case 0x0182:
+            return "Huion Kamvas Pro 13";
+        case 0x0311:
+            return "Gaomon M10K Pro";
+        case 0x0119:
+            return "Gaomon M10K 2018";
+        default:
+            return "Unknown Huion Device";
+    }
 }
 
 int huion_tablet::getAliasedProductId(libusb_device_handle *handle, int originalId) {
