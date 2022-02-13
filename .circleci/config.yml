@@ -36,18 +36,24 @@ jobs:
           root: /root/project
           paths:
             - artifacts
-  build-centos8-package:
+  build-centos-stream-package:
     docker:
-      - image: centos:8
+      - image: centos:latest
     working_directory: /root/project
     steps:
       - checkout
       - run:
-          name: "Fix update"
-          command: "sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-Linux-*"
+          name: "Download GPG keys"
+          command: "curl -O 'http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/Packages/centos-gpg-keys-8-3.el8.noarch.rpm'"
       - run:
-          name: "Fix update 2"
-          command: "sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-Linux-*"
+          name: "Install GPG keys"
+          command: "rpm -i 'centos-gpg-keys-8-3.el8.noarch.rpm'"
+      - run:
+          name: "Enable repositories"
+          command: "dnf -y --disablerepo '*' --enablerepo=extras swap centos-linux-repos centos-stream-repos"
+      - run:
+          name: "Remove GPG RPM"
+          command: "rm -f 'centos-gpg-keys-8-3.el8.noarch.rpm'"
       - run:
           name: "Update packages"
           command: "yum -y update"
@@ -94,7 +100,7 @@ workflows:
             branches:
               only:
                 - /circleci-.*/
-      - build-centos8-package:
+      - build-centos-stream-package:
           filters:
             branches:
               only:
@@ -102,7 +108,7 @@ workflows:
       - upload-packages-to-github:
           requires:
             - build-ubuntu-bionic-package
-            - build-centos8-package
+            - build-centos-stream-package
           filters:
             branches:
               only:
@@ -117,8 +123,8 @@ workflows:
                 - main
     jobs:
       - build-ubuntu-bionic-package
-      - build-centos8-package
+      - build-centos-stream-package
       - upload-packages-to-github:
           requires:
             - build-ubuntu-bionic-package
-            - build-centos8-package
+            - build-centos-stream-package
