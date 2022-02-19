@@ -94,7 +94,9 @@ std::string huion_tablet::getDeviceNameFromFirmware(std::wstring firmwareName) {
         return "Huion H1161";
     } else if (firmwareName == L"HUION_T153_160524") {
         return "Huion WH1409 (2048)";
-    } else if (firmwareName == L"HUION_T200_210309" || firmwareName == L"HUION_T200_210315") {
+    } else if (firmwareName == L"HUION_T200_210309" ||
+               firmwareName == L"HUION_T200_210315" ||
+               firmwareName == L"HUION_T200_210430") {
         return "Huion KD100 mini Keydial";
     } else if (firmwareName == L"HUION_M182_200605") {
         return "Huion Kamvas Pro 13";
@@ -119,7 +121,9 @@ int huion_tablet::getAliasedDeviceIdFromFirmware(std::wstring firmwareName) {
         return 0x0191;
     } else if (firmwareName == L"HUION_T153_160524") {
         return 0x0153;
-    } else if (firmwareName == L"HUION_T200_210309" || firmwareName == L"HUION_T200_210315") {
+    } else if (firmwareName == L"HUION_T200_210309" ||
+               firmwareName == L"HUION_T200_210315" ||
+               firmwareName == L"HUION_T200_210430") {
         return 0x0200;
     } else if (firmwareName == L"HUION_M182_200605") {
         return 0x0182;
