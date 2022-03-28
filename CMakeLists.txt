@@ -15,11 +15,15 @@ target_link_libraries(userspace_tablet_driver_daemon stdc++fs ${LIBUSB_1_LIBRARI
 target_include_directories(userspace_tablet_driver_daemon PRIVATE ${LIBUSB_1_INCLUDE_DIRS})
 target_compile_definitions(userspace_tablet_driver_daemon PRIVATE ${LIBUSB_1_DEFINITIONS})
 
+if(NOT DEFINED UDEV_RULES_PATH)
+  set(UDEV_RULES_PATH "etc/udev/")
+endif(NOT DEFINED UDEV_RULES_PATH)
+
 if(DEFINED ENV{BUILD_PKG})
     install(TARGETS userspace_tablet_driver_daemon DESTINATION bin)
 else()
     install(TARGETS userspace_tablet_driver_daemon DESTINATION usr/bin)
-    install(DIRECTORY config/etc/ DESTINATION etc)
+    install(DIRECTORY config/etc/udev/rules.d DESTINATION ${UDEV_RULES_PATH})
     install(DIRECTORY config/usr/ DESTINATION usr)
 endif()
 
