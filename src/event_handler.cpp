@@ -107,7 +107,7 @@ void event_handler::loadConfiguration() {
     try {
         driverConfig >> driverConfigJson;
     } catch (nlohmann::detail::parse_error) {
-        std::cout << "No existing config so we will be creating a new one" << std::endl;
+        std::cout << "No existing valid config so we will be creating a new one" << std::endl;
     }
 
     if (!driverConfigJson.contains("deviceConfigurations")) {
@@ -144,7 +144,9 @@ void event_handler::saveConfiguration() {
     driverConfig.open(getConfigFileLocation(), std::ofstream::out);
 
     driverConfig << driverConfigJson;
+    driverConfig.flush();
     driverConfig.close();
+    std::cout << "Saved updated configuration file" << std::endl;
 }
 
 void event_handler::addHandler(vendor_handler *handler) {
