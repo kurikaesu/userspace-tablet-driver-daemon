@@ -98,12 +98,7 @@ bool deco_pro::handleTransferData(libusb_device_handle *handle, unsigned char *d
 }
 
 void deco_pro::handleUnifiedFrameEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
-    if (data[1] >= 0xf0) {
-        // Not exactly what this message is but the deco pro wireless seems to send it randomly so let's ignore it for now
-        if (data[1] == 0xf2 && data[3] == 0x63) {
-            return;
-        }
-
+    if (data[1] == 0xf0) {
         long button = data[2];
         // Only 8 buttons on this device
         long position = ffsl(data[2]);
