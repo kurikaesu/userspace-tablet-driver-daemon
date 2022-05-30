@@ -42,6 +42,8 @@ public:
     virtual std::set<short> getConnectedDevices() { return std::set<short>(); }
     virtual bool handleProductAttach(libusb_device* device, const struct libusb_device_descriptor descriptor) { return false; };
     virtual void handleProductDetach(libusb_device* device, const struct libusb_device_descriptor descriptor) {};
+
+    virtual void sendInitKey(libusb_device_handle* handle, int interface_number, transfer_handler* productHandler) {}
 protected:
     virtual bool setupReportProtocol(libusb_device_handle* handle, unsigned char interface_number);
     virtual bool setupInfiniteIdle(libusb_device_handle* handle, unsigned char interface_number);
@@ -50,8 +52,6 @@ protected:
 
     virtual void cleanupDevice(device_interface_pair* pair);
     virtual device_interface_pair* claimDevice(libusb_device* device, libusb_device_handle* handle, const libusb_device_descriptor descriptor);
-
-    virtual void sendInitKey(libusb_device_handle* handle, int interface_number, transfer_handler* productHandler) {}
 
     virtual bool setupTransfers(libusb_device_handle* handle, unsigned char interface_number, int maxPacketSize, int productId);
     static void LIBUSB_CALL transferCallback(struct libusb_transfer* transfer);

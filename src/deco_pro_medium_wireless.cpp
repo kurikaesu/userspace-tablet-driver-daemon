@@ -19,9 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include "deco_pro_medium_wireless.h"
 
-deco_pro_medium_wireless::deco_pro_medium_wireless()
+deco_pro_medium_wireless::deco_pro_medium_wireless(vendor_handler* vendorHandler)
 : deco_pro() {
     productIds.push_back(0x0934);
+    this->vendorHandler = vendorHandler;
 }
 
 std::string deco_pro_medium_wireless::getProductName(int productId) {

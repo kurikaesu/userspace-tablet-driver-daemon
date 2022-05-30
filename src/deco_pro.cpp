@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "deco_pro.h"
 
 deco_pro::deco_pro() {
+    vendorHandler = nullptr;
     for (int currentAssignedButton = BTN_0; currentAssignedButton < BTN_8; ++currentAssignedButton) {
         padButtonAliases.push_back(currentAssignedButton);
     }
@@ -80,6 +81,12 @@ bool deco_pro::handleTransferData(libusb_device_handle *handle, unsigned char *d
 
         case 0x01:
             handleNonUnifiedFrameEvent(handle, data, dataLen);
+            break;
+
+        // This message is used at times where the tablet has a wireless USB dongle but the device is powered on
+        // after the dongle is inserted.
+        case 0x07:
+            handleNonUnifiedDigitizerEvent(handle, data, dataLen);
             break;
 
         default:
@@ -173,4 +180,11 @@ void deco_pro::handleNonUnifiedFrameEvent(libusb_device_handle *handle, unsigned
     }
 
     uinput_send(uinputPointers[handle], EV_SYN, SYN_REPORT, 1);
+}
+
+void deco_pro::handleNonUnifiedDigitizerEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
+    // We will force send the init key back to the device
+    if (vendorHandler != nullptr) {
+        vendorHandler->sendInitKey(handle, sendInitKeyOnInterface(), this);
+    }
 }

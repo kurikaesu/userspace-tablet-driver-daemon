@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #include "xp_pen_unified_device.h"
+#include "vendor_handler.h"
 
 class deco_pro : public xp_pen_unified_device {
 public:
@@ -33,8 +34,11 @@ public:
 protected:
     void handleUnifiedFrameEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
     void handleNonUnifiedFrameEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
+    void handleNonUnifiedDigitizerEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
 
     bool wasTapping = false;
+
+    vendor_handler* vendorHandler;
 };
 
 

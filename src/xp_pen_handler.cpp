@@ -54,7 +54,7 @@ xp_pen_handler::xp_pen_handler() {
     addHandler(new innovator_16());
     addHandler(new deco_pro_small());
     addHandler(new deco_pro_medium());
-    addHandler(new deco_pro_medium_wireless());
+    addHandler(new deco_pro_medium_wireless(this));
     addHandler(new deco_01v2());
     addHandler(new deco_03());
     addHandler(new deco_mini7());

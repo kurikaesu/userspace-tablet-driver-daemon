@@ -21,10 +21,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #include "deco_pro.h"
+#include "vendor_handler.h"
 
 class deco_pro_medium_wireless : public deco_pro {
 public:
-    deco_pro_medium_wireless();
+    deco_pro_medium_wireless(vendor_handler* vendorHandler);
 
     std::string getProductName(int productId);
     bool attachToInterfaceId(int interfaceId);
