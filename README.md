@@ -5,6 +5,7 @@ This repo currently houses a command-line only utility that creates a user-space
 - XP-Pen Artist 22E Pro
 - XP-Pen Artist 22R Pro
 - XP-Pen Artist 16 Pro
+- XP-Pen Artist Pro 16
 - XP-Pen Artist 13.3 Pro
 - XP-Pen Artist 12 Pro
 - XP-Pen Artist 12 (2nd Gen)
