@@ -21,7 +21,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "artist_pro_16.h"
 
 artist_pro_16::artist_pro_16() {
+    productIds.push_back(0x094b);
 
+    for (int currentAssignedButton = BTN_0; currentAssignedButton < BTN_8; ++currentAssignedButton) {
+        padButtonAliases.push_back(currentAssignedButton);
+    }
 }
 
 std::string artist_pro_16::getProductName(int productId) {
@@ -30,6 +34,10 @@ std::string artist_pro_16::getProductName(int productId) {
     }
 
     return "Unknown XP-Pen Device";
+}
+
+unsigned short artist_pro_16::getDescriptorLength() {
+    return 13;
 }
 
 void artist_pro_16::setConfig(nlohmann::json config) {
