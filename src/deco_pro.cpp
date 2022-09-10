@@ -67,12 +67,6 @@ void deco_pro::setConfig(nlohmann::json config) {
 }
 
 bool deco_pro::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {
-//    std::cout << std::dec << "Got transfer of data length: " << (int)dataLen << " data: ";
-//    for (int i = 0; i < dataLen; ++i) {
-//        std::cout << std::hex << std::setfill('0')  << std::setw(2) << (int)data[i] << ":";
-//    }
-//    std::cout << std::endl;
-
     switch (data[0]) {
         case 0x02:
             handleDigitizerEvent(handle, data, dataLen);

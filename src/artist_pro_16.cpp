@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <iostream>
+#include <iomanip>
 #include "artist_pro_16.h"
 
 artist_pro_16::artist_pro_16() {
@@ -62,8 +64,14 @@ void artist_pro_16::setConfig(nlohmann::json config) {
     submitMapping(jsonConfig);
 }
 
-bool artist_pro_16::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen,
-                                       int productId) {
+bool artist_pro_16::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {
+    // Should definitely move this debug code into the vendor handler class and have a runtime flag to trigger it
+    std::cout << std::dec << "Got transfer of data length: " << (int)dataLen << " data: ";
+    for (int i = 0; i < dataLen; ++i) {
+        std::cout << std::hex << std::setfill('0')  << std::setw(2) << (int)data[i] << ":";
+    }
+    std::cout << std::endl;
+
     switch (data[0]) {
         case 0x02:
             handleDigitizerEvent(handle, data, dataLen);
