@@ -131,10 +131,12 @@ void xp_pen_unified_device::handleDigitizerEvent(libusb_device_handle *handle, u
         short tilty = (char)data[9];
 
         // Check to see if the stylus buttons are being pressed
-        if (stylusTipAndButton.test(1)) {
+        if (stylusTipAndButton.test(3)) {
             handleStylusButtonsPressed(handle, BTN_STYLUS);
-        } else if (stylusTipAndButton.test(2)) {
+        } else if (stylusTipAndButton.test(1)) {
             handleStylusButtonsPressed(handle, BTN_STYLUS2);
+        } else if (stylusTipAndButton.test(2)) {
+            handleStylusButtonsPressed(handle, BTN_TOOL_RUBBER);
         } else if (stylusButtonPressed > 0) {
             handleStylusButtonUnpressed(handle);
         }
