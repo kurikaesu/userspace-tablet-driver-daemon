@@ -62,7 +62,7 @@ void huion_tablet::setConfig(nlohmann::json config) {
         addToButtonMap(BTN_3, EV_KEY, {KEY_E});
         addToButtonMap(BTN_4, EV_KEY, {KEY_RIGHTBRACE});
         addToButtonMap(BTN_5, EV_KEY, {KEY_LEFTBRACE});
-        addToButtonMap(BTN_6, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTSHIFT, KEY_EQUAL});
+        addToButtonMap(BTN_6, EV_KEY, {KEY_LEFTCTRL, KEY_EQUAL});
         addToButtonMap(BTN_7, EV_KEY, {KEY_LEFTCTRL, KEY_MINUS});
         addToButtonMap(BTN_8, EV_KEY, {KEY_SPACE});
         addToButtonMap(BTN_9, EV_KEY, {KEY_F6});
@@ -71,7 +71,7 @@ void huion_tablet::setConfig(nlohmann::json config) {
 
         // Mapping the touch-strips
         addToDialMap(REL_WHEEL, -1, EV_KEY, {KEY_LEFTCTRL, KEY_MINUS});
-        addToDialMap(REL_WHEEL, 1, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTSHIFT, KEY_EQUAL});
+        addToDialMap(REL_WHEEL, 1, EV_KEY, {KEY_LEFTCTRL, KEY_EQUAL});
     }
     jsonConfig = config;
 
