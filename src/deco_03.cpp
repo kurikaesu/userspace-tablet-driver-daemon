@@ -57,7 +57,7 @@ void deco_03::setConfig(nlohmann::json config) {
         addToButtonMap(BTN_4, EV_KEY, {KEY_V});
         addToButtonMap(BTN_5, EV_KEY, {KEY_LEFTCTRL, KEY_S});
 
-        addToDialMap(REL_WHEEL, -1, EV_KEY, {KEY_LEFTCTRL, KEY_EQUAL});
+        addToDialMap(REL_WHEEL, -1, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTSHIFT, KEY_EQUAL});
         addToDialMap(REL_WHEEL, 1, EV_KEY, {KEY_LEFTCTRL, KEY_MINUS});
     }
     jsonConfig = config;

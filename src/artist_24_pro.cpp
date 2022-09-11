@@ -83,7 +83,7 @@ void artist_24_pro::setConfig(nlohmann::json config) {
 
         // Mapping the dials
         addToDialMap(REL_WHEEL, -1, EV_KEY, {KEY_LEFTCTRL, KEY_MINUS});
-        addToDialMap(REL_WHEEL, 1, EV_KEY, {KEY_LEFTCTRL, KEY_EQUAL});
+        addToDialMap(REL_WHEEL, 1, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTSHIFT, KEY_EQUAL});
         addToDialMap(REL_HWHEEL, -1, EV_KEY, {KEY_LEFTBRACE});
         addToDialMap(REL_HWHEEL, 1, EV_KEY, {KEY_RIGHTBRACE});
     }
