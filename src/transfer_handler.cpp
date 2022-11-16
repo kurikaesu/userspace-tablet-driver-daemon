@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 transfer_handler::transfer_handler() {
     penInProximity = false;
+    eraserInProximity = false;
     penWasDown = false;
     stylusButtonPressed = 0;
 }
@@ -494,9 +495,27 @@ void transfer_handler::handleUnknownUsbMessage(libusb_device_handle *handle, uns
     std::cout << std::endl;
 }
 
+void transfer_handler::handleEraserEnteredProximity(libusb_device_handle* handle) {
+    if (!eraserInProximity) {
+        uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_RUBBER, 1);
+        if (hasCustomButtonMap(BTN_TOOL_RUBBER)) {
+            handleStylusMappedEvent(handle, BTN_TOOL_RUBBER, 1);
+            handleStylusMappedEvent(handle, BTN_TOOL_RUBBER, 0);
+        }
+        eraserInProximity = true;
+    }
+}
+void transfer_handler::handleEraserLeftProximity(libusb_device_handle* handle) {
+    uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_RUBBER, 0);
+    eraserInProximity = false;
+}
 void transfer_handler::handlePenEnteredProximity(libusb_device_handle* handle) {
     if (!penInProximity) {
         uinput_send(uinputPens[handle], EV_KEY, BTN_TOOL_PEN, 1);
+        if (hasCustomButtonMap(BTN_TOOL_PEN)) {
+            handleStylusMappedEvent(handle, BTN_TOOL_PEN, 1);
+            handleStylusMappedEvent(handle, BTN_TOOL_PEN, 0);
+        }
         penInProximity = true;
     }
 }
@@ -511,31 +530,29 @@ void transfer_handler::handlePenTouchingDigitizer(libusb_device_handle *handle, 
     uinput_send(uinputPens[handle], EV_ABS, ABS_PRESSURE, pressure);
 }
 
-void transfer_handler::handleStylusButtonsPressed(libusb_device_handle *handle, int stylusButton) {
-    auto stylusButtonMap = stylusButtonMapping.getStylusButtonMap(stylusButton);
+bool transfer_handler::hasCustomButtonMap(int button) {
+    return !stylusButtonMapping.getStylusButtonMap(button).empty();
+}
+
+void transfer_handler::handleStylusMappedEvent(libusb_device_handle *handle, int event, int value) {
+    auto stylusButtonMap = stylusButtonMapping.getStylusButtonMap(event);
     if (!stylusButtonMap.empty()) {
         for (auto sbMap: stylusButtonMap) {
-            uinput_send(uinputPads[handle], sbMap.event_type, sbMap.event_value, 1);
+            uinput_send(uinputPads[handle], sbMap.event_type, sbMap.event_value, value);
         }
         uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
     } else {
-        uinput_send(uinputPens[handle], EV_KEY, stylusButton, 1);
+        uinput_send(uinputPens[handle], EV_KEY, event, value);
     }
+}
 
+void transfer_handler::handleStylusButtonsPressed(libusb_device_handle *handle, int stylusButton) {
+    handleStylusMappedEvent(handle, stylusButton, 1);
     stylusButtonPressed = stylusButton;
 }
 
 void transfer_handler::handleStylusButtonUnpressed(libusb_device_handle *handle) {
-    auto stylusButtonMap = stylusButtonMapping.getStylusButtonMap(stylusButtonPressed);
-    if (!stylusButtonMap.empty()) {
-        for (auto sbMap: stylusButtonMap) {
-            uinput_send(uinputPads[handle], sbMap.event_type, sbMap.event_value, 0);
-        }
-        uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
-    } else {
-        uinput_send(uinputPens[handle], EV_KEY, stylusButtonPressed, 0);
-    }
-
+    handleStylusMappedEvent(handle, stylusButtonPressed, 0);
     stylusButtonPressed = 0;
 }
 
