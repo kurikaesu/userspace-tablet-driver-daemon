@@ -95,7 +95,7 @@ bool xp_pen_unified_device::attachDevice(libusb_device_handle *handle, int inter
 
     return true;
 }
-#include <iomanip>
+
 void xp_pen_unified_device::handleDigitizerEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int offsetPressure) {
     if (data[1] <= 0xc0) {
         // Extract the X and Y position
