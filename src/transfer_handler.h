@@ -60,12 +60,19 @@ protected:
 
     virtual void submitMapping(const nlohmann::json& config);
 
+    virtual bool hasCustomButtonMap(int button);
+
     virtual void handleUnknownUsbMessage(libusb_device_handle *handle, unsigned char *data, size_t dataLen);
+
+    virtual void handleEraserEnteredProximity(libusb_device_handle* handle);
+    virtual void handleEraserLeftProximity(libusb_device_handle* handle);
 
     virtual void handlePenEnteredProximity(libusb_device_handle* handle);
     virtual void handlePenLeftProximity(libusb_device_handle* handle);
 
     virtual void handlePenTouchingDigitizer(libusb_device_handle* handle, int pressure);
+
+    virtual void handleStylusMappedEvent(libusb_device_handle *handle, int event, int value);
 
     virtual void handleStylusButtonsPressed(libusb_device_handle* handle, int stylusButton);
     virtual void handleStylusButtonUnpressed(libusb_device_handle* handle);
@@ -96,6 +103,7 @@ protected:
     nlohmann::json jsonConfig;
 
     bool penInProximity;
+    bool eraserInProximity;
     bool penWasDown;
     int stylusButtonPressed;
 

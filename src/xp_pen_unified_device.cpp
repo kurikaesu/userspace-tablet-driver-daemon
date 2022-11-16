@@ -95,7 +95,7 @@ bool xp_pen_unified_device::attachDevice(libusb_device_handle *handle, int inter
 
     return true;
 }
-
+#include <iomanip>
 void xp_pen_unified_device::handleDigitizerEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int offsetPressure) {
     if (data[1] <= 0xc0) {
         // Extract the X and Y position
@@ -112,11 +112,23 @@ void xp_pen_unified_device::handleDigitizerEvent(libusb_device_handle *handle, u
         int pressure = (data[7] << 8) + data[6];
         pressure += offsetPressure;
 
+        const bool isInProximity = stylusTipAndButton.test(5) && !stylusTipAndButton.test(4);
+        const bool isEraserBit = stylusTipAndButton.test(3);
+
+        const bool hasEraserEnteredProximity = isInProximity && isEraserBit;
+        const bool hasPenEnteredProximity = isInProximity && !isEraserBit;
+        const bool hasPenExitedProximity = stylusTipAndButton.test(6) && !eraserInProximity;
+        const bool hasEraserExitedProximity = stylusTipAndButton.test(6);
+
         // Handle pen coming into/out of proximity
-        if (stylusTipAndButton.test(5)) {
+        if (hasEraserEnteredProximity) {
+            handleEraserEnteredProximity(handle);
+        } else if (hasPenEnteredProximity) {
             handlePenEnteredProximity(handle);
-        } else if (stylusTipAndButton.test(6)) {
+        } else if (hasPenExitedProximity) {
             handlePenLeftProximity(handle);
+        } else if (hasEraserExitedProximity) {
+            handleEraserLeftProximity(handle);
         }
 
         // Handle actual stylus to digitizer contact
