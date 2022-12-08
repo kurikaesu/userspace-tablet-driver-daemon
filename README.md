@@ -13,6 +13,7 @@ This repo currently houses a command-line only utility that creates a user-space
 - XP-Pen Deco Pro S (Use GUI to switch touch-pad modes)
 - XP-Pen Deco Pro M / MW (Use GUI to switch touch-pad modes)
 - XP-Pen Deco 01v2
+- XP-Pen Deco 02
 - XP-Pen Deco 03
 - XP-Pen Deco mini7/mini7w
 - XP-Pen Star G430S
