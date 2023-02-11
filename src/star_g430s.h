@@ -27,6 +27,7 @@ public:
     star_g430s();
 
     std::string getProductName(int productId);
+    void setConfig(nlohmann::json config);
     bool attachDevice(libusb_device_handle *handle, int interfaceId, int productId);
     std::string getInitKey();
 };

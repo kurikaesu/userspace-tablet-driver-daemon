@@ -47,7 +47,7 @@ bool star::handleTransferData(libusb_device_handle *handle, unsigned char *data,
             break;
 
         case 0x02:
-            xp_pen_unified_device::handleDigitizerEvent(handle, data, dataLen);
+            handleDigitizerEvent(handle, data, dataLen);
             break;
 
         default:

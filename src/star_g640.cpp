@@ -36,6 +36,23 @@ std::string star_g640::getInitKey() {
     return {0x02, static_cast<char>(0xb0), 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 }
 
+void star_g640::setConfig(nlohmann::json config) {
+    if (!config.contains("mapping") || config["mapping"] == nullptr) {
+        config["mapping"] = nlohmann::json({});
+
+        auto addToStylusMap = [&config](int key, int eventType, std::vector<int> codes) {
+            std::string evstring = std::to_string(eventType);
+            config["mapping"]["stylus_buttons"][std::to_string(key)][evstring] = codes;
+        };
+
+        addToStylusMap(BTN_STYLUS, EV_KEY, {});
+        addToStylusMap(BTN_STYLUS2, EV_KEY, {});
+    }
+    jsonConfig = config;
+
+    submitMapping(jsonConfig);
+}
+
 bool star_g640::attachDevice(libusb_device_handle *handle, int interfaceId, int productId) {
     unsigned int descriptorLength = 12;
     unsigned char* buf = new unsigned char[descriptorLength];
@@ -49,7 +66,7 @@ bool star_g640::attachDevice(libusb_device_handle *handle, int interfaceId, int 
     // Hard coding these values in because the probe returns physical values.
     int maxWidth = 0x7fff;
     int maxHeight = 0x7fff;
-    int maxPressure = (buf[9] << 8) + buf[8];
+    maxPressure = (buf[9] << 8) + buf[8];
     int resolution = (buf[11] << 8) + buf[10];
 
     std::string deviceName = "Star G640";
