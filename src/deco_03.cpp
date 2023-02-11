@@ -101,7 +101,7 @@ void deco_03::handleFrameEvent(libusb_device_handle *handle, unsigned char *data
 
 void deco_03::handleNonUnifiedDialEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     if (data[1] == 0x01) {
-        std::bitset<sizeof(data)> dialBits(data[2]);
+        std::bitset<8> dialBits(data[2]);
 
         // Take the dial
         short dialValue = 0;

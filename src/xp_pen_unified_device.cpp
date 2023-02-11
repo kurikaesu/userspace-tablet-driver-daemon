@@ -108,7 +108,7 @@ void xp_pen_unified_device::handleDigitizerEvent(libusb_device_handle *handle, u
         }
 
         // Check to see if the pen is touching
-        std::bitset<sizeof(data)> stylusTipAndButton(data[1]);
+        std::bitset<8> stylusTipAndButton(data[1]);
         int pressure = (data[7] << 8) + data[6];
         pressure += offsetPressure;
 

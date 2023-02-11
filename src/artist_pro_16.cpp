@@ -92,7 +92,7 @@ void artist_pro_16::handleFrameEvent(libusb_device_handle *handle, unsigned char
         // Only 8 buttons on this device
         long position = ffsl(data[2]);
 
-        std::bitset<sizeof(data)> dialBits(data[7]);
+        std::bitset<8> dialBits(data[7]);
 
         // Take the dial
         short dialValue = 0;
