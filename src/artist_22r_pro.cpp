@@ -113,7 +113,7 @@ void artist_22r_pro::handleFrameEvent(libusb_device_handle *handle, unsigned cha
         // Grab the first bit set in the button long which tells us the button number
         long position = ffsl(button);
 
-        std::bitset<sizeof(data)> dialBits(data[7]);
+        std::bitset<8> dialBits(data[7]);
 
         // Take the left dial
         short leftDialValue = 0;

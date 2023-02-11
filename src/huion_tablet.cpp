@@ -363,7 +363,7 @@ void huion_tablet::handleDigitizerEventV1(libusb_device_handle *handle, unsigned
     int penX = (data[3] << 8) + data[2];
     int penY = (data[5] << 8) + data[4];
 
-    std::bitset<sizeof(data)> stylusTipAndButton(data[1]);
+    std::bitset<8> stylusTipAndButton(data[1]);
 
     // Check to see if the pen is touching
     int pressure = (data[7] << 8) + data[6];
@@ -395,7 +395,7 @@ void huion_tablet::handleDigitizerEventV2(libusb_device_handle *handle, unsigned
     int penY = (data[5] << 8) + data[4];
 
     // Check to see if the pen is touching
-    std::bitset<sizeof(data)> stylusTipAndButton(data[1]);
+    std::bitset<8> stylusTipAndButton(data[1]);
     int pressure = (data[7] << 8) + data[6];
 
     if (stylusTipAndButton.test(0)) {
@@ -430,7 +430,7 @@ void huion_tablet::handleDigitizerEventV3(libusb_device_handle *handle, unsigned
         int penY = (data[5] << 8) + data[4];
 
         // Check to see if the pen is touching
-        std::bitset<sizeof(data)> stylusTipAndButton(data[1]);
+        std::bitset<8> stylusTipAndButton(data[1]);
         int pressure = (data[7] << 8) + data[6];
 
         if (stylusTipAndButton.test(0)) {
