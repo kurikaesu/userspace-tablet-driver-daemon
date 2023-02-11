@@ -73,7 +73,7 @@ bool star_g640::attachDevice(libusb_device_handle *handle, int interfaceId, int 
     std::cout << "Device: " << std::dec << deviceName << " - Probed maxWidth: (" << maxWidth << ") maxHeight: (" << maxHeight << ") resolution: (" << resolution << ") pressure: " << maxPressure << std::endl;
 
     unsigned short vendorId = 0x28bd;
-    unsigned short aliasedProductId = 0xf913;
+    unsigned short aliasedProductId = 0xf914;
     unsigned short versionId = 0x0001;
 
     if (interfaceId == 2) {
