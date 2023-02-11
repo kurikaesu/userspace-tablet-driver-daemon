@@ -90,7 +90,20 @@ bool star_g640::attachDevice(libusb_device_handle *handle, int interfaceId, int 
                 {"XP-Pen Star G640"},
         };
 
+        struct uinput_pad_args padArgs{
+                .padButtonAliases = padButtonAliases,
+                .hasWheel = false,
+                .hasHWheel = false,
+                .wheelMax = 1,
+                .hWheelMax = 1,
+                .vendorId = vendorId,
+                .productId = aliasedProductId,
+                .versionId = versionId,
+                {"XP-Pen Star G640 Pad"},
+        };
+
         uinputPens[handle] = create_pen(penArgs);
+        uinputPads[handle] = create_pad(padArgs);
     }
 
     return true;

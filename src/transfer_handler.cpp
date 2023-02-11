@@ -540,6 +540,7 @@ void transfer_handler::handleStylusMappedEvent(libusb_device_handle *handle, int
         for (auto sbMap: stylusButtonMap) {
             uinput_send(uinputPads[handle], sbMap.event_type, sbMap.event_value, value);
         }
+        uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
     } else {
         uinput_send(uinputPens[handle], EV_KEY, event, value);
     }
