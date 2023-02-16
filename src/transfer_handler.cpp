@@ -475,22 +475,19 @@ void transfer_handler::submitMapping(const nlohmann::json& config) {
     if (config.contains("disabled")) {
         for (auto disabled: config["disabled"].items()) {
             if (disabled.key() == "stylus_buttons") {
-                for (auto disabledStylusButtons: disabled.value().items()) {
-                    for (auto event: disabledStylusButtons.value().items()) {
-                        stylusButtonDisabled.insert(std::atoi(event.key().c_str()));
-                    }
+                for (auto disabledStylusButton: disabled.value().items()) {
+                    std::string value = disabledStylusButton.value();
+                    stylusButtonDisabled.insert(std::atoi(value.c_str()));
                 }
             } else if (disabled.key() == "buttons") {
                 for (auto disabledPadButtons: disabled.value().items()) {
-                    for (auto event: disabledPadButtons.value().items()) {
-                        padButtonDisabled.insert(std::atoi(event.key().c_str()));
-                    }
+                    std::string value = disabledPadButtons.value();
+                    padButtonDisabled.insert(std::atoi(value.c_str()));
                 }
             } else if (disabled.key() == "dials") {
                 for (auto disabledDials: disabled.value().items()) {
-                    for (auto event: disabledDials.value().items()) {
-                        dialDisabled.insert(std::atoi(event.key().c_str()));
-                    }
+                    std::string value = disabledDials.value();
+                    dialDisabled.insert(std::atoi(value.c_str()));
                 }
             }
         }
@@ -561,28 +558,31 @@ bool transfer_handler::hasCustomButtonMap(int button) {
 }
 
 void transfer_handler::handleStylusMappedEvent(libusb_device_handle *handle, int event, int value) {
-    auto iterator = stylusButtonDisabled.find(event);
-    if (iterator == stylusButtonDisabled.end()) {
-        auto stylusButtonMap = stylusButtonMapping.getStylusButtonMap(event);
-        if (!stylusButtonMap.empty()) {
-            for (auto sbMap: stylusButtonMap) {
-                uinput_send(uinputPads[handle], sbMap.event_type, sbMap.event_value, value);
-            }
-            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
-        } else {
-            uinput_send(uinputPens[handle], EV_KEY, event, value);
+    auto stylusButtonMap = stylusButtonMapping.getStylusButtonMap(event);
+    if (!stylusButtonMap.empty()) {
+        for (auto sbMap: stylusButtonMap) {
+            uinput_send(uinputPads[handle], sbMap.event_type, sbMap.event_value, value);
         }
+        uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+    } else {
+        uinput_send(uinputPens[handle], EV_KEY, event, value);
     }
 }
 
 void transfer_handler::handleStylusButtonsPressed(libusb_device_handle *handle, int stylusButton) {
-    handleStylusMappedEvent(handle, stylusButton, 1);
-    stylusButtonPressed = stylusButton;
+    auto iterator = stylusButtonDisabled.find(stylusButton);
+    if (iterator == stylusButtonDisabled.end()) {
+        handleStylusMappedEvent(handle, stylusButton, 1);
+        stylusButtonPressed = stylusButton;
+    }
 }
 
 void transfer_handler::handleStylusButtonUnpressed(libusb_device_handle *handle) {
-    handleStylusMappedEvent(handle, stylusButtonPressed, 0);
-    stylusButtonPressed = 0;
+    auto iterator = stylusButtonDisabled.find(stylusButtonPressed);
+    if (iterator == stylusButtonDisabled.end()) {
+        handleStylusMappedEvent(handle, stylusButtonPressed, 0);
+        stylusButtonPressed = 0;
+    }
 }
 
 void transfer_handler::handleCoordsAndTilt(libusb_device_handle *handle, int penX, int penY, short tiltX, short tiltY) {
