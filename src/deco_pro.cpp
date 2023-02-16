@@ -61,6 +61,11 @@ void deco_pro::setConfig(nlohmann::json config) {
         addToDialMap(REL_HWHEEL, -1, EV_KEY, {KEY_LEFTCTRL, KEY_MINUS});
         addToDialMap(REL_HWHEEL, 1, EV_KEY, {KEY_LEFTCTRL, KEY_EQUAL});
     }
+
+    if (!config.contains("disabled") || config["disabled"] == nullptr) {
+        config["disabled"] = nlohmann::json({});
+    }
+
     jsonConfig = config;
 
     submitMapping(jsonConfig);

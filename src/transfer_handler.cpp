@@ -419,52 +419,78 @@ void transfer_handler::destroy_uinput_device(int fd) {
 
 void transfer_handler::submitMapping(const nlohmann::json& config) {
     std::vector<aliased_input_event> scanCodes;
-    for (auto mapping : config["mapping"].items()) {
-        if (mapping.key() == "stylus_buttons") {
-            for (auto mappingStylusButtons : mapping.value().items()) {
-                for (auto events : mappingStylusButtons.value().items()) {
-                    for (auto codes: events.value().items()) {
-                        aliased_input_event newEvent{
-                                std::atoi(events.key().c_str()),
-                                codes.value()
-                        };
-                        scanCodes.push_back(newEvent);
-                    }
-                }
-                stylusButtonMapping.setStylusButtonMap(std::atoi(mappingStylusButtons.key().c_str()), scanCodes);
-                scanCodes.clear();
-            }
-        } else if (mapping.key() == "buttons") {
-            for (auto mappingButtons : mapping.value().items()) {
-                for (auto events : mappingButtons.value().items()) {
-                    for (auto codes: events.value().items()) {
-                        aliased_input_event newEvent{
-                                std::atoi(events.key().c_str()),
-                                codes.value()
-                        };
-                        scanCodes.push_back(newEvent);
-                    }
-                }
-                padMapping.setPadMap(std::atoi(mappingButtons.key().c_str()), scanCodes);
-                scanCodes.clear();
-            }
-        } else if (mapping.key() == "dials") {
-            for (auto mappingDials : mapping.value().items()) {
-                for (auto interceptValues : mappingDials.value().items()) {
-                    for (auto events : interceptValues.value().items()) {
+    if (config.contains("mapping")) {
+        for (auto mapping: config["mapping"].items()) {
+            if (mapping.key() == "stylus_buttons") {
+                for (auto mappingStylusButtons: mapping.value().items()) {
+                    for (auto events: mappingStylusButtons.value().items()) {
                         for (auto codes: events.value().items()) {
                             aliased_input_event newEvent{
                                     std::atoi(events.key().c_str()),
                                     codes.value()
                             };
-                            if (newEvent.event_type == EV_KEY){
-                                newEvent.event_data = 1;
-                            }
                             scanCodes.push_back(newEvent);
                         }
                     }
-                    dialMapping.setDialMap(std::atoi(mappingDials.key().c_str()), interceptValues.key(), scanCodes);
+                    stylusButtonMapping.setStylusButtonMap(std::atoi(mappingStylusButtons.key().c_str()), scanCodes);
                     scanCodes.clear();
+                }
+            } else if (mapping.key() == "buttons") {
+                for (auto mappingButtons: mapping.value().items()) {
+                    for (auto events: mappingButtons.value().items()) {
+                        for (auto codes: events.value().items()) {
+                            aliased_input_event newEvent{
+                                    std::atoi(events.key().c_str()),
+                                    codes.value()
+                            };
+                            scanCodes.push_back(newEvent);
+                        }
+                    }
+                    padMapping.setPadMap(std::atoi(mappingButtons.key().c_str()), scanCodes);
+                    scanCodes.clear();
+                }
+            } else if (mapping.key() == "dials") {
+                for (auto mappingDials: mapping.value().items()) {
+                    for (auto interceptValues: mappingDials.value().items()) {
+                        for (auto events: interceptValues.value().items()) {
+                            for (auto codes: events.value().items()) {
+                                aliased_input_event newEvent{
+                                        std::atoi(events.key().c_str()),
+                                        codes.value()
+                                };
+                                if (newEvent.event_type == EV_KEY) {
+                                    newEvent.event_data = 1;
+                                }
+                                scanCodes.push_back(newEvent);
+                            }
+                        }
+                        dialMapping.setDialMap(std::atoi(mappingDials.key().c_str()), interceptValues.key(), scanCodes);
+                        scanCodes.clear();
+                    }
+                }
+            }
+        }
+    }
+
+    if (config.contains("disabled")) {
+        for (auto disabled: config["disabled"].items()) {
+            if (disabled.key() == "stylus_buttons") {
+                for (auto disabledStylusButtons: disabled.value().items()) {
+                    for (auto event: disabledStylusButtons.value().items()) {
+                        stylusButtonDisabled.insert(std::atoi(event.key().c_str()));
+                    }
+                }
+            } else if (disabled.key() == "buttons") {
+                for (auto disabledPadButtons: disabled.value().items()) {
+                    for (auto event: disabledPadButtons.value().items()) {
+                        padButtonDisabled.insert(std::atoi(event.key().c_str()));
+                    }
+                }
+            } else if (disabled.key() == "dials") {
+                for (auto disabledDials: disabled.value().items()) {
+                    for (auto event: disabledDials.value().items()) {
+                        dialDisabled.insert(std::atoi(event.key().c_str()));
+                    }
                 }
             }
         }
@@ -535,14 +561,17 @@ bool transfer_handler::hasCustomButtonMap(int button) {
 }
 
 void transfer_handler::handleStylusMappedEvent(libusb_device_handle *handle, int event, int value) {
-    auto stylusButtonMap = stylusButtonMapping.getStylusButtonMap(event);
-    if (!stylusButtonMap.empty()) {
-        for (auto sbMap: stylusButtonMap) {
-            uinput_send(uinputPads[handle], sbMap.event_type, sbMap.event_value, value);
+    auto iterator = stylusButtonDisabled.find(event);
+    if (iterator == stylusButtonDisabled.end()) {
+        auto stylusButtonMap = stylusButtonMapping.getStylusButtonMap(event);
+        if (!stylusButtonMap.empty()) {
+            for (auto sbMap: stylusButtonMap) {
+                uinput_send(uinputPads[handle], sbMap.event_type, sbMap.event_value, value);
+            }
+            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+        } else {
+            uinput_send(uinputPens[handle], EV_KEY, event, value);
         }
-        uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
-    } else {
-        uinput_send(uinputPens[handle], EV_KEY, event, value);
     }
 }
 
@@ -568,11 +597,14 @@ void transfer_handler::handleCoords(libusb_device_handle *handle, int penX, int 
 }
 
 void transfer_handler::handlePadButtonPressed(libusb_device_handle *handle, int button) {
-    auto padMap = padMapping.getPadMap(padButtonAliases[button - 1]);
-    for (auto pmap : padMap) {
-        uinput_send(uinputPads[handle], pmap.event_type, pmap.event_value, 1);
+    auto iterator = padButtonDisabled.find(button);
+    if (iterator == padButtonDisabled.end()) {
+        auto padMap = padMapping.getPadMap(padButtonAliases[button - 1]);
+        for (auto pmap: padMap) {
+            uinput_send(uinputPads[handle], pmap.event_type, pmap.event_value, 1);
+        }
+        lastPressedButton[handle] = button;
     }
-    lastPressedButton[handle] = button;
 }
 
 void transfer_handler::handlePadButtonUnpressed(libusb_device_handle *handle) {
@@ -586,25 +618,28 @@ void transfer_handler::handlePadButtonUnpressed(libusb_device_handle *handle) {
 }
 
 void transfer_handler::handleDialEvent(libusb_device_handle* handle, int dial, short value) {
-    bool send_reset = false;
-    auto dialMap = dialMapping.getDialMap(EV_REL, dial, value);
-    for (auto dmap: dialMap) {
-        uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, dmap.event_data);
-        if (dmap.event_type == EV_KEY) {
-            send_reset = true;
-        }
-    }
-
-    uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
-
-    if (send_reset) {
+    auto iterator = dialDisabled.find(dial);
+    if (iterator == dialDisabled.end()) {
+        bool send_reset = false;
+        auto dialMap = dialMapping.getDialMap(EV_REL, dial, value);
         for (auto dmap: dialMap) {
-            // We have to handle key presses manually here because this device does not send reset events
+            uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, dmap.event_data);
             if (dmap.event_type == EV_KEY) {
-                uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, 0);
+                send_reset = true;
             }
         }
+
         uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+
+        if (send_reset) {
+            for (auto dmap: dialMap) {
+                // We have to handle key presses manually here because this device does not send reset events
+                if (dmap.event_type == EV_KEY) {
+                    uinput_send(uinputPads[handle], dmap.event_type, dmap.event_value, 0);
+                }
+            }
+            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+        }
     }
 }
 

@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <string>
 #include <bitset>
+#include <unordered_set>
 #include "uinput_pen_args.h"
 #include "uinput_pad_args.h"
 #include "uinput_pointer_args.h"
@@ -98,8 +99,11 @@ protected:
     std::vector<int> padButtonAliases;
 
     stylus_button_mapping stylusButtonMapping;
+    std::unordered_set<int> stylusButtonDisabled;
     pad_mapping padMapping;
+    std::unordered_set<int> padButtonDisabled;
     dial_mapping dialMapping;
+    std::unordered_set<int> dialDisabled;
     nlohmann::json jsonConfig;
 
     bool penInProximity;

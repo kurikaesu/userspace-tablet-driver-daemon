@@ -36,6 +36,8 @@ CMakeFiles
 _CPack_Packages
 Testing
 
+.cmake
+
 CMakeCache.txt
 cmake_install.cmake
 CPackConfig.cmake
@@ -46,3 +48,6 @@ userspace_tablet_driver_daemon*.deb
 userspace_tablet_driver_daemon*.rpm
 install_manifest.txt
 *.cbp
+/.ninja_deps
+/.ninja_log
+/build.ninja
