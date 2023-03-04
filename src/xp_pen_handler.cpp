@@ -42,6 +42,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "generic_xp_pen_device.h"
 #include "artist_15_6_pro.h"
 #include "deco_02.h"
+#include "deco_large.h"
 
 xp_pen_handler::xp_pen_handler() {
     std::cout << "xp_pen_handler initialized" << std::endl;
@@ -66,6 +67,7 @@ xp_pen_handler::xp_pen_handler() {
     addHandler(new star_g640());
     addHandler(new ac19());
     addHandler(new deco_02());
+    addHandler(new deco_large());
 }
 
 int xp_pen_handler::getVendorId() {
