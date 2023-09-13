@@ -44,12 +44,6 @@ void artist_pro_16tp::setConfig(nlohmann::json config) {
 }
 
 bool artist_pro_16tp::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {
-    /*for(int i = 0; i < dataLen; i++)
-    {
-        printf("%02X ", data[i]);
-    }
-    printf("\r");
-    std::cout << std::flush;*/
     switch (data[0]) {
         case 0x02:
             handleDigitizerEvent(handle, data, dataLen);
