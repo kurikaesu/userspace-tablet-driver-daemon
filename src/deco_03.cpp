@@ -35,6 +35,10 @@ std::string deco_03::getProductName(int productId) {
     return "Unknown XP-Pen Device";
 }
 
+std::string deco_03::getInitKey() {
+    return {0x02, static_cast<char>(0xb0), 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+}
+
 void deco_03::setConfig(nlohmann::json config) {
     if (!config.contains("mapping") || config["mapping"] == nullptr) {
         config["mapping"] = nlohmann::json({});

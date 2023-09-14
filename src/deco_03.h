@@ -32,6 +32,8 @@ public:
 private:
     void handleFrameEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
     void handleNonUnifiedDialEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
+    
+    virtual std::string getInitKey() override;
 };
 
 
