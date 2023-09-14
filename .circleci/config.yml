@@ -113,3 +113,11 @@ workflows:
             branches:
               only:
                 - /circleci-.*/
+  build-packages-nightly:
+    jobs:
+      - build-ubuntu-bionic-package
+      - build-centos-stream-package
+      - upload-packages-to-github:
+          requires:
+            - build-ubuntu-bionic-package
+            - build-centos-stream-package
