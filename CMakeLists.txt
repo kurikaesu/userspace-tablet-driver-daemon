@@ -14,6 +14,7 @@ add_executable(userspace_tablet_driver_daemon src/main.cpp src/usb_devices.cpp s
 target_link_libraries(userspace_tablet_driver_daemon stdc++fs ${LIBUSB_1_LIBRARIES})
 target_include_directories(userspace_tablet_driver_daemon PRIVATE ${LIBUSB_1_INCLUDE_DIRS})
 target_compile_definitions(userspace_tablet_driver_daemon PRIVATE ${LIBUSB_1_DEFINITIONS})
+target_compile_options(userspace_tablet_driver_daemon PRIVATE -fsigned-char)
 
 if(NOT DEFINED UDEV_RULES_PATH)
   set(UDEV_RULES_PATH "etc/udev/")
