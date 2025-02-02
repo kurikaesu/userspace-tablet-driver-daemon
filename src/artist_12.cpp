@@ -35,6 +35,12 @@ std::string artist_12::getProductName(int productId) {
     return "Unknown XP-Pen Device";
 }
 
+void artist_12::setOffsetPressure(int productId) {
+    if (productId == 0x094a) {
+        offsetPressure = -8192;
+    }
+}
+
 void artist_12::setConfig(nlohmann::json config) {
     if (!config.contains("mapping") || config["mapping"] == nullptr) {
         config["mapping"] = nlohmann::json({});
@@ -63,7 +69,7 @@ bool artist_12::handleTransferData(libusb_device_handle *handle, unsigned char *
         case 0x02:
             if (productId == 0x094a) {
                 // This product has a specific offset pressure.
-                handleDigitizerEvent(handle, data, dataLen, -8192);
+                handleDigitizerEvent(handle, data, dataLen);
             } else {
                 handleDigitizerEvent(handle, data, dataLen);
             }

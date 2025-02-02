@@ -43,6 +43,7 @@ public:
     virtual std::string getProductName(int productId) = 0;
     virtual void setConfig(nlohmann::json config) = 0;
     virtual nlohmann::json getConfig();
+    virtual void setOffsetPressure(int productId);
     virtual int sendInitKeyOnInterface() = 0;
     virtual bool attachToInterfaceId(int interfaceId) = 0;
     virtual bool attachDevice(libusb_device_handle* handle, int interfaceId, int productId) = 0;
@@ -113,6 +114,7 @@ protected:
 
     std::vector<std::pair<float, float> > pressureCurve;
     int maxPressure;
+    int offsetPressure;
 
 private:
     static float getPoint(float n1, float n2, float dt);

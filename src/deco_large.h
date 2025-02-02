@@ -26,6 +26,8 @@ class deco_large : public deco {
 public:
     deco_large();
 
+    void setOffsetPressure(int productId);
+
     std::string getProductName(int productId);
 };
 

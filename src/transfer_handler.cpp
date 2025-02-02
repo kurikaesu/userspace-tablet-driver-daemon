@@ -691,3 +691,7 @@ int transfer_handler::applyPressureCurve(int pressure) {
     auto returnedPressure = (adjustedPressure / 100.0f) * maxPressure;
     return (int)returnedPressure;
 }
+
+void transfer_handler::setOffsetPressure(int productId) {
+    offsetPressure = 0;
+}

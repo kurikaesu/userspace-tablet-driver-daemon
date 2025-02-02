@@ -169,6 +169,9 @@ device_interface_pair* vendor_handler::claimDevice(libusb_device *device, libusb
                     }
                 }
 
+                // Have the device set up any offset pressure values
+                productHandlers[productId]->setOffsetPressure(productId);
+
                 std::cout << std::dec << "Setup completed on interface " << (int)interface_number << std::endl;
             } else {
                 std::cout << "Could not claim interface " << (int)interface_number << " retcode: " << err << " errno: " << errno << std::endl;

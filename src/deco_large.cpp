@@ -24,6 +24,10 @@ deco_large::deco_large()
     productIds.push_back(0x0935);
 }
 
+void deco_large::setOffsetPressure(int productId) {
+    offsetPressure = -8192;
+}
+
 std::string deco_large::getProductName(int productId) {
     if (productId == 0x0935) {
         return "XP-Pen Deco Large";
