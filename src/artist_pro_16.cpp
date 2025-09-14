@@ -1,6 +1,6 @@
 /*
 userspace-tablet-driver-daemon
-Copyright (C) 2022 - Aren Villanueva <https://github.com/kurikaesu/>
+Copyright (C) 2021 - Aren Villanueva <https://github.com/kurikaesu/>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,59 +17,34 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <iostream>
-#include <iomanip>
 #include "artist_pro_16.h"
 
 artist_pro_16::artist_pro_16() {
-    productIds.push_back(0x094b);
-
-    for (int currentAssignedButton = BTN_0; currentAssignedButton < BTN_8; ++currentAssignedButton) {
-        padButtonAliases.push_back(currentAssignedButton);
+    // Create a device specification for artist_pro_16 devices
+    device_specification spec;
+    spec.numButtons = 10;
+    spec.hasDial = true;
+    spec.hasHorizontalDial = false;
+    spec.buttonByteIndex = 2;
+    spec.dialByteIndex = 7;
+    
+    // Register product IDs and names
+    spec.addProduct(0x0300, "XP-Pen Artist Pro 16");
+    
+    // Initialize the base class with the specification
+    deviceSpec = spec;
+    
+    // Register products
+    for (const auto& product : spec.productNames) {
+        registerProduct(product.first, product.second);
+        productIds.push_back(product.first);
     }
-}
-
-std::string artist_pro_16::getProductName(int productId) {
-    if (productId == 0x094b) {
-        return "XP-Pen Artist Pro 16";
-    }
-
-    return "Unknown XP-Pen Device";
-}
-
-unsigned short artist_pro_16::getDescriptorLength() {
-    return 13;
-}
-
-void artist_pro_16::setConfig(nlohmann::json config) {
-    if (!config.contains("mapping") || config["mapping"] == nullptr) {
-        config["mapping"] = nlohmann::json({});
-
-        auto addToButtonMap = [&config](int key, int eventType, std::vector<int> codes) {
-            std::string evstring = std::to_string(eventType);
-            config["mapping"]["buttons"][std::to_string(key)][evstring] = codes;
-        };
-
-        auto addToDialMap = [&config](int dial, int value, int eventType, std::vector<int> codes) {
-            std::string strvalue = std::to_string(value);
-            std::string evstring = std::to_string(eventType);
-            config["mapping"]["dials"][std::to_string(dial)][strvalue][evstring] = codes;
-        };
-
-        addToButtonMap(BTN_0, EV_KEY, {KEY_B});
-        addToButtonMap(BTN_1, EV_KEY, {KEY_E});
-        addToButtonMap(BTN_2, EV_KEY, {KEY_SPACE});
-        addToButtonMap(BTN_3, EV_KEY, {KEY_LEFTALT});
-        addToButtonMap(BTN_4, EV_KEY, {KEY_V});
-        addToButtonMap(BTN_5, EV_KEY, {KEY_LEFTCTRL, KEY_S});
-        addToButtonMap(BTN_6, EV_KEY, {KEY_LEFTCTRL, KEY_Z});
-        addToButtonMap(BTN_7, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTALT, KEY_N});
-
-        addToDialMap(REL_WHEEL, -1, EV_KEY, {KEY_LEFTCTRL, KEY_MINUS});
-        addToDialMap(REL_WHEEL, 1, EV_KEY, {KEY_LEFTCTRL, KEY_EQUAL});
-    }
-    jsonConfig = config;
-
-    submitMapping(jsonConfig);
+    
+    // Initialize pad button aliases
+    initializePadButtonAliases(spec.numButtons);
+    
+    // Apply default configuration with dial
+    applyDefaultConfig(true);
 }
 
 bool artist_pro_16::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {
@@ -88,25 +63,26 @@ bool artist_pro_16::handleTransferData(libusb_device_handle *handle, unsigned ch
 
 void artist_pro_16::handleFrameEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
     if (data[1] >= 0xf0) {
-        long button = data[2];
-        // Only 8 buttons on this device
-        long position = ffsl(data[2]);
+        // Extract the button being pressed (If there is one)
+        long button = (data[4] << 16) + (data[3] << 8) + data[2];
+        // Grab the first bit set in the button long which tells us the button number
+        long position = ffsl(button);
 
         std::bitset<8> dialBits(data[7]);
 
-        // Take the dial
-        short dialValue = 0;
+        // Take the left dial
+        short leftDialValue = 0;
         if (dialBits.test(0)) {
-            dialValue = 1;
+            leftDialValue = 1;
         } else if (dialBits.test(1)) {
-            dialValue = -1;
+            leftDialValue = -1;
         }
 
         bool shouldSyn = true;
         bool dialEvent = false;
 
-        if (dialValue != 0) {
-            handleDialEvent(handle, REL_WHEEL, dialValue);
+        if (leftDialValue != 0) {
+            handleDialEvent(handle, REL_WHEEL, leftDialValue);
             shouldSyn = false;
             dialEvent = true;
         }

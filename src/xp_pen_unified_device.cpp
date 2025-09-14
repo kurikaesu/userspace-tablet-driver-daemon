@@ -20,6 +20,65 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sstream>
 #include "xp_pen_unified_device.h"
 
+xp_pen_unified_device::xp_pen_unified_device() {
+    // Default constructor
+}
+
+xp_pen_unified_device::xp_pen_unified_device(const device_specification& spec) : deviceSpec(spec) {
+    // Initialize from device specification
+    
+    // Register product IDs and names
+    for (const auto& product : spec.productNames) {
+        registerProduct(product.first, product.second);
+        productIds.push_back(product.first);
+    }
+    
+    // Initialize pad button aliases
+    initializePadButtonAliases(spec.numButtons);
+}
+
+void xp_pen_unified_device::registerProduct(int productId, const std::string& name) {
+    productNameMap[productId] = name;
+}
+
+std::string xp_pen_unified_device::getProductName(int productId) {
+    auto it = productNameMap.find(productId);
+    if (it != productNameMap.end()) {
+        return it->second;
+    }
+    return "Unknown XP-Pen Device";
+}
+
+void xp_pen_unified_device::setConfig(nlohmann::json config) {
+    if (!config.contains("mapping") || config["mapping"] == nullptr) {
+        // Apply default configuration
+        applyDefaultConfig(deviceSpec.hasDial);
+    } else {
+        jsonConfig = config;
+    }
+    
+    submitMapping(jsonConfig);
+}
+
+void xp_pen_unified_device::applyDefaultConfig(bool withDial) {
+    button_mapping_configuration buttonConfig;
+    
+    if (withDial) {
+        buttonConfig = button_mapping_configuration::createDefaultXPPenConfigWithDial();
+    } else {
+        buttonConfig = button_mapping_configuration::createDefaultXPPenConfig();
+    }
+    
+    buttonConfig.applyToJson(jsonConfig);
+}
+
+void xp_pen_unified_device::initializePadButtonAliases(int numButtons) {
+    padButtonAliases.clear();
+    for (int currentAssignedButton = BTN_0; currentAssignedButton < BTN_0 + numButtons; ++currentAssignedButton) {
+        padButtonAliases.push_back(currentAssignedButton);
+    }
+}
+
 std::string xp_pen_unified_device::getInitKey() {
     return {0x02, static_cast<char>(0xb0), 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 }
@@ -43,6 +102,7 @@ bool xp_pen_unified_device::attachDevice(libusb_device_handle *handle, int inter
     // We need to get a few more bits of information
     if (libusb_get_string_descriptor(handle, 0x64, 0x0409, buf, descriptorLength) != descriptorLength) {
         std::cout << "Could not get descriptor" << std::endl;
+        delete[] buf;
         return false;
     }
 
@@ -79,8 +139,8 @@ bool xp_pen_unified_device::attachDevice(libusb_device_handle *handle, int inter
 
     struct uinput_pad_args padArgs {
             .padButtonAliases = padButtonAliases,
-            .hasWheel = true,
-            .hasHWheel = true,
+            .hasWheel = deviceSpec.hasDial,
+            .hasHWheel = deviceSpec.hasHorizontalDial,
             .wheelMax = 1,
             .hWheelMax = 1,
             .vendorId = vendorId,
@@ -93,6 +153,7 @@ bool xp_pen_unified_device::attachDevice(libusb_device_handle *handle, int inter
     uinputPens[handle] = create_pen(penArgs);
     uinputPads[handle] = create_pad(padArgs);
 
+    delete[] buf;
     return true;
 }
 
@@ -156,5 +217,48 @@ void xp_pen_unified_device::handleDigitizerEvent(libusb_device_handle *handle, u
         handleCoordsAndTilt(handle, penX, penY, tiltx, tilty);
 
         uinput_send(uinputPens[handle], EV_SYN, SYN_REPORT, 1);
+    }
+}
+
+void xp_pen_unified_device::handleGenericFrameEvent(
+    libusb_device_handle* handle, 
+    unsigned char* data, 
+    size_t dataLen,
+    int buttonByteIndex,
+    int dialByteIndex
+) {
+    if (data[1] >= 0xf0) {
+        long button = data[buttonByteIndex];
+        // Get the position of the first set bit
+        long position = ffsl(button);
+
+        std::bitset<8> dialBits(data[dialByteIndex]);
+
+        // Take the dial
+        short dialValue = 0;
+        if (dialBits.test(0)) {
+            dialValue = 1;
+        } else if (dialBits.test(1)) {
+            dialValue = -1;
+        }
+
+        bool shouldSyn = true;
+        bool dialEvent = false;
+
+        if (dialValue != 0) {
+            handleDialEvent(handle, REL_WHEEL, dialValue);
+            shouldSyn = false;
+            dialEvent = true;
+        }
+
+        if (button != 0) {
+            handlePadButtonPressed(handle, position);
+        } else if (!dialEvent) {
+            handlePadButtonUnpressed(handle);
+        }
+
+        if (shouldSyn) {
+            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
+        }
     }
 }

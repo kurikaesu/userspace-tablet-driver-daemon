@@ -26,11 +26,8 @@ class artist_12_pro : public xp_pen_unified_device {
 public:
     artist_12_pro();
 
-    std::string getProductName(int productId);
-    void setConfig(nlohmann::json config);
-    bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen, int productId);
-private:
-    void handleFrameEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
+    // Override only the methods that need custom behavior
+    bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen, int productId) override;
 };
 
 

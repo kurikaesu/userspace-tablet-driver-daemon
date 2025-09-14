@@ -21,13 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 deco_01v2::deco_01v2()
 : deco() {
+    // Register the product ID and name
+    registerProduct(0x0905, "XP-Pen Deco 01v2");
     productIds.push_back(0x0905);
-}
-
-std::string deco_01v2::getProductName(int productId) {
-    if (productId == 0x0905) {
-        return "XP-Pen Deco 01v2";
-    }
-
-    return deco::getProductName(productId);
 }

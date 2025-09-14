@@ -26,13 +26,9 @@ class artist_12 : public xp_pen_unified_device {
 public:
     artist_12();
 
-    void setOffsetPressure(int productId);
-
-    std::string getProductName(int productId);
-    void setConfig(nlohmann::json config);
-    bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen, int productId);
-private:
-    void handleFrameEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
+    // Override only the methods that need custom behavior
+    void setOffsetPressure(int productId) override;
+    bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen, int productId) override;
 };
 
 

@@ -1,6 +1,6 @@
 /*
 userspace-tablet-driver-daemon
-Copyright (C) 2022 - Aren Villanueva <https://github.com/kurikaesu/>
+Copyright (C) 2021 - Aren Villanueva <https://github.com/kurikaesu/>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,30 +17,34 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <iostream>
-#include <iomanip>
 #include "artist_pro_16tp.h"
 
 artist_pro_16tp::artist_pro_16tp() {
-    productIds.push_back(0x092e);
-}
-
-std::string artist_pro_16tp::getProductName(int productId) {
-    if (productId == 0x092e) {
-        return "XP-Pen Artist Pro 16TP";
+    // Create a device specification for artist_pro_16tp devices
+    device_specification spec;
+    spec.numButtons = 0;
+    spec.hasDial = false;
+    spec.hasHorizontalDial = false;
+    spec.buttonByteIndex = 2;
+    spec.dialByteIndex = 7;
+    
+    // Register product IDs and names
+    spec.addProduct(0x0301, "XP-Pen Artist Pro 16TP");
+    
+    // Initialize the base class with the specification
+    deviceSpec = spec;
+    
+    // Register products
+    for (const auto& product : spec.productNames) {
+        registerProduct(product.first, product.second);
+        productIds.push_back(product.first);
     }
-
-    return "Unknown XP-Pen Device";
-}
-
-unsigned short artist_pro_16tp::getDescriptorLength() {
-    return 13;
-}
-
-void artist_pro_16tp::setConfig(nlohmann::json config) {
-
-    jsonConfig = config;
-
-    submitMapping(jsonConfig);
+    
+    // Initialize pad button aliases
+    initializePadButtonAliases(spec.numButtons);
+    
+    // Apply default configuration
+    applyDefaultConfig(false);
 }
 
 bool artist_pro_16tp::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {

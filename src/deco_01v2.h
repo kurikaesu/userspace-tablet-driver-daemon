@@ -25,8 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class deco_01v2 : public deco {
 public:
     deco_01v2();
-
-    std::string getProductName(int productId);
 };
 
 

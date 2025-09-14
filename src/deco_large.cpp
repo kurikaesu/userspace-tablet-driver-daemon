@@ -18,20 +18,49 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <iostream>
 #include "deco_large.h"
-
-deco_large::deco_large()
-: deco() {
-    productIds.push_back(0x0935);
+deco_large::deco_large() {
+    // Create a device specification for deco_large devices
+    device_specification spec;
+    spec.numButtons = 0;
+    spec.hasDial = false;
+    spec.hasHorizontalDial = false;
+    spec.buttonByteIndex = 2;
+    spec.dialByteIndex = 7;
+    
+    // Register product IDs and names
+    spec.addProduct(0x0935, "XP-Pen Deco Large");
+    
+    // Initialize the base class with the specification
+    deviceSpec = spec;
+    
+    // Register products
+    for (const auto& product : spec.productNames) {
+        registerProduct(product.first, product.second);
+        productIds.push_back(product.first);
+    }
+    
+    // Initialize pad button aliases
+    initializePadButtonAliases(spec.numButtons);
+    
+    // Apply default configuration
+    applyDefaultConfig(false);
 }
 
 void deco_large::setOffsetPressure(int productId) {
     offsetPressure = -8192;
 }
+bool deco_large::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {
+    switch (data[0]) {
+        case 0x02:
+            handleDigitizerEvent(handle, data, dataLen);
+            // Use the generic frame event handler
+            handleGenericFrameEvent(handle, data, dataLen, deviceSpec.buttonByteIndex, deviceSpec.dialByteIndex);
+            break;
 
-std::string deco_large::getProductName(int productId) {
-    if (productId == 0x0935) {
-        return "XP-Pen Deco Large";
+        default:
+            break;
     }
 
-    return deco::getProductName(productId);
+    return true;
 }
+

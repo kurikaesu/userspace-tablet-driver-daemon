@@ -17,56 +17,34 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <iostream>
-#include <unistd.h>
-#include <string>
 #include "artist_13_3_pro.h"
 
 artist_13_3_pro::artist_13_3_pro() {
-    productIds.push_back(0x092b);
-
-    for (int currentAssignedButton = BTN_0; currentAssignedButton < BTN_8; ++currentAssignedButton) {
-        padButtonAliases.push_back(currentAssignedButton);
+    // Create a device specification for artist_13_3_pro devices
+    device_specification spec;
+    spec.numButtons = 9;
+    spec.hasDial = true;
+    spec.hasHorizontalDial = false;
+    spec.buttonByteIndex = 2;
+    spec.dialByteIndex = 7;
+    
+    // Register product IDs and names
+    spec.addProduct(0x092b, "XP-Pen Artist 13.3 Pro");
+    
+    // Initialize the base class with the specification
+    deviceSpec = spec;
+    
+    // Register products
+    for (const auto& product : spec.productNames) {
+        registerProduct(product.first, product.second);
+        productIds.push_back(product.first);
     }
-}
-
-std::string artist_13_3_pro::getProductName(int productId) {
-    if (productId == 0x092b) {
-        return "XP-Pen Artist 13.3 Pro";
-    }
-
-    return "Unknown XP-Pen Device";
-}
-
-void artist_13_3_pro::setConfig(nlohmann::json config) {
-    if (!config.contains("mapping") || config["mapping"] == nullptr) {
-        config["mapping"] = nlohmann::json({});
-
-        auto addToButtonMap = [&config](int key, int eventType, std::vector<int> codes) {
-            std::string evstring = std::to_string(eventType);
-            config["mapping"]["buttons"][std::to_string(key)][evstring] = codes;
-        };
-
-        auto addToDialMap = [&config](int dial, int value, int eventType, std::vector<int> codes) {
-            std::string strvalue = std::to_string(value);
-            std::string evstring = std::to_string(eventType);
-            config["mapping"]["dials"][std::to_string(dial)][strvalue][evstring] = codes;
-        };
-
-        addToButtonMap(BTN_0, EV_KEY, {KEY_B});
-        addToButtonMap(BTN_1, EV_KEY, {KEY_E});
-        addToButtonMap(BTN_2, EV_KEY, {KEY_SPACE});
-        addToButtonMap(BTN_3, EV_KEY, {KEY_LEFTALT});
-        addToButtonMap(BTN_4, EV_KEY, {KEY_V});
-        addToButtonMap(BTN_5, EV_KEY, {KEY_LEFTCTRL, KEY_S});
-        addToButtonMap(BTN_6, EV_KEY, {KEY_LEFTCTRL, KEY_Z});
-        addToButtonMap(BTN_7, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTALT, KEY_N});
-
-        addToDialMap(REL_WHEEL, -1, EV_KEY, {KEY_LEFTCTRL, KEY_MINUS});
-        addToDialMap(REL_WHEEL, 1, EV_KEY, {KEY_LEFTCTRL, KEY_EQUAL});
-    }
-    jsonConfig = config;
-
-    submitMapping(jsonConfig);
+    
+    // Initialize pad button aliases
+    initializePadButtonAliases(spec.numButtons);
+    
+    // Apply default configuration with dial
+    applyDefaultConfig(true);
 }
 
 bool artist_13_3_pro::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {

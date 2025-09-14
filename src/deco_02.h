@@ -26,11 +26,11 @@ class deco_02 : public xp_pen_unified_device {
 public:
     deco_02();
 
-    std::string getProductName(int productId);
-    void setConfig(nlohmann::json config);
-    bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen, int productId);
+    // Override only the methods that need custom behavior
+    bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen, int productId) override;
+    
 private:
-    void handleFrameEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
+    // Helper method for handling non-unified dial events
     void handleNonUnifiedDialEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
 };
 

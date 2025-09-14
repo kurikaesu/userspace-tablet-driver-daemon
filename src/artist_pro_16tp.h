@@ -19,16 +19,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef USERSPACE_TABLET_DRIVER_DAEMON_ARTIST_PRO_16TP_H
 #define USERSPACE_TABLET_DRIVER_DAEMON_ARTIST_PRO_16TP_H
 
+
 #include "xp_pen_unified_device.h"
 
 class artist_pro_16tp : public xp_pen_unified_device {
 public:
     artist_pro_16tp();
 
-    std::string getProductName(int productId);
-    void setConfig(nlohmann::json config);
-    virtual unsigned short getDescriptorLength();
-    bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen, int productId);
+    // Override only the methods that need custom behavior
+    bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen, int productId) override;
 };
+
 
 #endif //USERSPACE_TABLET_DRIVER_DAEMON_ARTIST_PRO_16TP_H

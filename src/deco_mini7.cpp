@@ -20,41 +20,31 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "deco_mini7.h"
 
 deco_mini7::deco_mini7() {
-    productIds.push_back(0x0928);
-    for (int currentAssignedButton = BTN_0; currentAssignedButton < BTN_8; ++currentAssignedButton) {
-        padButtonAliases.push_back(currentAssignedButton);
+    // Create a device specification for deco_mini7 devices
+    device_specification spec;
+    spec.numButtons = 8;
+    spec.hasDial = false;
+    spec.hasHorizontalDial = false;
+    spec.buttonByteIndex = 2;
+    spec.dialByteIndex = 7;
+    
+    // Register product IDs and names
+    spec.addProduct(0x0084, "XP-Pen Deco mini7");
+    
+    // Initialize the base class with the specification
+    deviceSpec = spec;
+    
+    // Register products
+    for (const auto& product : spec.productNames) {
+        registerProduct(product.first, product.second);
+        productIds.push_back(product.first);
     }
-}
-
-std::string deco_mini7::getProductName(int productId) {
-    if (productId == 0x0928) {
-        return "XP-Pen Deco mini7";
-    }
-
-    return "Unknown XP-Pen Device";
-}
-
-void deco_mini7::setConfig(nlohmann::json config) {
-    if (!config.contains("mapping") || config["mapping"] == nullptr) {
-        config["mapping"] = nlohmann::json({});
-
-        auto addToButtonMap = [&config](int key, int eventType, std::vector<int> codes) {
-            std::string evstring = std::to_string(eventType);
-            config["mapping"]["buttons"][std::to_string(key)][evstring] = codes;
-        };
-
-        addToButtonMap(BTN_0, EV_KEY, {KEY_B});
-        addToButtonMap(BTN_1, EV_KEY, {KEY_E});
-        addToButtonMap(BTN_2, EV_KEY, {KEY_SPACE});
-        addToButtonMap(BTN_3, EV_KEY, {KEY_LEFTALT});
-        addToButtonMap(BTN_4, EV_KEY, {KEY_V});
-        addToButtonMap(BTN_5, EV_KEY, {KEY_LEFTCTRL, KEY_Z});
-        addToButtonMap(BTN_6, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTALT, KEY_Z});
-        addToButtonMap(BTN_7, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTSHIFT, KEY_Z});
-    }
-    jsonConfig = config;
-
-    submitMapping(jsonConfig);
+    
+    // Initialize pad button aliases
+    initializePadButtonAliases(spec.numButtons);
+    
+    // Apply default configuration
+    applyDefaultConfig(false);
 }
 
 bool deco_mini7::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {

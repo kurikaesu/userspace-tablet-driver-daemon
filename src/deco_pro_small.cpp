@@ -19,77 +19,44 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include "deco_pro_small.h"
 
-deco_pro_small::deco_pro_small()
-: deco_pro() {
-    productIds.push_back(0x0909);
+deco_pro_small::deco_pro_small() {
+    // Create a device specification for deco_pro_small devices
+    device_specification spec;
+    spec.numButtons = 8;
+    spec.hasDial = true;
+    spec.hasHorizontalDial = true;
+    spec.buttonByteIndex = 2;
+    spec.dialByteIndex = 7;
+    
+    // Register product IDs and names
+    spec.addProduct(0x0909, "XP-Pen Deco Pro Small");
+    
+    // Initialize the base class with the specification
+    deviceSpec = spec;
+    
+    // Register products
+    for (const auto& product : spec.productNames) {
+        registerProduct(product.first, product.second);
+        productIds.push_back(product.first);
+    }
+    
+    // Initialize pad button aliases
+    initializePadButtonAliases(spec.numButtons);
+    
+    // Apply default configuration with dial
+    applyDefaultConfig(true);
 }
 
-std::string deco_pro_small::getProductName(int productId) {
-    if (productId == 0x0909) {
-        return "XP-Pen Deco Pro S";
-    }
+bool deco_pro_small::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {
+    switch (data[0]) {
+        case 0x02:
+            handleDigitizerEvent(handle, data, dataLen);
+            // Use the generic frame event handler
+            handleGenericFrameEvent(handle, data, dataLen, deviceSpec.buttonByteIndex, deviceSpec.dialByteIndex);
+            break;
 
-    return deco_pro::getProductName(productId);
-}
-
-bool deco_pro_small::attachDevice(libusb_device_handle *handle, int interfaceId, int productId) {
-    unsigned char* buf = new unsigned char[12];
-
-    // We need to get a few more bits of information
-    if (libusb_get_string_descriptor(handle, 0x64, 0x0409, buf, 12) != 12) {
-        std::cout << "Could not get descriptor" << std::endl;
-        return false;
-    }
-
-    int maxWidth = (buf[3] << 8) + buf[2];
-    int maxHeight = (buf[5] << 8) + buf[4];
-    maxPressure = (buf[9] << 8) + buf[8];
-    int resolution = (buf[11] << 8) + buf[10];
-
-    unsigned short vendorId = 0x28bd;
-    unsigned short aliasedProductId = 0xf909;
-    unsigned short versionId = 0x0001;
-
-    if (interfaceId == 2) {
-        struct uinput_pen_args penArgs{
-                .maxWidth = maxWidth,
-                .maxHeight = maxHeight,
-                .maxPressure = maxPressure,
-                .resolution = resolution,
-                .maxTiltX = 60,
-                .maxTiltY = 60,
-                .vendorId = vendorId,
-                .productId = aliasedProductId,
-                .versionId = versionId,
-                {"XP-Pen Deco Pro S"},
-        };
-
-        struct uinput_pad_args padArgs{
-                .padButtonAliases = padButtonAliases,
-                .hasWheel = true,
-                .hasHWheel = true,
-                .wheelMax = 1,
-                .hWheelMax = 1,
-                .vendorId = vendorId,
-                .productId = aliasedProductId,
-                .versionId = versionId,
-                {"XP-Pen Deco Pro S Pad"},
-        };
-
-        uinputPens[handle] = create_pen(penArgs);
-        uinputPads[handle] = create_pad(padArgs);
-    }
-
-    if (interfaceId == 0) {
-        struct uinput_pointer_args pointerArgs{
-                .wheelMax = 1,
-                .vendorId = vendorId,
-                .productId = aliasedProductId,
-                .versionId = versionId,
-                {"XP-Pen Deco Pro S Pointer"},
-        };
-
-        uinputPointers[handle] = create_pointer(pointerArgs);
+        default:
+            break;
     }
 
     return true;

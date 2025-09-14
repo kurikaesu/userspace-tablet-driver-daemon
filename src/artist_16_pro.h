@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef USERSPACE_TABLET_DRIVER_DAEMON_artist_16_pro_H
-#define USERSPACE_TABLET_DRIVER_DAEMON_artist_16_pro_H
+#ifndef USERSPACE_TABLET_DRIVER_DAEMON_ARTIST_16_PRO_H
+#define USERSPACE_TABLET_DRIVER_DAEMON_ARTIST_16_PRO_H
 
 
 #include "xp_pen_unified_device.h"
@@ -26,12 +26,12 @@ class artist_16_pro : public xp_pen_unified_device {
 public:
     artist_16_pro();
 
-    std::string getProductName(int productId);
-    void setConfig(nlohmann::json config);
-    bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen, int productId);
+    // Override only the methods that need custom behavior
+    bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen, int productId) override;
 private:
+    // Helper method for handling frame events
     void handleFrameEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
 };
 
 
-#endif //USERSPACE_TABLET_DRIVER_DAEMON_artist_16_pro_H
+#endif //USERSPACE_TABLET_DRIVER_DAEMON_ARTIST_16_PRO_H

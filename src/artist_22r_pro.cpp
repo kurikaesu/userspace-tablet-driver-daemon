@@ -17,86 +17,41 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <iostream>
-#include <cstring>
-#include <unistd.h>
-#include <linux/uinput.h>
 #include "artist_22r_pro.h"
 
 artist_22r_pro::artist_22r_pro() {
-    productIds.push_back(0x091b);
-
-    for (int currentAssignedButton = BTN_0; currentAssignedButton <= BTN_9; ++currentAssignedButton) {
-        padButtonAliases.push_back(currentAssignedButton);
+    // Create a device specification for artist_22r_pro devices
+    device_specification spec;
+    spec.numButtons = 10;
+    spec.hasDial = true;
+    spec.hasHorizontalDial = false;
+    spec.buttonByteIndex = 2;
+    spec.dialByteIndex = 7;
+    
+    // Register product IDs and names
+    spec.addProduct(0x0906, "XP-Pen Artist 22R Pro");
+    
+    // Initialize the base class with the specification
+    deviceSpec = spec;
+    
+    // Register products
+    for (const auto& product : spec.productNames) {
+        registerProduct(product.first, product.second);
+        productIds.push_back(product.first);
     }
-
-    for (int currentAssignedButton = BTN_A; currentAssignedButton <= BTN_SELECT; ++currentAssignedButton) {
-        padButtonAliases.push_back(currentAssignedButton);
-    }
+    
+    // Initialize pad button aliases
+    initializePadButtonAliases(spec.numButtons);
+    
+    // Apply default configuration with dial
+    applyDefaultConfig(true);
 }
 
-std::string artist_22r_pro::getProductName(int productId) {
-    if (productId == 0x091b) {
-        return "XP-Pen Artist 22R Pro";
-    }
-
-    return "Unknown XP-Pen Device";
-}
-
-void artist_22r_pro::setConfig(nlohmann::json config) {
-    if (!config.contains("mapping") || config["mapping"] == nullptr) {
-        config["mapping"] = nlohmann::json({});
-
-        auto addToButtonMap = [&config](int key, int eventType, std::vector<int> codes) {
-            std::string evstring = std::to_string(eventType);
-            config["mapping"]["buttons"][std::to_string(key)][evstring] = codes;
-        };
-
-        auto addToDialMap = [&config](int dial, int value, int eventType, std::vector<int> codes) {
-            std::string strvalue = std::to_string(value);
-            std::string evstring = std::to_string(eventType);
-            config["mapping"]["dials"][std::to_string(dial)][strvalue][evstring] = codes;
-        };
-
-        // We are going to emulate the default mapping of the device
-        addToButtonMap(BTN_0, EV_KEY, {KEY_B});
-        addToButtonMap(BTN_1, EV_KEY, {KEY_E});
-        addToButtonMap(BTN_2, EV_KEY, {KEY_LEFTALT});
-        addToButtonMap(BTN_3, EV_KEY, {KEY_SPACE});
-        addToButtonMap(BTN_4, EV_KEY, {KEY_LEFTCTRL, KEY_S});
-        addToButtonMap(BTN_5, EV_KEY, {KEY_LEFTCTRL, KEY_Z});
-        addToButtonMap(BTN_6, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTALT, KEY_Z});
-        addToButtonMap(BTN_7, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTSHIFT, KEY_Z});
-        addToButtonMap(BTN_8, EV_KEY, {KEY_V});
-        addToButtonMap(BTN_9, EV_KEY, {KEY_L});
-        addToButtonMap(BTN_SOUTH, EV_KEY, {KEY_LEFTCTRL, KEY_0});
-        addToButtonMap(BTN_EAST, EV_KEY, {KEY_LEFTCTRL, KEY_N});
-        addToButtonMap(BTN_C, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTSHIFT, KEY_N});
-        addToButtonMap(BTN_NORTH, EV_KEY, {KEY_LEFTCTRL, KEY_E});
-        addToButtonMap(BTN_WEST, EV_KEY, {KEY_F});
-        addToButtonMap(BTN_Z, EV_KEY, {KEY_D});
-        addToButtonMap(BTN_TL, EV_KEY, {KEY_X});
-        addToButtonMap(BTN_TR, EV_KEY, {KEY_LEFTCTRL, KEY_DELETE});
-        addToButtonMap(BTN_TL2, EV_KEY, {KEY_LEFTCTRL, KEY_C});
-        addToButtonMap(BTN_TR2, EV_KEY, {KEY_LEFTCTRL, KEY_V});
-
-        // Mapping the dials
-        addToDialMap(REL_WHEEL, -1, EV_KEY, {KEY_LEFTCTRL, KEY_MINUS});
-        addToDialMap(REL_WHEEL, 1, EV_KEY, {KEY_LEFTCTRL, KEY_EQUAL});
-        addToDialMap(REL_HWHEEL, -1, EV_KEY, {KEY_LEFTBRACE});
-        addToDialMap(REL_HWHEEL, 1, EV_KEY, {KEY_RIGHTBRACE});
-    }
-    jsonConfig = config;
-
-    submitMapping(jsonConfig);
-}
-
-bool artist_22r_pro::handleTransferData(libusb_device_handle* handle, unsigned char *data, size_t dataLen, int productId) {
+bool artist_22r_pro::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {
     switch (data[0]) {
-        // Unified interface
         case 0x02:
             handleDigitizerEvent(handle, data, dataLen);
             handleFrameEvent(handle, data, dataLen);
-
             break;
 
         default:
@@ -123,25 +78,11 @@ void artist_22r_pro::handleFrameEvent(libusb_device_handle *handle, unsigned cha
             leftDialValue = -1;
         }
 
-        // Take the right dial
-        short rightDialValue = 0;
-        if (0x10 & data[7]) {
-            rightDialValue = 1;
-        } else if (0x20 & data[7]) {
-            rightDialValue = -1;
-        }
-
         bool shouldSyn = true;
         bool dialEvent = false;
 
         if (leftDialValue != 0) {
             handleDialEvent(handle, REL_WHEEL, leftDialValue);
-            shouldSyn = false;
-            dialEvent = true;
-        }
-
-        if (rightDialValue != 0) {
-            handleDialEvent(handle, REL_HWHEEL, rightDialValue);
             shouldSyn = false;
             dialEvent = true;
         }

@@ -20,53 +20,31 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "deco_03.h"
 
 deco_03::deco_03() {
-    productIds.push_back(0x0096);
-
-    for (int currentAssignedButton = BTN_0; currentAssignedButton < BTN_6; ++currentAssignedButton) {
-        padButtonAliases.push_back(currentAssignedButton);
+    // Create a device specification for deco_03 devices
+    device_specification spec;
+    spec.numButtons = 8;
+    spec.hasDial = true;
+    spec.hasHorizontalDial = false;
+    spec.buttonByteIndex = 2;
+    spec.dialByteIndex = 7;
+    
+    // Register product IDs and names
+    spec.addProduct(0x0904, "XP-Pen Deco 03");
+    
+    // Initialize the base class with the specification
+    deviceSpec = spec;
+    
+    // Register products
+    for (const auto& product : spec.productNames) {
+        registerProduct(product.first, product.second);
+        productIds.push_back(product.first);
     }
-}
-
-std::string deco_03::getProductName(int productId) {
-    if (productId == 0x0096) {
-        return "XP-Pen Deco 03";
-    }
-
-    return "Unknown XP-Pen Device";
-}
-
-std::string deco_03::getInitKey() {
-    return {0x02, static_cast<char>(0xb0), 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-}
-
-void deco_03::setConfig(nlohmann::json config) {
-    if (!config.contains("mapping") || config["mapping"] == nullptr) {
-        config["mapping"] = nlohmann::json({});
-
-        auto addToButtonMap = [&config](int key, int eventType, std::vector<int> codes) {
-            std::string evstring = std::to_string(eventType);
-            config["mapping"]["buttons"][std::to_string(key)][evstring] = codes;
-        };
-
-        auto addToDialMap = [&config](int dial, int value, int eventType, std::vector<int> codes) {
-            std::string strvalue = std::to_string(value);
-            std::string evstring = std::to_string(eventType);
-            config["mapping"]["dials"][std::to_string(dial)][strvalue][evstring] = codes;
-        };
-
-        addToButtonMap(BTN_0, EV_KEY, {KEY_B});
-        addToButtonMap(BTN_1, EV_KEY, {KEY_E});
-        addToButtonMap(BTN_2, EV_KEY, {KEY_SPACE});
-        addToButtonMap(BTN_3, EV_KEY, {KEY_LEFTALT});
-        addToButtonMap(BTN_4, EV_KEY, {KEY_V});
-        addToButtonMap(BTN_5, EV_KEY, {KEY_LEFTCTRL, KEY_S});
-
-        addToDialMap(REL_WHEEL, -1, EV_KEY, {KEY_LEFTCTRL, KEY_EQUAL});
-        addToDialMap(REL_WHEEL, 1, EV_KEY, {KEY_LEFTCTRL, KEY_MINUS});
-    }
-    jsonConfig = config;
-
-    submitMapping(jsonConfig);
+    
+    // Initialize pad button aliases
+    initializePadButtonAliases(spec.numButtons);
+    
+    // Apply default configuration with dial
+    applyDefaultConfig(true);
 }
 
 bool deco_03::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {

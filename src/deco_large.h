@@ -20,15 +20,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define USERSPACE_TABLET_DRIVER_DAEMON_DECO_LARGE_H
 
 
-#include "deco.h"
+#include "xp_pen_unified_device.h"
 
-class deco_large : public deco {
+class deco_large : public xp_pen_unified_device {
 public:
     deco_large();
 
-    void setOffsetPressure(int productId);
-
-    std::string getProductName(int productId);
+    // Override only the methods that need custom behavior
+    bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen, int productId) override;
+    void setOffsetPressure(int productId) override;
 };
 
 

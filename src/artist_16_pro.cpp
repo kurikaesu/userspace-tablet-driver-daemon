@@ -17,58 +17,41 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <iostream>
-#include <cstring>
-#include <unistd.h>
-#include <linux/uinput.h>
 #include "artist_16_pro.h"
 
 artist_16_pro::artist_16_pro() {
-    productIds.push_back(0x090a);
-
-    for (int currentAssignedButton = BTN_0; currentAssignedButton < BTN_8; ++currentAssignedButton) {
-        padButtonAliases.push_back(currentAssignedButton);
+    // Create a device specification for artist_16_pro devices
+    device_specification spec;
+    spec.numButtons = 9;
+    spec.hasDial = false;
+    spec.hasHorizontalDial = false;
+    spec.buttonByteIndex = 2;
+    spec.dialByteIndex = 7;
+    
+    // Register product IDs and names
+    spec.addProduct(0x090a, "XP-Pen Artist 16 Pro");
+    
+    // Initialize the base class with the specification
+    deviceSpec = spec;
+    
+    // Register products
+    for (const auto& product : spec.productNames) {
+        registerProduct(product.first, product.second);
+        productIds.push_back(product.first);
     }
+    
+    // Initialize pad button aliases
+    initializePadButtonAliases(spec.numButtons);
+    
+    // Apply default configuration
+    applyDefaultConfig(false);
 }
 
-std::string artist_16_pro::getProductName(int productId) {
-    if (productId == 0x090a) {
-        return "XP-Pen Artist 16 Pro";
-    }
-
-    return "Unknown XP-Pen Device";
-}
-
-void artist_16_pro::setConfig(nlohmann::json config) {
-    if (!config.contains("mapping") || config["mapping"] == nullptr) {
-        config["mapping"] = nlohmann::json({});
-
-        auto addToButtonMap = [&config](int key, int eventType, std::vector<int> codes) {
-            std::string evstring = std::to_string(eventType);
-            config["mapping"]["buttons"][std::to_string(key)][evstring] = codes;
-        };
-
-        // We are going to emulate the default mapping of the device
-        addToButtonMap(BTN_0, EV_KEY, {KEY_B});
-        addToButtonMap(BTN_1, EV_KEY, {KEY_E});
-        addToButtonMap(BTN_2, EV_KEY, {KEY_LEFTALT});
-        addToButtonMap(BTN_3, EV_KEY, {KEY_SPACE});
-        addToButtonMap(BTN_4, EV_KEY, {KEY_LEFTCTRL, KEY_S});
-        addToButtonMap(BTN_5, EV_KEY, {KEY_LEFTCTRL, KEY_Z});
-        addToButtonMap(BTN_6, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTALT, KEY_Z});
-        addToButtonMap(BTN_7, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTSHIFT, KEY_Z});
-    }
-    jsonConfig = config;
-
-    submitMapping(jsonConfig);
-}
-
-bool artist_16_pro::handleTransferData(libusb_device_handle* handle, unsigned char *data, size_t dataLen, int productId) {
+bool artist_16_pro::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {
     switch (data[0]) {
-        // Unified interface
         case 0x02:
             handleDigitizerEvent(handle, data, dataLen);
             handleFrameEvent(handle, data, dataLen);
-
             break;
 
         default:

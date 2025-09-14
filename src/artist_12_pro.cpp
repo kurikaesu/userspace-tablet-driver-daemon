@@ -23,61 +23,39 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "artist_12_pro.h"
 
 artist_12_pro::artist_12_pro() {
-    productIds.push_back(0x080a);
-    productIds.push_back(0x091f);
-
-    for (int currentAssignedButton = BTN_0; currentAssignedButton < BTN_8; ++currentAssignedButton) {
-        padButtonAliases.push_back(currentAssignedButton);
+    // Create a device specification for Artist 12 Pro devices
+    device_specification spec;
+    spec.numButtons = 8;
+    spec.hasDial = true;
+    spec.hasHorizontalDial = false;
+    spec.buttonByteIndex = 2;
+    spec.dialByteIndex = 7;
+    
+    // Register product IDs and names
+    spec.addProduct(0x080a, "XP-Pen Artist 12 Pro");
+    spec.addProduct(0x091f, "XP-Pen Artist 12 Pro (2nd Gen)");
+    
+    // Initialize the base class with the specification
+    deviceSpec = spec;
+    
+    // Register products
+    for (const auto& product : spec.productNames) {
+        registerProduct(product.first, product.second);
+        productIds.push_back(product.first);
     }
-}
-
-std::string artist_12_pro::getProductName(int productId) {
-    if (productId == 0x080a) {
-        return "XP-Pen Artist 12 Pro";
-    } else if (productId == 0x091f) {
-        return "XP-Pen Artist 12 Pro (2nd Gen)";
-    }
-
-    return "Unknown XP-Pen Device";
-}
-
-void artist_12_pro::setConfig(nlohmann::json config) {
-    if (!config.contains("mapping") || config["mapping"] == nullptr) {
-        config["mapping"] = nlohmann::json({});
-
-        auto addToButtonMap = [&config](int key, int eventType, std::vector<int> codes) {
-            std::string evstring = std::to_string(eventType);
-            config["mapping"]["buttons"][std::to_string(key)][evstring] = codes;
-        };
-
-        auto addToDialMap = [&config](int dial, int value, int eventType, std::vector<int> codes) {
-            std::string strvalue = std::to_string(value);
-            std::string evstring = std::to_string(eventType);
-            config["mapping"]["dials"][std::to_string(dial)][strvalue][evstring] = codes;
-        };
-
-        addToButtonMap(BTN_0, EV_KEY, {KEY_B});
-        addToButtonMap(BTN_1, EV_KEY, {KEY_E});
-        addToButtonMap(BTN_2, EV_KEY, {KEY_SPACE});
-        addToButtonMap(BTN_3, EV_KEY, {KEY_LEFTALT});
-        addToButtonMap(BTN_4, EV_KEY, {KEY_V});
-        addToButtonMap(BTN_5, EV_KEY, {KEY_LEFTCTRL, KEY_S});
-        addToButtonMap(BTN_6, EV_KEY, {KEY_LEFTCTRL, KEY_Z});
-        addToButtonMap(BTN_7, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTALT, KEY_N});
-
-        addToDialMap(REL_WHEEL, -1, EV_KEY, {KEY_LEFTCTRL, KEY_MINUS});
-        addToDialMap(REL_WHEEL, 1, EV_KEY, {KEY_LEFTCTRL, KEY_EQUAL});
-    }
-    jsonConfig = config;
-
-    submitMapping(jsonConfig);
+    
+    // Initialize pad button aliases
+    initializePadButtonAliases(spec.numButtons);
+    
+    // Apply default configuration with dial
+    applyDefaultConfig(true);
 }
 
 bool artist_12_pro::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {
     switch (data[0]) {
         case 0x02:
             handleDigitizerEvent(handle, data, dataLen);
-            handleFrameEvent(handle, data, dataLen);
+            handleGenericFrameEvent(handle, data, dataLen, deviceSpec.buttonByteIndex, deviceSpec.dialByteIndex);
             break;
 
         default:
@@ -85,41 +63,4 @@ bool artist_12_pro::handleTransferData(libusb_device_handle *handle, unsigned ch
     }
 
     return true;
-}
-
-void artist_12_pro::handleFrameEvent(libusb_device_handle *handle, unsigned char *data, size_t dataLen) {
-    if (data[1] >= 0xf0) {
-        long button = data[2];
-        // Only 8 buttons on this device
-        long position = ffsl(data[2]);
-
-        std::bitset<8> dialBits(data[7]);
-
-        // Take the dial
-        short dialValue = 0;
-        if (dialBits.test(0)) {
-            dialValue = 1;
-        } else if (dialBits.test(1)) {
-            dialValue = -1;
-        }
-
-        bool shouldSyn = true;
-        bool dialEvent = false;
-
-        if (dialValue != 0) {
-            handleDialEvent(handle, REL_WHEEL, dialValue);
-            shouldSyn = false;
-            dialEvent = true;
-        }
-
-        if (button != 0) {
-            handlePadButtonPressed(handle, position);
-        } else if (!dialEvent) {
-            handlePadButtonUnpressed(handle);
-        }
-
-        if (shouldSyn) {
-            uinput_send(uinputPads[handle], EV_SYN, SYN_REPORT, 1);
-        }
-    }
 }
