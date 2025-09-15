@@ -653,43 +653,32 @@ int transfer_handler::applyPressureCurve(int pressure) {
     if (pressureCurve.empty() || pressure == 0) {
         return pressure;
     }
-
+    
     // Normalize the pressure first
     float normalizedPressure = (float)pressure / maxPressure;
-
-    float adjustedPressure;
-    auto controlPointCount = pressureCurve.size();
-
-    // Single control point is invalid
-    switch (controlPointCount) {
-    case 2:
-        adjustedPressure = (pressureCurve[1].second - pressureCurve[0].second) * normalizedPressure;
-        break;
-    case 3: {
-        auto y1 = getPoint(pressureCurve[0].second, pressureCurve[1].second, normalizedPressure);
-        auto y2 = getPoint(pressureCurve[1].second, pressureCurve[2].second, normalizedPressure);
-        adjustedPressure = getPoint(y1, y2, normalizedPressure);
-        break;
-    }
-
-    case 4: {
-        auto y1 = getPoint(pressureCurve[0].second, pressureCurve[1].second, normalizedPressure);
-        auto y2 = getPoint(pressureCurve[1].second, pressureCurve[2].second, normalizedPressure);
-        auto y3 = getPoint(pressureCurve[2].second, pressureCurve[3].second, normalizedPressure);
-
-        auto m1 = getPoint(y1, y2, normalizedPressure);
-        auto m2 = getPoint(y2, y3, normalizedPressure);
-
-        adjustedPressure = getPoint(m1, m2, normalizedPressure);
-        break;
-    }
-
-    default:
-        return pressure;
-    }
-
+    
+    // Apply De Casteljau's algorithm for any number of control points
+    float adjustedPressure = evaluateBezier(pressureCurve, normalizedPressure);
+    
     auto returnedPressure = (adjustedPressure / 100.0f) * maxPressure;
     return (int)returnedPressure;
+}
+
+// Recursive implementation of De Casteljau's algorithm
+float transfer_handler::evaluateBezier(const std::vector<std::pair<float, float>>& points, float t) {
+    if (points.size() == 1) {
+        return points[0].second;
+    }
+    
+    std::vector<std::pair<float, float>> nextLevel;
+    nextLevel.reserve(points.size() - 1);
+    
+    for (size_t i = 0; i < points.size() - 1; ++i) {
+        float interpolatedY = getPoint(points[i].second, points[i + 1].second, t);
+        nextLevel.push_back({0, interpolatedY}); // x-coordinate not used in recursion
+    }
+    
+    return evaluateBezier(nextLevel, t);
 }
 
 void transfer_handler::setOffsetPressure(int productId) {

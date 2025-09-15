@@ -88,6 +88,7 @@ protected:
     virtual void handleDialEvent(libusb_device_handle* handle, int dial, short value);
 
     virtual int applyPressureCurve(int pressure);
+    virtual float evaluateBezier(const std::vector<std::pair<float, float>>& points, float t);
 
     std::vector<int> productIds;
 
