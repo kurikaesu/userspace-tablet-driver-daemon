@@ -21,7 +21,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "star.h"
 
 star::star() {
-
+    // Initialize with default device specification
+    device_specification spec;
+    spec.numButtons = 0;  // Star devices focus on stylus buttons rather than pad buttons
+    spec.hasDial = false;
+    spec.hasHorizontalDial = false;
+    spec.buttonByteIndex = 2;
+    spec.dialByteIndex = 7;
+    
+    // Initialize the base class with the specification
+    deviceSpec = spec;
+    
+    // Initialize pad button aliases (even though not used for pad buttons)
+    initializePadButtonAliases(spec.numButtons);
 }
 
 std::string star::getProductName(int productId) {
@@ -29,7 +41,22 @@ std::string star::getProductName(int productId) {
 }
 
 void star::setConfig(nlohmann::json config) {
+    // Star devices have a different configuration approach focusing on stylus buttons
+    if (!config.contains("mapping") || config["mapping"] == nullptr) {
+        config["mapping"] = nlohmann::json({});
 
+        auto addToStylusMap = [&config](int key, int eventType, std::vector<int> codes) {
+            std::string evstring = std::to_string(eventType);
+            config["mapping"]["stylus_buttons"][std::to_string(key)][evstring] = codes;
+        };
+
+        // Default stylus button mappings
+        addToStylusMap(BTN_STYLUS, EV_KEY, {});
+        addToStylusMap(BTN_STYLUS2, EV_KEY, {});
+    }
+    jsonConfig = config;
+
+    submitMapping(jsonConfig);
 }
 
 int star::sendInitKeyOnInterface() {

@@ -19,68 +19,31 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "generic_xp_pen_device.h"
 
 generic_xp_pen_device::generic_xp_pen_device(int productId) {
-    productIds.push_back(productId);
-
-    for (int currentAssignedButton = BTN_0; currentAssignedButton < BTN_9; ++currentAssignedButton) {
-        padButtonAliases.push_back(currentAssignedButton);
+    // Create a device specification for generic XP-Pen devices
+    device_specification spec;
+    spec.numButtons = 20;  // High number to accommodate all possible buttons
+    spec.hasDial = true;
+    spec.hasHorizontalDial = true;
+    spec.buttonByteIndex = 2;
+    spec.dialByteIndex = 7;
+    
+    // Register product IDs and names
+    spec.addProduct(productId, "Generic XP-Pen Device");
+    
+    // Initialize the base class with the specification
+    deviceSpec = spec;
+    
+    // Register products
+    for (const auto& product : spec.productNames) {
+        registerProduct(product.first, product.second);
+        productIds.push_back(product.first);
     }
-
-    for (int currentAssignedButton = BTN_A; currentAssignedButton <= BTN_SELECT; ++currentAssignedButton) {
-        padButtonAliases.push_back(currentAssignedButton);
-    }
-}
-
-std::string generic_xp_pen_device::getProductName(int productId) {
-    return "Generic XP-Pen Device";
-}
-
-void generic_xp_pen_device::setConfig(nlohmann::json config) {
-    if (!config.contains("mapping") || config["mapping"] == nullptr) {
-        config["mapping"] = nlohmann::json({});
-
-        auto addToButtonMap = [&config](int key, int eventType, std::vector<int> codes) {
-            std::string evstring = std::to_string(eventType);
-            config["mapping"]["buttons"][std::to_string(key)][evstring] = codes;
-        };
-
-        auto addToDialMap = [&config](int dial, int value, int eventType, std::vector<int> codes) {
-            std::string strvalue = std::to_string(value);
-            std::string evstring = std::to_string(eventType);
-            config["mapping"]["dials"][std::to_string(dial)][strvalue][evstring] = codes;
-        };
-
-        // We are going to emulate the default mapping of the device
-        addToButtonMap(BTN_0, EV_KEY, {KEY_B});
-        addToButtonMap(BTN_1, EV_KEY, {KEY_E});
-        addToButtonMap(BTN_2, EV_KEY, {KEY_LEFTALT});
-        addToButtonMap(BTN_3, EV_KEY, {KEY_SPACE});
-        addToButtonMap(BTN_4, EV_KEY, {KEY_LEFTCTRL, KEY_S});
-        addToButtonMap(BTN_5, EV_KEY, {KEY_LEFTCTRL, KEY_Z});
-        addToButtonMap(BTN_6, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTALT, KEY_Z});
-        addToButtonMap(BTN_7, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTSHIFT, KEY_Z});
-        addToButtonMap(BTN_8, EV_KEY, {KEY_V});
-        addToButtonMap(BTN_9, EV_KEY, {KEY_L});
-
-        addToButtonMap(BTN_SOUTH, EV_KEY, {KEY_LEFTCTRL, KEY_0});
-        addToButtonMap(BTN_EAST, EV_KEY, {KEY_LEFTCTRL, KEY_N});
-        addToButtonMap(BTN_C, EV_KEY, {KEY_LEFTCTRL, KEY_LEFTSHIFT, KEY_N});
-        addToButtonMap(BTN_NORTH, EV_KEY, {KEY_LEFTCTRL, KEY_E});
-        addToButtonMap(BTN_WEST, EV_KEY, {KEY_F});
-        addToButtonMap(BTN_Z, EV_KEY, {KEY_D});
-        addToButtonMap(BTN_TL, EV_KEY, {KEY_X});
-        addToButtonMap(BTN_TR, EV_KEY, {KEY_LEFTCTRL, KEY_DELETE});
-        addToButtonMap(BTN_TL2, EV_KEY, {KEY_LEFTCTRL, KEY_C});
-        addToButtonMap(BTN_TR2, EV_KEY, {KEY_LEFTCTRL, KEY_V});
-
-        // Mapping the dials
-        addToDialMap(REL_WHEEL, -1, EV_KEY, {KEY_LEFTCTRL, KEY_MINUS});
-        addToDialMap(REL_WHEEL, 1, EV_KEY, {KEY_LEFTCTRL, KEY_EQUAL});
-        addToDialMap(REL_HWHEEL, -1, EV_KEY, {KEY_LEFTBRACE});
-        addToDialMap(REL_HWHEEL, 1, EV_KEY, {KEY_RIGHTBRACE});
-    }
-    jsonConfig = config;
-
-    submitMapping(jsonConfig);
+    
+    // Initialize pad button aliases
+    initializePadButtonAliases(spec.numButtons);
+    
+    // Apply default configuration with dial
+    applyDefaultConfig(true);
 }
 
 bool generic_xp_pen_device::handleTransferData(libusb_device_handle *handle, unsigned char *data, size_t dataLen, int productId) {

@@ -25,10 +25,11 @@ class generic_xp_pen_device : public xp_pen_unified_device {
 public:
     generic_xp_pen_device(int productId);
 
-    std::string getProductName(int productId);
-    void setConfig(nlohmann::json config);
-    bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen, int productId);
+    // Override only the methods that need custom behavior
+    bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen, int productId) override;
+    
 private:
+    // Helper method for handling frame events
     void handleFrameEvent(libusb_device_handle* handle, unsigned char* data, size_t dataLen);
 };
 

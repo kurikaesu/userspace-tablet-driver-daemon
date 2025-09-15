@@ -21,7 +21,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "star_g640.h"
 
 star_g640::star_g640() {
-    productIds.push_back(0x0914);
+    // Create a device specification for Star G640 devices
+    device_specification spec;
+    spec.numButtons = 0;  // Star devices focus on stylus buttons rather than pad buttons
+    spec.hasDial = false;
+    spec.hasHorizontalDial = false;
+    spec.buttonByteIndex = 2;
+    spec.dialByteIndex = 7;
+    
+    // Register product IDs and names
+    spec.addProduct(0x0914, "XP-Pen Star G640");
+    
+    // Initialize the base class with the specification
+    deviceSpec = spec;
+    
+    // Register products
+    for (const auto& product : spec.productNames) {
+        registerProduct(product.first, product.second);
+        productIds.push_back(product.first);
+    }
+    
+    // Initialize pad button aliases (even though not used for pad buttons)
+    initializePadButtonAliases(spec.numButtons);
 }
 
 std::string star_g640::getProductName(int productId) {
@@ -108,4 +129,3 @@ bool star_g640::attachDevice(libusb_device_handle *handle, int interfaceId, int 
 
     return true;
 }
-

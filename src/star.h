@@ -26,12 +26,13 @@ class star : public xp_pen_unified_device {
 public:
     star();
 
-    virtual std::string getProductName(int productId);
-    void setConfig(nlohmann::json config);
+    // Override only the methods that need custom behavior
+    virtual std::string getProductName(int productId) override;
+    void setConfig(nlohmann::json config) override;
     int sendInitKeyOnInterface();
     bool attachToInterfaceId(int interfaceId);
     virtual bool attachDevice(libusb_device_handle *handle, int interfaceId, int productId) = 0;
-    bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen, int productId);
+    bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen, int productId) override;
 
 };
 

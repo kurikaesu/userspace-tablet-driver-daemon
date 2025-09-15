@@ -26,10 +26,11 @@ class star_g640 : public star {
 public:
     star_g640();
 
-    std::string getProductName(int productId);
-    void setConfig(nlohmann::json config);
-    bool attachDevice(libusb_device_handle *handle, int interfaceId, int productId);
-    std::string getInitKey();
+    // Override only the methods that need custom behavior
+    std::string getProductName(int productId) override;
+    void setConfig(nlohmann::json config) override;
+    bool attachDevice(libusb_device_handle *handle, int interfaceId, int productId) override;
+    std::string getInitKey() override;
 };
 
 
