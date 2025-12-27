@@ -97,25 +97,24 @@ unsigned short xp_pen_unified_device::getDescriptorLength() {
 
 bool xp_pen_unified_device::attachDevice(libusb_device_handle *handle, int interfaceId, int productId) {
     const int descriptorLength = getDescriptorLength();
-    auto* buf = new unsigned char[descriptorLength];
+    std::vector<unsigned char> buf(descriptorLength);
 
     // We need to get a few more bits of information
-    if (libusb_get_string_descriptor(handle, 0x64, 0x0409, buf, descriptorLength) != descriptorLength) {
+    if (libusb_get_string_descriptor(handle, 0x64, 0x0409, &buf[0], descriptorLength) != descriptorLength) {
         std::cout << "Could not get descriptor" << std::endl;
-        delete[] buf;
         return false;
     }
 
-    int maxWidth = (buf[12] << 16) + (buf[3] << 8) + buf[2];
+    // I do not how these work exactly, but the buf[12] access is out of bounds
+    // and amounted to 0 if we're lucky and some random value otherwise
+    int maxWidth = /*(buf[12] << 16)*/ + (buf[3] << 8) + buf[2];
     int maxHeight = (buf[5] << 8) + buf[4];
     maxPressure = (buf[9] << 8) + buf[8];
     int resolution = (buf[11] << 8) + buf[10];
 
     std::string deviceName = getProductName(productId);
-    std::stringstream padNameBuilder;
-    padNameBuilder << deviceName;
-    padNameBuilder << " Pad";
-    std::string padName = padNameBuilder.str();
+    std::string padName = std::string(deviceName).append(" Pad");
+    std::string penName = std::string(deviceName).append(" Pen");
 
     std::cout << "Device: " << deviceName << " - Probed maxWidth: (" << maxWidth << ") maxHeight: (" << maxHeight << ") resolution: (" << resolution << ")" << std::endl;
 
@@ -135,7 +134,7 @@ bool xp_pen_unified_device::attachDevice(libusb_device_handle *handle, int inter
             .versionId = versionId,
     };
 
-    memcpy(penArgs.productName, deviceName.c_str(), deviceName.length());
+    memcpy(penArgs.productName, penName.c_str(), penName.length());
 
     struct uinput_pad_args padArgs {
             .padButtonAliases = padButtonAliases,
@@ -145,15 +144,18 @@ bool xp_pen_unified_device::attachDevice(libusb_device_handle *handle, int inter
             .hWheelMax = 1,
             .vendorId = vendorId,
             .productId = aliasedProductId,
-            .versionId = versionId,
+            .versionId = versionId
     };
 
-    memcpy(padArgs.productName, deviceName.c_str(), deviceName.length());
+    memcpy(padArgs.productName, padName.c_str(), padName.length());
 
-    uinputPens[handle] = create_pen(penArgs);
-    uinputPads[handle] = create_pad(padArgs);
+    auto pen_fd = create_pen(penArgs);
+    auto pad_fd = create_pad(padArgs);
+    if (pen_fd < 0 || pad_fd < 0)
+        return false;
+    uinputPens[handle] = pen_fd;
+    uinputPads[handle] = pad_fd;
 
-    delete[] buf;
     return true;
 }
 

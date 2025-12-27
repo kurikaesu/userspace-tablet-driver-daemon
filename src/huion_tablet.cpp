@@ -212,8 +212,7 @@ std::wstring huion_tablet::getDeviceFirmwareName(libusb_device_handle *handle) {
 }
 
 bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId, int productId) {
-    auto *buffer = new unsigned char[200];
-    memset(buffer, 0, 200);
+    std::vector<unsigned char> buffer(200, 0);
     auto firmware = getDeviceFirmwareName(handle);
     std::wcout << "Got firmware " << firmware << std::endl;
 
@@ -224,12 +223,12 @@ bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId, i
     handleToAliasedDeviceId[handle] = getAliasedDeviceIdFromFirmware(firmware);
 
     // We need to get a few more bits of information
-    if (libusb_get_string_descriptor(handle, 200, 0x0409, buffer, 32) < 18) {
+    if (libusb_get_string_descriptor(handle, 200, 0x0409, &buffer[0], 32) < 18) {
         std::cout << "Could not get descriptor" << std::endl;
         // Let's see which descriptors are actually available
         for (int i = 1; i < 0xff; ++i) {
-            memset(buffer, 0, 12);
-            int stringLength = libusb_get_string_descriptor(handle, i, 0x0409, buffer, 12);
+            memset(&buffer[0], 0, 12);
+            int stringLength = libusb_get_string_descriptor(handle, i, 0x0409, &buffer[0], 12);
             if (stringLength < 0) {
                 std::cout << "Could not get descriptor on index " << i << std::endl;
             } else {
@@ -237,7 +236,6 @@ bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId, i
             }
         }
 
-        delete[] buffer;
         return false;
     }
 
@@ -269,7 +267,9 @@ bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId, i
         memset(penArgs.productName, 0, UINPUT_MAX_NAME_SIZE);
         memcpy(penArgs.productName, deviceName.c_str(), deviceName.length());
 
-        uinputPens[handle] = create_pen(penArgs);
+        int pen_fd = create_pen(penArgs);
+        if (pen_fd < 0) return false;
+        uinputPens[handle] = pen_fd;
     }
 
     struct uinput_pad_args padArgs{
@@ -291,9 +291,10 @@ bool huion_tablet::attachDevice(libusb_device_handle *handle, int interfaceId, i
     memset(padArgs.productName, 0, UINPUT_MAX_NAME_SIZE);
     memcpy(padArgs.productName, padNameString.c_str(), padNameString.length());
 
-    uinputPads[handle] = create_pad(padArgs);
+    auto pad_fd = create_pad(padArgs);
+    if (pad_fd < 0) return false;
+    uinputPads[handle] = pad_fd;
 
-    delete[] buffer;
 
     return true;
 }
