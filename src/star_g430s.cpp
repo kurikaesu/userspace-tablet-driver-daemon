@@ -77,7 +77,8 @@ void star_g430s::setConfig(nlohmann::json config) {
 
 bool star_g430s::attachDevice(libusb_device_handle *handle, int interfaceId, int productId) {
     unsigned int descriptorLength = 12;
-    unsigned char* buf = new unsigned char[descriptorLength];
+    std::vector<unsigned char> buf_(descriptorLength);
+    auto* buf = &buf_[0];
 
     // We need to get a few more bits of information
     if (libusb_get_string_descriptor(handle, 0x64, 0x0409, buf, descriptorLength) != descriptorLength) {
@@ -124,8 +125,13 @@ bool star_g430s::attachDevice(libusb_device_handle *handle, int interfaceId, int
                 {"XP-Pen Star G430S Pad"},
         };
 
-        uinputPens[handle] = create_pen(penArgs);
-        uinputPads[handle] = create_pad(padArgs);
+        auto pen_fd = create_pen(penArgs);
+        auto pad_fd = create_pad(padArgs);
+        if (pen_fd < 0 || pad_fd < 0)
+            return false;
+
+        uinputPens[handle] = pen_fd;
+        uinputPads[handle] = pad_fd;
     }
 
     return true;

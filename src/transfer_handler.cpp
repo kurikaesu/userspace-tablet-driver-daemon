@@ -135,8 +135,8 @@ int transfer_handler::create_pen(const uinput_pen_args& penArgs) {
     int fd = -1;
     fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
     if (fd < 0) {
-        std::cout << "Could not create uinput pen" << std::endl;
-        return false;
+        std::cout << "Could not create uinput pen (" << std::strerror(errno) << ")" << std::endl;
+        return fd;
     }
 
     auto set_evbit = [&fd](int evBit) {
@@ -279,7 +279,7 @@ int transfer_handler::create_pad(const uinput_pad_args& padArgs) {
     fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
     if (fd < 0) {
         std::cout << "Could not create uinput pad" << std::endl;
-        return false;
+        return fd;
     }
 
     auto set_evbit = [&fd](int evBit) {

@@ -96,7 +96,10 @@ bool ac19::attachDevice(libusb_device_handle *handle, int interfaceId, int produ
                 {"XP-Pen AC19 Shortcut Remote"},
         };
 
-        uinputPads[handle] = create_pad(padArgs);
+        int pad_fd = create_pad(padArgs);
+        if (pad_fd < 0)
+            return false;
+        uinputPads[handle] = pad_fd;
     }
 
     return true;
