@@ -28,6 +28,7 @@ public:
 
     // Override only the methods that need custom behavior
     bool handleTransferData(libusb_device_handle* handle, unsigned char* data, size_t dataLen, int productId) override;
+    bool attachDevice(libusb_device_handle *handle, int interfaceId, int productId) override;
 };
 
 

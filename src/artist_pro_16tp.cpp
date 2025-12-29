@@ -29,7 +29,7 @@ artist_pro_16tp::artist_pro_16tp() {
     spec.dialByteIndex = 7;
     
     // Register product IDs and names
-    spec.addProduct(0x0301, "XP-Pen Artist Pro 16TP");
+    spec.addProduct(0x092e, "XP-Pen Artist Pro 16TP");
     
     // Initialize the base class with the specification
     deviceSpec = spec;
@@ -55,6 +55,54 @@ bool artist_pro_16tp::handleTransferData(libusb_device_handle *handle, unsigned 
 
         default:
             break;
+    }
+
+    return true;
+}
+
+bool artist_pro_16tp::attachDevice(libusb_device_handle *handle, int interfaceId, int productId) {
+    unsigned int descriptorLength = 12;
+    std::vector<unsigned char> buf_(descriptorLength);
+    auto* buf = &buf_[0];
+
+    // We need to get a few more bits of information
+    if (libusb_get_string_descriptor(handle, 0x64, 0x0409, buf, descriptorLength) != descriptorLength) {
+        std::cout << "Could not get descriptor" << std::endl;
+        return false;
+    }
+
+    // Hard coding these values in because the probe returns erroneous values.
+    int maxWidth = 0x10e24;
+    int maxHeight = 0x97dd;
+    maxPressure = (buf[9] << 8) + buf[8];
+    int resolution = (buf[11] << 8) + buf[10];
+
+    std::string deviceName = "Artist Pro 16TP";
+    std::cout << "Device: " << std::dec << deviceName << " - Probed maxWidth: (" << maxWidth << ") maxHeight: (" << maxHeight << ") resolution: (" << resolution << ") pressure: " << maxPressure << std::endl;
+
+    unsigned short vendorId = 0x28bd;
+    unsigned short aliasedProductId = 0x092e;
+    unsigned short versionId = 0x0001;
+
+    if (interfaceId == 2) {
+        struct uinput_pen_args penArgs{
+                .maxWidth = maxWidth,
+                .maxHeight = maxHeight,
+                .maxPressure = maxPressure,
+                .resolution = resolution,
+                .maxTiltX = 60,
+                .maxTiltY = 60,
+                .vendorId = vendorId,
+                .productId = aliasedProductId,
+                .versionId = versionId,
+                {"XP-Pen Artist Pro 16TP"},
+        };
+
+        auto pen_fd = create_pen(penArgs);
+        if (pen_fd < 0)
+            return false;
+
+        uinputPens[handle] = pen_fd;
     }
 
     return true;
