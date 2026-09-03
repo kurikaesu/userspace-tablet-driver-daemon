@@ -88,6 +88,7 @@ device_interface_pair* vendor_handler::claimDevice(libusb_device *device, libusb
     err = libusb_get_config_descriptor(device, 0, &configDescriptor);
     if (err != LIBUSB_SUCCESS) {
         std::cout << "Could not get config descriptor" << std::endl;
+        return nullptr;
     }
 
     auto productId = descriptor.idProduct;
@@ -175,6 +176,7 @@ device_interface_pair* vendor_handler::claimDevice(libusb_device *device, libusb
                 std::cout << std::dec << "Setup completed on interface " << (int)interface_number << std::endl;
             } else {
                 std::cout << "Could not claim interface " << (int)interface_number << " retcode: " << err << " errno: " << errno << std::endl;
+                libusb_free_config_descriptor(configDescriptor);
                 delete deviceInterface;
                 return nullptr;
             }
@@ -184,6 +186,7 @@ device_interface_pair* vendor_handler::claimDevice(libusb_device *device, libusb
         if (err == LIBUSB_ERROR_ACCESS) {
             std::cout << "This was an access denied error. Is the correct udev rule set up?" << std::endl;
         }
+        libusb_free_config_descriptor(configDescriptor);
         delete deviceInterface;
         return nullptr;
     }
@@ -192,6 +195,8 @@ device_interface_pair* vendor_handler::claimDevice(libusb_device *device, libusb
     auto productString = std::to_string(productId);
     std::cout << "Set up config for device " << productString << ": (" << productHandlers[productId]->getProductName(productId) << ")" <<  std::endl;
     productHandlers[productId]->setConfig(getConfig()[productString]);
+
+    libusb_free_config_descriptor(configDescriptor);
     return deviceInterface;
 }
 
